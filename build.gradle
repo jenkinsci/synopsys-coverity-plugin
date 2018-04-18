@@ -1,0 +1,57 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url 'https://plugins.gradle.org/m2/' }
+    }
+    dependencies { classpath 'com.blackducksoftware.integration:common-gradle-plugin:0.0.+' }
+}
+
+plugins {
+    id 'org.jenkins-ci.jpi' version '0.25.0'
+}
+group = 'com.blackducksoftware.integration'
+version = '0.0.1-SNAPSHOT'
+description = 'SIG Coverity Plugin for Jenkins'
+
+apply plugin: 'com.blackducksoftware.integration.solution'
+
+task listrepos {
+    doLast {
+        println "Repositories:"
+        project.repositories.each { println "Name: " + it.name + "; url: " + it.url }
+    }
+}
+
+def jcenterRepo = project.repositories.findByName('BintrayJCenter')
+project.repositories.remove(jcenterRepo)
+def mavenRepo = project.repositories.findByName('maven')
+project.repositories.remove(mavenRepo)
+
+project.afterEvaluate {
+    // MavenLocal is added by the gradle-jpi-plugin so we have to remove it after the plugins are evaluated
+    def mavenLocalRepo = project.repositories.findByName('MavenLocal')
+    project.repositories.remove(mavenLocalRepo)
+}
+
+jenkinsPlugin {
+    coreVersion = '2.60.1'
+    displayName = 'SIG Coverity Plugin'
+    url = 'N/A'
+    gitHubUrl = 'https://github.com/blackducksoftware/sig-coverity'
+}
+
+dependencies {
+    
+}
+
+task renameFile << {
+    if (project.getVersion().toString().contains("SNAPSHOT")) {
+        File libsDirectory = new File(project.getBuildDir(), "libs")
+        File originalFile = new File(libsDirectory, "${project.getName()}.hpi")
+        File newFile = new File(libsDirectory, "${project.getName()}-${project.getVersion()}.hpi")
+        originalFile.renameTo newFile
+    }
+}
+
+jpi.finalizedBy renameFile
