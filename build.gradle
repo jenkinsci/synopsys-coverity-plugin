@@ -10,7 +10,8 @@ buildscript {
 plugins {
     id 'org.jenkins-ci.jpi' version '0.25.0'
 }
-group = 'com.blackducksoftware.integration'
+
+group = 'com.sig.integration'
 version = '0.0.1-SNAPSHOT'
 description = 'SIG Coverity Plugin for Jenkins'
 
@@ -42,7 +43,7 @@ jenkinsPlugin {
 }
 
 dependencies {
-    
+
 }
 
 task renameFile << {
