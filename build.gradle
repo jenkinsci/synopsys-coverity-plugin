@@ -29,11 +29,11 @@ project.repositories.remove(jcenterRepo)
 def mavenRepo = project.repositories.findByName('maven')
 project.repositories.remove(mavenRepo)
 
-project.afterEvaluate {
-    // MavenLocal is added by the gradle-jpi-plugin so we have to remove it after the plugins are evaluated
-    def mavenLocalRepo = project.repositories.findByName('MavenLocal')
-    project.repositories.remove(mavenLocalRepo)
-}
+//project.afterEvaluate {
+//    // MavenLocal is added by the gradle-jpi-plugin so we have to remove it after the plugins are evaluated
+//    def mavenLocalRepo = project.repositories.findByName('MavenLocal')
+//    project.repositories.remove(mavenLocalRepo)
+//}
 
 jenkinsPlugin {
     coreVersion = '2.60.1'
@@ -43,7 +43,7 @@ jenkinsPlugin {
 }
 
 dependencies {
-
+    compile 'com.sig.integration:coverity-common:0.0.1-SNAPSHOT'
 }
 
 task renameFile << {
