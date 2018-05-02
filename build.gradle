@@ -43,6 +43,8 @@ jenkinsPlugin {
 }
 
 dependencies {
+    jenkinsPlugins 'org.jenkins-ci.plugins:credentials:1.9.4'
+    
     compile 'com.sig.integration:coverity-common:0.0.1-SNAPSHOT'
 }
 

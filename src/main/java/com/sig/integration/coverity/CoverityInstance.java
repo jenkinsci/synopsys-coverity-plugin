@@ -25,12 +25,18 @@ package com.sig.integration.coverity;
 
 public class CoverityInstance {
     private final String url;
+    private final String credentialId;
 
-    public CoverityInstance(String url) {
+    public CoverityInstance(String url, String credentialId) {
         this.url = url;
+        this.credentialId = credentialId;
     }
 
     public String getUrl() {
         return url;
+    }
+
+    public String getCredentialId() {
+        return credentialId;
     }
 }

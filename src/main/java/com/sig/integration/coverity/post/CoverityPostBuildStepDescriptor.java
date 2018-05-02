@@ -24,16 +24,27 @@
 package com.sig.integration.coverity.post;
 
 import java.io.Serializable;
+import java.util.Collections;
 
+import org.apache.commons.lang3.StringUtils;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import com.cloudbees.plugins.credentials.CredentialsMatcher;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.sig.integration.coverity.CoverityInstance;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
+import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import net.sf.json.JSONObject;
 
 @Extension()
@@ -62,8 +73,48 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     @Override
     public boolean configure(final StaplerRequest req, final JSONObject formData) throws Descriptor.FormException {
         String url = formData.getString("url");
-        coverityInstance = new CoverityInstance(url);
+        String credentialId = formData.getString("credentialId");
+        coverityInstance = new CoverityInstance(url, credentialId);
         save();
         return super.configure(req, formData);
+    }
+
+    public FormValidation doCheckUrl(@QueryParameter("url") String url) {
+        if (StringUtils.isBlank(url)) {
+            return FormValidation.error("Please provide a URL for the Coverity server.");
+        }
+        return FormValidation.ok();
+    }
+
+    public ListBoxModel doFillCredentialIdItems() {
+        ListBoxModel boxModel = null;
+        final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        boolean changed = false;
+        try {
+            if (CoverityPostBuildStepDescriptor.class.getClassLoader() != originalClassLoader) {
+                changed = true;
+                Thread.currentThread().setContextClassLoader(CoverityPostBuildStepDescriptor.class.getClassLoader());
+            }
+            final CredentialsMatcher credentialsMatcher = CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
+            // Dont want to limit the search to a particular project for the drop down menu
+            final AbstractProject<?, ?> project = null;
+            boxModel = new StandardListBoxModel().withEmptySelection()
+                               .withMatching(credentialsMatcher, CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, project, ACL.SYSTEM, Collections.emptyList()));
+        } finally {
+            if (changed) {
+                Thread.currentThread().setContextClassLoader(originalClassLoader);
+            }
+        }
+        return boxModel;
+    }
+
+    public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("credentialId") String credentialId) {
+        if (StringUtils.isBlank(url)) {
+            return FormValidation.error("Missing the URL for the Coverity server.");
+        }
+        if (StringUtils.isBlank(credentialId)) {
+            return FormValidation.error("Missing the credentials for the Coverity server.");
+        }
+        return FormValidation.ok();
     }
 }

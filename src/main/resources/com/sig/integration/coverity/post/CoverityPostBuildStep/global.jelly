@@ -4,5 +4,11 @@
         <f:entry title="${%URL}" field="url" description="${%URLDescription}">
             <f:textbox/>
         </f:entry>
+        <f:entry title="${%Credentials}" field="credentialId">
+            <c:select/>
+        </f:entry>
+
+        <f:validateButton method="testConnection" title="${%TestConnection}" progress="${%TestConnectionProgress}"
+                          with="url,credentialId"/>
 	</f:section>
 </j:jelly>
