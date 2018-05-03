@@ -23,7 +23,11 @@
  */
 package com.sig.integration.coverity.post;
 
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collections;
 
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +40,8 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.sig.integration.coverity.CoverityInstance;
+import com.sig.integration.coverity.Messages;
+import com.sig.integration.coverity.tools.CoverityToolInstallation;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
@@ -50,6 +56,7 @@ import net.sf.json.JSONObject;
 @Extension()
 public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publisher> implements Serializable {
     private CoverityInstance coverityInstance;
+    private CoverityToolInstallation[] coverityToolInstallations;
 
     public CoverityPostBuildStepDescriptor() {
         super(CoverityPostBuildStep.class);
@@ -60,9 +67,18 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityInstance;
     }
 
+    public CoverityToolInstallation[] getCoverityToolInstallations() {
+        return coverityToolInstallations;
+    }
+
+    public void setCoverityToolInstallations(CoverityToolInstallation[] coverityToolInstallations) {
+        this.coverityToolInstallations = coverityToolInstallations;
+        save();
+    }
+
     @Override
     public String getDisplayName() {
-        return "Sig Coverity";
+        return Messages.CoverityPostBuildStep_getDisplayName();
     }
 
     @Override
@@ -81,7 +97,16 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
 
     public FormValidation doCheckUrl(@QueryParameter("url") String url) {
         if (StringUtils.isBlank(url)) {
-            return FormValidation.error("Please provide a URL for the Coverity server.");
+            return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetServerUrl());
+        }
+        try {
+            new URL(url);
+        } catch (MalformedURLException e) {
+            final StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            System.err.println(sw.toString());
+
+            return FormValidation.error(Messages.CoverityPostBuildStep_getUrlError_0(e.getMessage()));
         }
         return FormValidation.ok();
     }
@@ -110,10 +135,10 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
 
     public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("credentialId") String credentialId) {
         if (StringUtils.isBlank(url)) {
-            return FormValidation.error("Missing the URL for the Coverity server.");
+            return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetServerUrl());
         }
         if (StringUtils.isBlank(credentialId)) {
-            return FormValidation.error("Missing the credentials for the Coverity server.");
+            return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetCoverityCredentials());
         }
         return FormValidation.ok();
     }

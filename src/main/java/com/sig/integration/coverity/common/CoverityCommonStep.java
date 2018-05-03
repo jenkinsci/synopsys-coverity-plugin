@@ -23,5 +23,18 @@
  */
 package com.sig.integration.coverity.common;
 
+import com.sig.integration.coverity.CoverityInstance;
+import com.sig.integration.coverity.post.CoverityPostBuildStepDescriptor;
+
+import jenkins.model.Jenkins;
+
 public class CoverityCommonStep {
+
+    private CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
+    }
+
+    private CoverityInstance getCoverityInstance() {
+        return getCoverityPostBuildStepDescriptor().getCoverityInstance();
+    }
 }
