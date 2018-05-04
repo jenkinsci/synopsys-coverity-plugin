@@ -23,12 +23,16 @@
  */
 package com.sig.integration.coverity.common;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
+import com.blackducksoftware.integration.log.IntLogger;
 import com.blackducksoftware.integration.util.CIEnvironmentVariables;
 import com.sig.integration.coverity.CoverityInstance;
 import com.sig.integration.coverity.JenkinsCoverityLogger;
@@ -36,6 +40,9 @@ import com.sig.integration.coverity.JenkinsProxyHelper;
 import com.sig.integration.coverity.PluginHelper;
 import com.sig.integration.coverity.exception.CoverityJenkinsException;
 import com.sig.integration.coverity.post.CoverityPostBuildStepDescriptor;
+import com.sig.integration.coverity.remote.CoverityRemoteResponse;
+import com.sig.integration.coverity.remote.CoverityRemoteRunner;
+import com.sig.integration.coverity.tools.CoverityToolInstallation;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -52,13 +59,20 @@ public class CoverityCommonStep {
     private final EnvVars envVars;
     private final FilePath workspace;
     private final Run run;
+    private final String coverityToolName;
+    private final Boolean continueOnCommandFailure;
+    private final RepeatableCommand[] commands;
 
-    public CoverityCommonStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+    public CoverityCommonStep(Node node, TaskListener listener, EnvVars envVars, FilePath workspace, Run run, String coverityToolName, Boolean continueOnCommandFailure,
+            RepeatableCommand[] commands) {
         this.node = node;
         this.listener = listener;
         this.envVars = envVars;
         this.workspace = workspace;
         this.run = run;
+        this.coverityToolName = coverityToolName;
+        this.continueOnCommandFailure = continueOnCommandFailure;
+        this.commands = commands;
     }
 
     private CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
@@ -69,6 +83,10 @@ public class CoverityCommonStep {
         return getCoverityPostBuildStepDescriptor().getCoverityInstance();
     }
 
+    private CoverityToolInstallation[] getCoverityToolInstallations() {
+        return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
+    }
+
     public void runCommonDetectStep() {
         final JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
         final CIEnvironmentVariables variables = new CIEnvironmentVariables();
@@ -76,50 +94,127 @@ public class CoverityCommonStep {
         logger.setLogLevel(variables);
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
-            logger.info("Running Jenkins Detect version : " + pluginVersion);
-            //
-            //            final DummyToolInstaller dummyInstaller = new DummyToolInstaller();
-            //            final String toolsDirectory = dummyInstaller.getToolDir(new DummyToolInstallation(), node).getRemote();
-            //            final String hubUrl = HubServerInfoSingleton.getInstance().getHubUrl();
-            //            final String hubUsername = HubServerInfoSingleton.getInstance().getHubUsername();
-            //            final String hubPassword = HubServerInfoSingleton.getInstance().getHubPassword();
-            //            final String hubApiToken = HubServerInfoSingleton.getInstance().getHubApiToken();
-            //            final int hubTimeout = HubServerInfoSingleton.getInstance().getHubTimeout();
-            //            final boolean trustSSLCertificates = HubServerInfoSingleton.getInstance().isTrustSSLCertificates();
-            //
-            //            final DetectRemoteRunner detectRemoteRunner = new DetectRemoteRunner(logger, javaHome, hubUrl, hubUsername, hubPassword, hubApiToken, hubTimeout, trustSSLCertificates, HubServerInfoSingleton.getInstance().getDetectDownloadUrl(),
-            //                    toolsDirectory, getCorrectedParameters(detectProperties), envVars);
-            //            final JenkinsProxyHelper jenkinsProxyHelper = getJenkinsProxyHelper();
-            //            final ProxyInfo proxyInfo = jenkinsProxyHelper.getProxyInfoFromJenkins(hubUrl);
-            //            if (ProxyInfo.NO_PROXY_INFO != proxyInfo) {
-            //                detectRemoteRunner.setProxyInfo(proxyInfo);
-            //            }
-            //            final DetectResponse response = node.getChannel().call(detectRemoteRunner);
-            //            if (response.getExitCode() > 0) {
-            //                logger.error("Detect failed with exit code: " + response.getExitCode());
-            //                run.setResult(Result.FAILURE);
-            //            } else if (null != response.getException()) {
-            //                final Exception exception = response.getException();
-            //                if (exception instanceof InterruptedException) {
-            //                    run.setResult(Result.ABORTED);
-            //                    Thread.currentThread().interrupt();
-            //                } else {
-            //                    logger.error(exception.getMessage(), exception);
-            //                    run.setResult(Result.UNSTABLE);
-            //                }
-            //            }
-            //        } catch (final InterruptedException e) {
-            //            logger.error("Detect caller thread was interrupted.", e);
-            //            run.setResult(Result.ABORTED);
-            //            Thread.currentThread().interrupt();
+            logger.alwaysLog("Running SIG Coverity version : " + pluginVersion);
+
+            CoverityInstance coverityInstance = getCoverityInstance();
+            logGlobalConfiguration(coverityInstance, logger);
+
+            boolean configurationErrors = false;
+
+            Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(coverityToolName, getCoverityToolInstallations(), logger);
+            if (!optionalCoverityToolInstallation.isPresent()) {
+                run.setResult(Result.FAILURE);
+                configurationErrors = true;
+            }
+            if (!verifyCoverityCommands(commands, logger)) {
+                run.setResult(Result.FAILURE);
+                configurationErrors = true;
+            }
+            if (configurationErrors) {
+                return;
+            }
+
+            CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
+            logger.alwaysLog("-- Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
+            try {
+                for (RepeatableCommand repeatableCommand : commands) {
+                    String command = repeatableCommand.getCommand();
+                    if (StringUtils.isBlank(command)) {
+                        continue;
+                    }
+                    List<String> arguments = getCorrectedParameters(command);
+                    CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityURL(), coverityInstance.getCoverityUsername(), coverityInstance.getCoverityPassword(),
+                            coverityToolInstallation.getHome(), arguments, workspace.getRemote(), envVars);
+                    final CoverityRemoteResponse response = node.getChannel().call(coverityRemoteRunner);
+                    if (response.getExitCode() != 0) {
+                        logger.error("[ERROR] Coverity failed with exit code: " + response.getExitCode());
+                        run.setResult(Result.FAILURE);
+                        if (!continueOnCommandFailure) {
+                            break;
+                        }
+                    } else if (null != response.getException()) {
+                        final Exception exception = response.getException();
+                        if (exception instanceof InterruptedException) {
+                            run.setResult(Result.ABORTED);
+                            Thread.currentThread().interrupt();
+                            break;
+                        } else {
+                            logger.error("[ERROR] " + exception.getMessage(), exception);
+                            run.setResult(Result.UNSTABLE);
+                            if (!continueOnCommandFailure) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (final InterruptedException e) {
+                logger.error("[ERROR] SIG Coverity thread was interrupted.", e);
+                run.setResult(Result.ABORTED);
+                Thread.currentThread().interrupt();
+            }
         } catch (final Exception e) {
-            logger.error(e.getMessage(), e);
+            logger.error("[ERROR] " + e.getMessage(), e);
             run.setResult(Result.UNSTABLE);
         }
     }
 
-    public List<String> getCorrectedParameters(final String commandLineParameters) throws CoverityJenkinsException {
-        final String[] separatedParameters = Commandline.translateCommandline(commandLineParameters);
+    private void logGlobalConfiguration(CoverityInstance coverityInstance, IntLogger logger) {
+        if (null == coverityInstance) {
+            logger.warn("No global Coverity configuration found.");
+        } else {
+            Optional<URL> optionalCoverityURL = coverityInstance.getCoverityURL();
+            if (!optionalCoverityURL.isPresent()) {
+                logger.warn("No Coverity URL configured.");
+            } else {
+                logger.alwaysLog("-- Coverity URL : " + optionalCoverityURL.get().toString());
+            }
+            Optional<String> optionalCoverityUsername = coverityInstance.getCoverityUsername();
+            if (!optionalCoverityUsername.isPresent()) {
+                logger.warn("No Coverity Username configured.");
+            } else {
+                logger.alwaysLog("-- Coverity username : " + optionalCoverityUsername.get());
+            }
+        }
+    }
+
+    private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(String coverityToolName, CoverityToolInstallation[] coverityToolInstallations, IntLogger logger) {
+        if (StringUtils.isBlank(coverityToolName)) {
+            logger.error("[ERROR] No Coverity Static Analysis tool configured for this Job.");
+        }
+        if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
+            logger.error("[ERROR] No Coverity Static Analysis tools configured in Jenkins.");
+        }
+        if (StringUtils.isNotBlank(coverityToolName) && null != coverityToolInstallations && coverityToolInstallations.length > 0) {
+            for (CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
+                if (coverityToolInstallation.getName().equals(coverityToolName)) {
+                    return Optional.of(coverityToolInstallation);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean verifyCoverityCommands(RepeatableCommand[] commands, IntLogger logger) {
+        if (null == commands || commands.length == 0) {
+            logger.error("[ERROR] There are no Coverity commands configured to run.");
+            return false;
+        }
+        boolean allCommandsEmpty = true;
+        for (RepeatableCommand repeatableCommand : commands) {
+            if (StringUtils.isNotBlank(repeatableCommand.getCommand())) {
+                allCommandsEmpty = false;
+                break;
+            }
+        }
+        if (allCommandsEmpty) {
+            logger.error("[ERROR] The are no non-empty Coverity commands configured.");
+            return false;
+        }
+        return true;
+    }
+
+    public List<String> getCorrectedParameters(final String command) throws CoverityJenkinsException {
+        final String[] separatedParameters = Commandline.translateCommandline(command);
         final List<String> correctedParameters = new ArrayList<>();
         for (final String parameter : separatedParameters) {
             correctedParameters.add(handleVariableReplacement(envVars, parameter));

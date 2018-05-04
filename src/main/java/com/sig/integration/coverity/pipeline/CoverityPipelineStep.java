@@ -43,11 +43,26 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 
 public class CoverityPipelineStep extends AbstractStepImpl {
+    private String coverityToolName;
+    private Boolean continueOnCommandFailure;
     private RepeatableCommand[] commands;
 
     @DataBoundConstructor
-    public CoverityPipelineStep(RepeatableCommand[] commands) {
+    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands) {
+        this.coverityToolName = coverityToolName;
+        this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
+    }
+
+    public String getCoverityToolName() {
+        return coverityToolName;
+    }
+
+    public boolean getContinueOnCommandFailure() {
+        if (null != continueOnCommandFailure) {
+            return continueOnCommandFailure;
+        }
+        return false;
     }
 
     public RepeatableCommand[] getCommands() {
@@ -94,7 +109,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
         @Override
         protected Void run() throws Exception {
-            final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(computer.getNode(), listener, envVars, workspace, run);
+            final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(computer.getNode(), listener, envVars, workspace, run, coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getContinueOnCommandFailure(),
+                    coverityPipelineStep.getCommands());
             coverityCommonStep.runCommonDetectStep();
             return null;
         }

@@ -28,9 +28,13 @@ import com.sig.integration.coverity.common.RepeatableCommand;
 import javaposse.jobdsl.dsl.Context;
 
 public class CoverityDslContext implements Context {
+    private String coverityToolName;
+    private Boolean continueOnCommandFailure;
     private RepeatableCommand[] commands;
 
-    public void commands(final RepeatableCommand[] commands) {
+    public void commands(String coverityToolName, Boolean continueOnCommandFailure, final RepeatableCommand[] commands) {
+        setCoverityToolName(coverityToolName);
+        setContinueOnCommandFailure(continueOnCommandFailure);
         setCommands(commands);
     }
 
@@ -40,5 +44,21 @@ public class CoverityDslContext implements Context {
 
     public void setCommands(final RepeatableCommand[] commands) {
         this.commands = commands;
+    }
+
+    public String getCoverityToolName() {
+        return coverityToolName;
+    }
+
+    public void setCoverityToolName(String coverityToolName) {
+        this.coverityToolName = coverityToolName;
+    }
+
+    public Boolean getContinueOnCommandFailure() {
+        return continueOnCommandFailure;
+    }
+
+    public void setContinueOnCommandFailure(Boolean continueOnCommandFailure) {
+        this.continueOnCommandFailure = continueOnCommandFailure;
     }
 }

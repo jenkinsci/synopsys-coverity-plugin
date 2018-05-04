@@ -28,22 +28,15 @@ import java.io.Serializable;
 public class CoverityRemoteResponse implements Serializable {
     private final Exception exception;
     private final int exitCode;
-    private final String command;
 
-    public CoverityRemoteResponse(String command, final int exitCode) {
-        this.command = command;
+    public CoverityRemoteResponse(final int exitCode) {
         this.exitCode = exitCode;
         this.exception = null;
     }
 
-    public CoverityRemoteResponse(String command, final Exception exception) {
-        this.command = command;
+    public CoverityRemoteResponse(final Exception exception) {
         this.exitCode = -1;
         this.exception = exception;
-    }
-
-    public String getCommand() {
-        return command;
     }
 
     public Exception getException() {

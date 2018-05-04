@@ -38,11 +38,26 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Recorder;
 
 public class CoverityPostBuildStep extends Recorder {
+    private String coverityToolName;
+    private Boolean continueOnCommandFailure;
     private RepeatableCommand[] commands;
 
     @DataBoundConstructor
-    public CoverityPostBuildStep(RepeatableCommand[] commands) {
+    public CoverityPostBuildStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands) {
+        this.coverityToolName = coverityToolName;
+        this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
+    }
+
+    public String getCoverityToolName() {
+        return coverityToolName;
+    }
+
+    public boolean getContinueOnCommandFailure() {
+        if (null != continueOnCommandFailure) {
+            return continueOnCommandFailure;
+        }
+        return false;
     }
 
     public RepeatableCommand[] getCommands() {
@@ -61,7 +76,7 @@ public class CoverityPostBuildStep extends Recorder {
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
-        final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
+        final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, coverityToolName, continueOnCommandFailure, commands);
         coverityCommonStep.runCommonDetectStep();
         return true;
     }

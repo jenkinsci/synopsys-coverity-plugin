@@ -37,19 +37,51 @@ public class Messages {
     private final static ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
 
     /**
-     * Sig Coverity
+     * Please choose one of the Coverity Static Analysis tools
      * 
      */
-    public static String CoverityPipelineStep_getDisplayName() {
-        return holder.format("CoverityPipelineStep_getDisplayName");
+    public static String CoverityToolInstallation_getPleaseChooseATool() {
+        return holder.format("CoverityToolInstallation_getPleaseChooseATool");
+    }
+
+    /**
+     * Please choose one of the Coverity Static Analysis tools
+     * 
+     */
+    public static Localizable _CoverityToolInstallation_getPleaseChooseATool() {
+        return new Localizable(holder, "CoverityToolInstallation_getPleaseChooseATool");
     }
 
     /**
      * Sig Coverity
      * 
      */
-    public static Localizable _CoverityPipelineStep_getDisplayName() {
-        return new Localizable(holder, "CoverityPipelineStep_getDisplayName");
+    public static String CoverityPostBuildStep_getDisplayName() {
+        return holder.format("CoverityPostBuildStep_getDisplayName");
+    }
+
+    /**
+     * Sig Coverity
+     * 
+     */
+    public static Localizable _CoverityPostBuildStep_getDisplayName() {
+        return new Localizable(holder, "CoverityPostBuildStep_getDisplayName");
+    }
+
+    /**
+     * There are no Coverity Static Analysis tools configured with the name {0}
+     * 
+     */
+    public static String CoverityToolInstallation_getNoToolWithName_0(Object arg1) {
+        return holder.format("CoverityToolInstallation_getNoToolWithName_0", arg1);
+    }
+
+    /**
+     * There are no Coverity Static Analysis tools configured with the name {0}
+     * 
+     */
+    public static Localizable _CoverityToolInstallation_getNoToolWithName_0(Object arg1) {
+        return new Localizable(holder, "CoverityToolInstallation_getNoToolWithName_0", arg1);
     }
 
     /**
@@ -69,35 +101,19 @@ public class Messages {
     }
 
     /**
-     * Please specify the credentials for the Coverity server.
+     * Connection Successful
      * 
      */
-    public static String CoverityPostBuildStep_getPleaseSetCoverityCredentials() {
-        return holder.format("CoverityPostBuildStep_getPleaseSetCoverityCredentials");
+    public static String CoverityPostBuildStep_getConnectionSuccessful() {
+        return holder.format("CoverityPostBuildStep_getConnectionSuccessful");
     }
 
     /**
-     * Please specify the credentials for the Coverity server.
+     * Connection Successful
      * 
      */
-    public static Localizable _CoverityPostBuildStep_getPleaseSetCoverityCredentials() {
-        return new Localizable(holder, "CoverityPostBuildStep_getPleaseSetCoverityCredentials");
-    }
-
-    /**
-     * Sig Coverity
-     * 
-     */
-    public static String CoverityPostBuildStep_getDisplayName() {
-        return holder.format("CoverityPostBuildStep_getDisplayName");
-    }
-
-    /**
-     * Sig Coverity
-     * 
-     */
-    public static Localizable _CoverityPostBuildStep_getDisplayName() {
-        return new Localizable(holder, "CoverityPostBuildStep_getDisplayName");
+    public static Localizable _CoverityPostBuildStep_getConnectionSuccessful() {
+        return new Localizable(holder, "CoverityPostBuildStep_getConnectionSuccessful");
     }
 
     /**
@@ -130,6 +146,70 @@ public class Messages {
      */
     public static Localizable _CoverityPostBuildStep_getUrlError_0(Object arg1) {
         return new Localizable(holder, "CoverityPostBuildStep_getUrlError_0", arg1);
+    }
+
+    /**
+     * There are no Coverity Static Analysis tools configured
+     * 
+     */
+    public static String CoverityToolInstallation_getNoToolsConfigured() {
+        return holder.format("CoverityToolInstallation_getNoToolsConfigured");
+    }
+
+    /**
+     * There are no Coverity Static Analysis tools configured
+     * 
+     */
+    public static Localizable _CoverityToolInstallation_getNoToolsConfigured() {
+        return new Localizable(holder, "CoverityToolInstallation_getNoToolsConfigured");
+    }
+
+    /**
+     * - none -
+     * 
+     */
+    public static String CoverityToolInstallation_getNone() {
+        return holder.format("CoverityToolInstallation_getNone");
+    }
+
+    /**
+     * - none -
+     * 
+     */
+    public static Localizable _CoverityToolInstallation_getNone() {
+        return new Localizable(holder, "CoverityToolInstallation_getNone");
+    }
+
+    /**
+     * Please specify the credentials for the Coverity server.
+     * 
+     */
+    public static String CoverityPostBuildStep_getPleaseSetCoverityCredentials() {
+        return holder.format("CoverityPostBuildStep_getPleaseSetCoverityCredentials");
+    }
+
+    /**
+     * Please specify the credentials for the Coverity server.
+     * 
+     */
+    public static Localizable _CoverityPostBuildStep_getPleaseSetCoverityCredentials() {
+        return new Localizable(holder, "CoverityPostBuildStep_getPleaseSetCoverityCredentials");
+    }
+
+    /**
+     * Sig Coverity
+     * 
+     */
+    public static String CoverityPipelineStep_getDisplayName() {
+        return holder.format("CoverityPipelineStep_getDisplayName");
+    }
+
+    /**
+     * Sig Coverity
+     * 
+     */
+    public static Localizable _CoverityPipelineStep_getDisplayName() {
+        return new Localizable(holder, "CoverityPipelineStep_getDisplayName");
     }
 
 }

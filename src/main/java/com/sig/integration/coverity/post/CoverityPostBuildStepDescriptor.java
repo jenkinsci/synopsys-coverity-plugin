@@ -156,6 +156,32 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         if (StringUtils.isBlank(credentialId)) {
             return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetCoverityCredentials());
         }
-        return FormValidation.ok("Connection successful");
+        return FormValidation.ok(Messages.CoverityPostBuildStep_getConnectionSuccessful());
+    }
+
+    public ListBoxModel doFillCoverityToolNameItems() {
+        ListBoxModel boxModel = new ListBoxModel();
+        boxModel.add(Messages.CoverityToolInstallation_getNone(), "");
+        if (null != coverityToolInstallations && coverityToolInstallations.length > 0) {
+            for (CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
+                boxModel.add(coverityToolInstallation.getName());
+            }
+        }
+        return boxModel;
+    }
+
+    public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") String coverityToolName) {
+        if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
+            return FormValidation.error(Messages.CoverityToolInstallation_getNoToolsConfigured());
+        }
+        if (StringUtils.isBlank(coverityToolName)) {
+            return FormValidation.error(Messages.CoverityToolInstallation_getPleaseChooseATool());
+        }
+        for (CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
+            if (coverityToolInstallation.getName().equals(coverityToolName)) {
+                return FormValidation.ok();
+            }
+        }
+        return FormValidation.error(Messages.CoverityToolInstallation_getNoToolWithName_0(coverityToolName));
     }
 }

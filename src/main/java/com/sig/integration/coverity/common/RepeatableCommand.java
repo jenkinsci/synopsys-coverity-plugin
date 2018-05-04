@@ -23,11 +23,14 @@
  */
 package com.sig.integration.coverity.common;
 
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.util.FormValidation;
 
 public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand> {
     private final String command;
@@ -59,6 +62,12 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
             return "";
         }
 
+        public FormValidation doCheckCommand(@QueryParameter("command") String command) {
+            if (StringUtils.isBlank(command)) {
+                return FormValidation.error("The Coverity command can not be empty");
+            }
+            return FormValidation.ok();
+        }
     }
 
 }

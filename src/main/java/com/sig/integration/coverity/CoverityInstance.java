@@ -23,6 +23,8 @@
  */
 package com.sig.integration.coverity;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +55,15 @@ public class CoverityInstance {
 
     public String getCredentialId() {
         return credentialId;
+    }
+
+    public Optional<URL> getCoverityURL() {
+        try {
+            return Optional.of(new URL(url));
+        } catch (MalformedURLException e) {
+            // problems with the URL will be shown in the global configuration
+        }
+        return Optional.empty();
     }
 
     public Optional<String> getCoverityUsername() {

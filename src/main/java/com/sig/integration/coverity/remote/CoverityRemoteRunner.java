@@ -25,7 +25,6 @@ package com.sig.integration.coverity.remote;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,27 +50,26 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
     private final Optional<String> optionalCoverityPassword;
 
     private final String coverityStaticAnalysisDirectory;
-    private final String command;
+    private final List<String> arguments;
 
     private final String workspacePath;
 
     private final EnvVars envVars;
 
     public CoverityRemoteRunner(JenkinsCoverityLogger logger, Optional<URL> optionalCoverityUrl, Optional<String> optionalCoverityUsername, Optional<String> optionalCoverityPassword,
-            String coverityStaticAnalysisDirectory, String command, String workspacePath, EnvVars envVars) {
+            String coverityStaticAnalysisDirectory, List<String> arguments, String workspacePath, EnvVars envVars) {
         this.logger = logger;
         this.optionalCoverityUrl = optionalCoverityUrl;
         this.optionalCoverityUsername = optionalCoverityUsername;
         this.optionalCoverityPassword = optionalCoverityPassword;
         this.coverityStaticAnalysisDirectory = coverityStaticAnalysisDirectory;
-        this.command = command;
+        this.arguments = arguments;
         this.workspacePath = workspacePath;
         this.envVars = envVars;
     }
 
     @Override
     public CoverityRemoteResponse call() throws IntegrationException {
-        List<String> arguments = Arrays.asList(command.split(" "));
         File workspace = new File(workspacePath);
         Map<String, String> environment = new HashMap<>();
         environment.putAll(envVars);
@@ -97,9 +95,11 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
             exitCode = executableManager.execute(executable, logger, logger.getJenkinsListener().getLogger(), logger.getJenkinsListener().getLogger());
         } catch (final InterruptedException e) {
             logger.error("Coverity remote thread was interrupted.", e);
-            return new CoverityRemoteResponse(command, e);
+            return new CoverityRemoteResponse(e);
+        } catch (final IntegrationException e) {
+            return new CoverityRemoteResponse(e);
         }
-        return new CoverityRemoteResponse(command, exitCode);
+        return new CoverityRemoteResponse(exitCode);
     }
 
     private void setEnvironmentVariableString(Map<String, String> environment, final String key, final String value) {
