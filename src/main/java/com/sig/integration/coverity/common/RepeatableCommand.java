@@ -21,29 +21,44 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.sig.integration.coverity.dsl;
+package com.sig.integration.coverity.common;
 
-import com.sig.integration.coverity.common.RepeatableCommand;
-import com.sig.integration.coverity.post.CoverityPostBuildStep;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.Extension;
-import javaposse.jobdsl.dsl.helpers.step.StepContext;
-import javaposse.jobdsl.plugin.ContextExtensionPoint;
-import javaposse.jobdsl.plugin.DslExtensionMethod;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
 
-@Extension(optional = true)
-public class CoverityDslExtension extends ContextExtensionPoint {
-    @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(RepeatableCommand[] commands) {
-        return new CoverityPostBuildStep(commands);
+public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand> {
+    private final String command;
+
+    @DataBoundConstructor
+    public RepeatableCommand(String command) {
+        this.command = command;
     }
 
-    @DslExtensionMethod(context = StepContext.class)
-    public Object detect(final Runnable closure) {
-        final CoverityDslContext context = new CoverityDslContext();
-        executeInContext(closure, context);
+    public String getCommand() {
+        return command;
+    }
 
-        return new CoverityPostBuildStep(context.getCommands());
+    @Override
+    public RepeatableCommandDescriptor getDescriptor() {
+        return (RepeatableCommandDescriptor) super.getDescriptor();
+    }
+
+    @Extension
+    public static class RepeatableCommandDescriptor extends Descriptor<RepeatableCommand> {
+
+        public RepeatableCommandDescriptor() {
+            super(RepeatableCommand.class);
+            load();
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "";
+        }
+
     }
 
 }

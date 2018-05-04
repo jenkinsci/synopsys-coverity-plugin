@@ -23,15 +23,30 @@
  */
 package com.sig.integration.coverity.post;
 
+import java.io.IOException;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import com.sig.integration.coverity.common.CoverityCommonStep;
+import com.sig.integration.coverity.common.RepeatableCommand;
+
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Recorder;
 
 public class CoverityPostBuildStep extends Recorder {
+    private RepeatableCommand[] commands;
 
     @DataBoundConstructor
-    public CoverityPostBuildStep() {
+    public CoverityPostBuildStep(RepeatableCommand[] commands) {
+        this.commands = commands;
+    }
+
+    public RepeatableCommand[] getCommands() {
+        return commands;
     }
 
     @Override
@@ -44,4 +59,21 @@ public class CoverityPostBuildStep extends Recorder {
         return (CoverityPostBuildStepDescriptor) super.getDescriptor();
     }
 
+    @Override
+    public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
+        final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
+        coverityCommonStep.runCommonDetectStep();
+        return true;
+    }
+
+    public FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) {
+        FilePath workingDirectory = null;
+        if (build.getWorkspace() == null) {
+            // might be using custom workspace
+            workingDirectory = new FilePath(build.getBuiltOn().getChannel(), build.getProject().getCustomWorkspace());
+        } else {
+            workingDirectory = build.getWorkspace();
+        }
+        return workingDirectory;
+    }
 }

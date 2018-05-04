@@ -44,8 +44,13 @@ jenkinsPlugin {
 
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:1.9.4'
-    
+
     compile 'com.sig.integration:coverity-common:0.0.1-SNAPSHOT'
+
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-cps:2.23'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-step-api:2.5'
 }
 
 task renameFile << {

@@ -23,5 +23,22 @@
  */
 package com.sig.integration.coverity.dsl;
 
-public class CoverityDslContext {
+import com.sig.integration.coverity.common.RepeatableCommand;
+
+import javaposse.jobdsl.dsl.Context;
+
+public class CoverityDslContext implements Context {
+    private RepeatableCommand[] commands;
+
+    public void commands(final RepeatableCommand[] commands) {
+        setCommands(commands);
+    }
+
+    public RepeatableCommand[] getCommands() {
+        return this.commands;
+    }
+
+    public void setCommands(final RepeatableCommand[] commands) {
+        this.commands = commands;
+    }
 }

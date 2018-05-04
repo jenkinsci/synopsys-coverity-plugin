@@ -67,6 +67,22 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityInstance;
     }
 
+    public String getUrl() {
+        String url = null;
+        if (null != coverityInstance) {
+            url = coverityInstance.getUrl();
+        }
+        return url;
+    }
+
+    public String getCredentialId() {
+        String credentialId = null;
+        if (null != coverityInstance) {
+            credentialId = coverityInstance.getCredentialId();
+        }
+        return credentialId;
+    }
+
     public CoverityToolInstallation[] getCoverityToolInstallations() {
         return coverityToolInstallations;
     }
@@ -140,6 +156,6 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         if (StringUtils.isBlank(credentialId)) {
             return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetCoverityCredentials());
         }
-        return FormValidation.ok();
+        return FormValidation.ok("Connection successful");
     }
 }

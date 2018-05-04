@@ -23,5 +23,82 @@
  */
 package com.sig.integration.coverity.pipeline;
 
-public class CoverityPipelineStep {
+import javax.inject.Inject;
+
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
+import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.sig.integration.coverity.Messages;
+import com.sig.integration.coverity.common.CoverityCommonStep;
+import com.sig.integration.coverity.common.RepeatableCommand;
+
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.model.Computer;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+
+public class CoverityPipelineStep extends AbstractStepImpl {
+    private RepeatableCommand[] commands;
+
+    @DataBoundConstructor
+    public CoverityPipelineStep(RepeatableCommand[] commands) {
+        this.commands = commands;
+    }
+
+    public RepeatableCommand[] getCommands() {
+        return commands;
+    }
+
+    @Override
+    public DetectPipelineStepDescriptor getDescriptor() {
+        return (DetectPipelineStepDescriptor) super.getDescriptor();
+    }
+
+    @Extension(optional = true)
+    public static final class DetectPipelineStepDescriptor extends AbstractStepDescriptorImpl {
+        public DetectPipelineStepDescriptor() {
+            super(DetectPipelineExecution.class);
+        }
+
+        @Override
+        public String getFunctionName() {
+            return "sig_coverity";
+        }
+
+        @Override
+        public String getDisplayName() {
+            return Messages.CoverityPipelineStep_getDisplayName();
+        }
+
+    }
+
+    public static final class DetectPipelineExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
+        @StepContextParameter
+        transient TaskListener listener;
+        @StepContextParameter
+        transient EnvVars envVars;
+        @Inject
+        private transient CoverityPipelineStep coverityPipelineStep;
+        @StepContextParameter
+        private transient Computer computer;
+        @StepContextParameter
+        private transient FilePath workspace;
+
+        @StepContextParameter
+        private transient Run run;
+
+        @Override
+        protected Void run() throws Exception {
+            final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(computer.getNode(), listener, envVars, workspace, run);
+            coverityCommonStep.runCommonDetectStep();
+            return null;
+        }
+
+    }
+
 }

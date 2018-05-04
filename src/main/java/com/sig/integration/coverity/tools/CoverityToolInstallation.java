@@ -60,7 +60,6 @@ import jenkins.model.Jenkins;
  * the install directory.
  */
 public class CoverityToolInstallation extends ToolInstallation implements NodeSpecific<CoverityToolInstallation>, EnvironmentSpecific<CoverityToolInstallation> {
-
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
 
     @DataBoundConstructor
@@ -145,7 +144,7 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
                 } else {
                     return FormValidation.error("The specified Analysis installation directory doesn't exists.");
                 }
-            } catch (InterruptedException | IOException e) {
+            } catch (IOException e) {
                 return FormValidation.error("Unable to verify the Analysis installation directory.");
             }
         }
@@ -154,7 +153,7 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
          * Gets the {@link CoverityVersion} given a static analysis tools home directory by finding the VERSION file,
          * then reading the version number
          */
-        public Optional<CoverityVersion> getVersion(File home) throws IOException, InterruptedException {
+        public Optional<CoverityVersion> getVersion(File home) throws IOException {
             File versionFile = new File(home, "VERSION");
             try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8))) {
                 final String prefix = "externalVersion=";

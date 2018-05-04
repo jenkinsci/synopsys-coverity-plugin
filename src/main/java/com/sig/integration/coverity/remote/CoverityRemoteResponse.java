@@ -21,29 +21,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.sig.integration.coverity.dsl;
+package com.sig.integration.coverity.remote;
 
-import com.sig.integration.coverity.common.RepeatableCommand;
-import com.sig.integration.coverity.post.CoverityPostBuildStep;
+import java.io.Serializable;
 
-import hudson.Extension;
-import javaposse.jobdsl.dsl.helpers.step.StepContext;
-import javaposse.jobdsl.plugin.ContextExtensionPoint;
-import javaposse.jobdsl.plugin.DslExtensionMethod;
+public class CoverityRemoteResponse implements Serializable {
+    private final Exception exception;
+    private final int exitCode;
+    private final String command;
 
-@Extension(optional = true)
-public class CoverityDslExtension extends ContextExtensionPoint {
-    @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(RepeatableCommand[] commands) {
-        return new CoverityPostBuildStep(commands);
+    public CoverityRemoteResponse(String command, final int exitCode) {
+        this.command = command;
+        this.exitCode = exitCode;
+        this.exception = null;
     }
 
-    @DslExtensionMethod(context = StepContext.class)
-    public Object detect(final Runnable closure) {
-        final CoverityDslContext context = new CoverityDslContext();
-        executeInContext(closure, context);
+    public CoverityRemoteResponse(String command, final Exception exception) {
+        this.command = command;
+        this.exitCode = -1;
+        this.exception = exception;
+    }
 
-        return new CoverityPostBuildStep(context.getCommands());
+    public String getCommand() {
+        return command;
+    }
+
+    public Exception getException() {
+        return exception;
+    }
+
+    public int getExitCode() {
+        return exitCode;
     }
 
 }

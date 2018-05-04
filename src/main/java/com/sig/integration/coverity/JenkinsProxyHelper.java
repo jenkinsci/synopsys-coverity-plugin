@@ -39,7 +39,6 @@ import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;
 
 public class JenkinsProxyHelper {
-
     public ProxyInfo getProxyInfo(final String url, final String proxyHost, final int proxyPort, final String proxyUsername, final String proxyPassword, final String ignoredProxyHosts, final String ntlmDomain,
             final String ntlmWorkstation) {
         ProxyInfo proxyInfo = ProxyInfo.NO_PROXY_INFO;

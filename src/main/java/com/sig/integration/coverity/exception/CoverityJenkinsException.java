@@ -21,29 +21,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.sig.integration.coverity.dsl;
+package com.sig.integration.coverity.exception;
 
-import com.sig.integration.coverity.common.RepeatableCommand;
-import com.sig.integration.coverity.post.CoverityPostBuildStep;
-
-import hudson.Extension;
-import javaposse.jobdsl.dsl.helpers.step.StepContext;
-import javaposse.jobdsl.plugin.ContextExtensionPoint;
-import javaposse.jobdsl.plugin.DslExtensionMethod;
-
-@Extension(optional = true)
-public class CoverityDslExtension extends ContextExtensionPoint {
-    @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(RepeatableCommand[] commands) {
-        return new CoverityPostBuildStep(commands);
+public class CoverityJenkinsException extends Exception {
+    public CoverityJenkinsException(final String message) {
+        super(message);
     }
 
-    @DslExtensionMethod(context = StepContext.class)
-    public Object detect(final Runnable closure) {
-        final CoverityDslContext context = new CoverityDslContext();
-        executeInContext(closure, context);
+    public CoverityJenkinsException(final Throwable cause) {
+        super(cause);
+    }
 
-        return new CoverityPostBuildStep(context.getCommands());
+    public CoverityJenkinsException(final String message, final Throwable cause) {
+        super(message, cause);
     }
 
 }
