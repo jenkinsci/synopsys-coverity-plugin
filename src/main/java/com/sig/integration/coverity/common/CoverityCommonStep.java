@@ -127,25 +127,27 @@ public class CoverityCommonStep {
                             coverityInstance.getCoverityPassword().orElse(null),
                             coverityToolInstallation.getHome(), arguments, workspace.getRemote(), envVars);
                     final CoverityRemoteResponse response = node.getChannel().call(coverityRemoteRunner);
+                    boolean shouldStop = false;
                     if (response.getExitCode() != 0) {
                         logger.error("[ERROR] Coverity failed with exit code: " + response.getExitCode());
                         run.setResult(Result.FAILURE);
-                        if (!continueOnCommandFailure) {
-                            break;
-                        }
-                    } else if (null != response.getException()) {
+                        shouldStop = true;
+                    }
+                    if (null != response.getException()) {
                         final Exception exception = response.getException();
                         if (exception instanceof InterruptedException) {
                             run.setResult(Result.ABORTED);
                             Thread.currentThread().interrupt();
                             break;
                         } else {
-                            logger.error("[ERROR] " + exception.getMessage(), exception);
                             run.setResult(Result.UNSTABLE);
-                            if (!continueOnCommandFailure) {
-                                break;
-                            }
+                            shouldStop = true;
+                            logger.error("[ERROR] " + exception.getMessage());
+                            logger.debug(null, exception);
                         }
+                    }
+                    if (!continueOnCommandFailure && shouldStop) {
+                        break;
                     }
                 }
             } catch (final InterruptedException e) {
