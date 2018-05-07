@@ -41,6 +41,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.sig.integration.coverity.CoverityInstance;
 import com.sig.integration.coverity.Messages;
+import com.sig.integration.coverity.common.CoverityCommonDescriptor;
 import com.sig.integration.coverity.tools.CoverityToolInstallation;
 
 import hudson.Extension;
@@ -58,9 +59,12 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     private CoverityInstance coverityInstance;
     private CoverityToolInstallation[] coverityToolInstallations;
 
+    private transient CoverityCommonDescriptor coverityCommonDescriptor;
+
     public CoverityPostBuildStepDescriptor() {
         super(CoverityPostBuildStep.class);
         load();
+        coverityCommonDescriptor = new CoverityCommonDescriptor();
     }
 
     public CoverityInstance getCoverityInstance() {
@@ -160,28 +164,10 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     public ListBoxModel doFillCoverityToolNameItems() {
-        ListBoxModel boxModel = new ListBoxModel();
-        boxModel.add(Messages.CoverityToolInstallation_getNone(), "");
-        if (null != coverityToolInstallations && coverityToolInstallations.length > 0) {
-            for (CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
-                boxModel.add(coverityToolInstallation.getName());
-            }
-        }
-        return boxModel;
+        return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolInstallations);
     }
 
     public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") String coverityToolName) {
-        if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
-            return FormValidation.error(Messages.CoverityToolInstallation_getNoToolsConfigured());
-        }
-        if (StringUtils.isBlank(coverityToolName)) {
-            return FormValidation.error(Messages.CoverityToolInstallation_getPleaseChooseATool());
-        }
-        for (CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
-            if (coverityToolInstallation.getName().equals(coverityToolName)) {
-                return FormValidation.ok();
-            }
-        }
-        return FormValidation.error(Messages.CoverityToolInstallation_getNoToolWithName_0(coverityToolName));
+        return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
     }
 }

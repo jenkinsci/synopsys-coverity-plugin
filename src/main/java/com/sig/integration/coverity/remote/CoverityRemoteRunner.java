@@ -24,11 +24,11 @@
 package com.sig.integration.coverity.remote;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.remoting.Role;
@@ -45,9 +45,9 @@ import hudson.remoting.Callable;
 public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, IntegrationException> {
     private final JenkinsCoverityLogger logger;
 
-    private final Optional<URL> optionalCoverityUrl;
-    private final Optional<String> optionalCoverityUsername;
-    private final Optional<String> optionalCoverityPassword;
+    private final URL coverityUrl;
+    private final String coverityUsername;
+    private final String coverityPassword;
 
     private final String coverityStaticAnalysisDirectory;
     private final List<String> arguments;
@@ -56,12 +56,12 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
 
     private final EnvVars envVars;
 
-    public CoverityRemoteRunner(JenkinsCoverityLogger logger, Optional<URL> optionalCoverityUrl, Optional<String> optionalCoverityUsername, Optional<String> optionalCoverityPassword,
+    public CoverityRemoteRunner(JenkinsCoverityLogger logger, URL coverityUrl, String coverityUsername, String coverityPassword,
             String coverityStaticAnalysisDirectory, List<String> arguments, String workspacePath, EnvVars envVars) {
         this.logger = logger;
-        this.optionalCoverityUrl = optionalCoverityUrl;
-        this.optionalCoverityUsername = optionalCoverityUsername;
-        this.optionalCoverityPassword = optionalCoverityPassword;
+        this.coverityUrl = coverityUrl;
+        this.coverityUsername = coverityUsername;
+        this.coverityPassword = coverityPassword;
         this.coverityStaticAnalysisDirectory = coverityStaticAnalysisDirectory;
         this.arguments = arguments;
         this.workspacePath = workspacePath;
@@ -73,26 +73,24 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
         File workspace = new File(workspacePath);
         Map<String, String> environment = new HashMap<>();
         environment.putAll(envVars);
-        if (optionalCoverityUrl.isPresent()) {
-            URL coverityUrl = optionalCoverityUrl.get();
+        if (null != coverityUrl) {
             setEnvironmentVariableString(environment, Executable.COVERITY_HOST_ENVIRONMENT_VARIABLE, coverityUrl.getHost());
             if (coverityUrl.getPort() > -1) {
                 setEnvironmentVariableString(environment, Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getPort()));
             }
         }
-        if (optionalCoverityUsername.isPresent()) {
-            String coverityUsername = optionalCoverityUsername.get();
+        if (null != coverityUsername) {
             setEnvironmentVariableString(environment, Executable.COVERITY_USER_ENVIRONMENT_VARIABLE, coverityUsername);
         }
-        if (optionalCoverityPassword.isPresent()) {
-            String coverityPassword = optionalCoverityPassword.get();
+        if (null != coverityPassword) {
             setEnvironmentVariableString(environment, Executable.COVERITY_PASSWORD_ENVIRONMENT_VARIABLE, coverityPassword);
         }
         Executable executable = new Executable(arguments, workspace, environment);
         ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
         int exitCode = -1;
         try {
-            exitCode = executableManager.execute(executable, logger, logger.getJenkinsListener().getLogger(), logger.getJenkinsListener().getLogger());
+            PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
+            exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, jenkinsPrintStream);
         } catch (final InterruptedException e) {
             logger.error("Coverity remote thread was interrupted.", e);
             return new CoverityRemoteResponse(e);

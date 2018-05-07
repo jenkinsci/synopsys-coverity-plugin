@@ -53,7 +53,7 @@ public class Messages {
     }
 
     /**
-     * Sig Coverity
+     * SIG Coverity
      * 
      */
     public static String CoverityPostBuildStep_getDisplayName() {
@@ -61,7 +61,7 @@ public class Messages {
     }
 
     /**
-     * Sig Coverity
+     * SIG Coverity
      * 
      */
     public static Localizable _CoverityPostBuildStep_getDisplayName() {
@@ -85,7 +85,7 @@ public class Messages {
     }
 
     /**
-     * Coverity Static Analysis Tools
+     * SIG Coverity Static Analysis Tools
      * 
      */
     public static String CoverityToolInstallation_getDisplayName() {
@@ -93,7 +93,7 @@ public class Messages {
     }
 
     /**
-     * Coverity Static Analysis Tools
+     * SIG Coverity Static Analysis Tools
      * 
      */
     public static Localizable _CoverityToolInstallation_getDisplayName() {
@@ -197,7 +197,7 @@ public class Messages {
     }
 
     /**
-     * Sig Coverity
+     * SIG Coverity
      * 
      */
     public static String CoverityPipelineStep_getDisplayName() {
@@ -205,7 +205,7 @@ public class Messages {
     }
 
     /**
-     * Sig Coverity
+     * SIG Coverity
      * 
      */
     public static Localizable _CoverityPipelineStep_getDisplayName() {

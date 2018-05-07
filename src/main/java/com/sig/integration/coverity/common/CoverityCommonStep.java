@@ -115,7 +115,7 @@ public class CoverityCommonStep {
             }
 
             CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
-            logger.alwaysLog("-- Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
+            logger.alwaysLog("-- SIG Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
             try {
                 for (RepeatableCommand repeatableCommand : commands) {
                     String command = repeatableCommand.getCommand();
@@ -123,7 +123,8 @@ public class CoverityCommonStep {
                         continue;
                     }
                     List<String> arguments = getCorrectedParameters(command);
-                    CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityURL(), coverityInstance.getCoverityUsername(), coverityInstance.getCoverityPassword(),
+                    CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityURL().orElse(null), coverityInstance.getCoverityUsername().orElse(null),
+                            coverityInstance.getCoverityPassword().orElse(null),
                             coverityToolInstallation.getHome(), arguments, workspace.getRemote(), envVars);
                     final CoverityRemoteResponse response = node.getChannel().call(coverityRemoteRunner);
                     if (response.getExitCode() != 0) {

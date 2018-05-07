@@ -30,10 +30,14 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import com.sig.integration.coverity.Messages;
+import com.sig.integration.coverity.common.CoverityCommonDescriptor;
 import com.sig.integration.coverity.common.CoverityCommonStep;
 import com.sig.integration.coverity.common.RepeatableCommand;
+import com.sig.integration.coverity.post.CoverityPostBuildStepDescriptor;
+import com.sig.integration.coverity.tools.CoverityToolInstallation;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -41,6 +45,9 @@ import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 
 public class CoverityPipelineStep extends AbstractStepImpl {
     private String coverityToolName;
@@ -76,8 +83,11 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
     @Extension(optional = true)
     public static final class DetectPipelineStepDescriptor extends AbstractStepDescriptorImpl {
+        private transient CoverityCommonDescriptor coverityCommonDescriptor;
+
         public DetectPipelineStepDescriptor() {
             super(DetectPipelineExecution.class);
+            coverityCommonDescriptor = new CoverityCommonDescriptor();
         }
 
         @Override
@@ -88,6 +98,22 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         @Override
         public String getDisplayName() {
             return Messages.CoverityPipelineStep_getDisplayName();
+        }
+
+        private CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
+            return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
+        }
+
+        private CoverityToolInstallation[] getCoverityToolInstallations() {
+            return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
+        }
+
+        public ListBoxModel doFillCoverityToolNameItems() {
+            return coverityCommonDescriptor.doFillCoverityToolNameItems(getCoverityToolInstallations());
+        }
+
+        public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") String coverityToolName) {
+            return coverityCommonDescriptor.doCheckCoverityToolName(getCoverityToolInstallations(), coverityToolName);
         }
 
     }
