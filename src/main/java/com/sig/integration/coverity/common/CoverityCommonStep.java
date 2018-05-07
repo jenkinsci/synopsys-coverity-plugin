@@ -23,6 +23,7 @@
  */
 package com.sig.integration.coverity.common;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,7 +102,7 @@ public class CoverityCommonStep {
 
             boolean configurationErrors = false;
 
-            Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(coverityToolName, getCoverityToolInstallations(), logger);
+            Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(coverityToolName, getCoverityToolInstallations(), node, logger);
             if (!optionalCoverityToolInstallation.isPresent()) {
                 run.setResult(Result.FAILURE);
                 configurationErrors = true;
@@ -180,7 +181,7 @@ public class CoverityCommonStep {
         }
     }
 
-    private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(String coverityToolName, CoverityToolInstallation[] coverityToolInstallations, IntLogger logger) {
+    private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(String coverityToolName, CoverityToolInstallation[] coverityToolInstallations, Node node, JenkinsCoverityLogger logger) throws InterruptedException {
         if (StringUtils.isBlank(coverityToolName)) {
             logger.error("[ERROR] No Coverity Static Analysis tool configured for this Job.");
         }
@@ -190,7 +191,12 @@ public class CoverityCommonStep {
         if (StringUtils.isNotBlank(coverityToolName) && null != coverityToolInstallations && coverityToolInstallations.length > 0) {
             for (CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
                 if (coverityToolInstallation.getName().equals(coverityToolName)) {
-                    return Optional.of(coverityToolInstallation);
+                    try {
+                        return Optional.of(coverityToolInstallation.forNode(node, logger.getJenkinsListener()));
+                    } catch (IOException e) {
+                        logger.error("Problem getting the SIG Coverity Static Analysis tool on node " + node.getDisplayName() + ": " + e.getMessage());
+                        logger.debug(null, e);
+                    }
                 }
             }
         }
