@@ -77,7 +77,6 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     private CoverityToolInstallation[] coverityToolInstallations;
 
     private transient CoverityCommonDescriptor coverityCommonDescriptor;
-    private transient String lastSuccessfulUser;
 
     public CoverityPostBuildStepDescriptor() {
         super(CoverityPostBuildStep.class);
@@ -227,13 +226,8 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     private FormValidation checkGetUser(ConfigurationService configurationService, String username) throws CovRemoteServiceException_Exception {
-        if (org.apache.commons.lang.StringUtils.isNotEmpty(lastSuccessfulUser)
-                    && lastSuccessfulUser.equalsIgnoreCase(username)) {
-            return FormValidation.ok();
-        }
         try {
             configurationService.getUser(username);
-            lastSuccessfulUser = username;
         } catch (SOAPFaultException e) {
             e.printStackTrace();
             if (org.apache.commons.lang.StringUtils.isNotEmpty(e.getMessage())) {
