@@ -29,7 +29,7 @@ import java.io.StringWriter;
 
 import com.blackducksoftware.integration.log.IntLogger;
 import com.blackducksoftware.integration.log.LogLevel;
-import com.blackducksoftware.integration.util.CIEnvironmentVariables;
+import com.blackducksoftware.integration.util.IntEnvironmentVariables;
 
 import hudson.model.TaskListener;
 
@@ -58,7 +58,7 @@ public class JenkinsCoverityLogger extends IntLogger implements Serializable {
     }
 
     @Override
-    public void setLogLevel(final CIEnvironmentVariables variables) {
+    public void setLogLevel(final IntEnvironmentVariables variables) {
         final String logLevel = variables.getValue("COVERITY_LOG_LEVEL", "INFO");
         try {
             setLogLevel(LogLevel.valueOf(logLevel.toUpperCase()));

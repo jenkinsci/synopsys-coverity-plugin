@@ -40,11 +40,11 @@ import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import hudson.model.AbstractProject;
 import hudson.security.ACL;
 
-public class CoverityInstance {
+public class JenkinsCoverityInstance {
     private final String url;
     private final String credentialId;
 
-    public CoverityInstance(String url, String credentialId) {
+    public JenkinsCoverityInstance(String url, String credentialId) {
         this.url = url;
         this.credentialId = credentialId;
     }
@@ -58,10 +58,12 @@ public class CoverityInstance {
     }
 
     public Optional<URL> getCoverityURL() {
-        try {
-            return Optional.of(new URL(url));
-        } catch (MalformedURLException e) {
-            // problems with the URL will be shown in the global configuration
+        if (null != url) {
+            try {
+                return Optional.of(new URL(url));
+            } catch (MalformedURLException e) {
+                // problems with the URL will be shown in the global configuration
+            }
         }
         return Optional.empty();
     }

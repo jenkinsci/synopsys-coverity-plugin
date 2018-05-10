@@ -34,11 +34,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import com.blackducksoftware.integration.log.IntLogger;
-import com.blackducksoftware.integration.util.CIEnvironmentVariables;
-import com.sig.integration.coverity.CoverityInstance;
+import com.blackducksoftware.integration.util.IntEnvironmentVariables;
+import com.sig.integration.coverity.JenkinsCoverityInstance;
 import com.sig.integration.coverity.JenkinsCoverityLogger;
 import com.sig.integration.coverity.JenkinsProxyHelper;
 import com.sig.integration.coverity.PluginHelper;
+import com.sig.integration.coverity.config.CoverityServerConfigBuilder;
 import com.sig.integration.coverity.exception.CoverityJenkinsException;
 import com.sig.integration.coverity.post.CoverityPostBuildStepDescriptor;
 import com.sig.integration.coverity.remote.CoverityRemoteResponse;
@@ -80,7 +81,7 @@ public class CoverityCommonStep {
         return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
     }
 
-    private CoverityInstance getCoverityInstance() {
+    private JenkinsCoverityInstance getCoverityInstance() {
         return getCoverityPostBuildStepDescriptor().getCoverityInstance();
     }
 
@@ -90,14 +91,14 @@ public class CoverityCommonStep {
 
     public void runCommonDetectStep() {
         final JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
-        final CIEnvironmentVariables variables = new CIEnvironmentVariables();
+        final IntEnvironmentVariables variables = new IntEnvironmentVariables();
         variables.putAll(envVars);
         logger.setLogLevel(variables);
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
             logger.alwaysLog("Running SIG Coverity version : " + pluginVersion);
 
-            CoverityInstance coverityInstance = getCoverityInstance();
+            JenkinsCoverityInstance coverityInstance = getCoverityInstance();
             logGlobalConfiguration(coverityInstance, logger);
 
             boolean configurationErrors = false;
@@ -162,7 +163,7 @@ public class CoverityCommonStep {
         }
     }
 
-    private void logGlobalConfiguration(CoverityInstance coverityInstance, IntLogger logger) {
+    private void logGlobalConfiguration(JenkinsCoverityInstance coverityInstance, IntLogger logger) {
         if (null == coverityInstance) {
             logger.warn("No global Coverity configuration found.");
         } else {

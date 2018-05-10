@@ -23,26 +23,41 @@
  */
 package com.sig.integration.coverity.post;
 
-import java.io.PrintWriter;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.xml.ws.WebServiceException;
+import javax.xml.ws.soap.SOAPFaultException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import com.blackducksoftware.integration.validator.FieldEnum;
+import com.blackducksoftware.integration.validator.ValidationResult;
+import com.blackducksoftware.integration.validator.ValidationResults;
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.sig.integration.coverity.CoverityInstance;
+import com.sig.integration.coverity.CoverityVersion;
+import com.sig.integration.coverity.JenkinsCoverityInstance;
 import com.sig.integration.coverity.Messages;
 import com.sig.integration.coverity.common.CoverityCommonDescriptor;
+import com.sig.integration.coverity.config.CoverityServerConfig;
+import com.sig.integration.coverity.config.CoverityServerConfigBuilder;
+import com.sig.integration.coverity.config.CoverityServerConfigValidator;
 import com.sig.integration.coverity.tools.CoverityToolInstallation;
+import com.sig.integration.coverity.ws.WebServiceFactory;
+import com.sig.integration.coverity.ws.v9.ConfigurationService;
+import com.sig.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
@@ -56,10 +71,13 @@ import net.sf.json.JSONObject;
 
 @Extension()
 public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publisher> implements Serializable {
-    private CoverityInstance coverityInstance;
+    public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
+
+    private JenkinsCoverityInstance coverityInstance;
     private CoverityToolInstallation[] coverityToolInstallations;
 
     private transient CoverityCommonDescriptor coverityCommonDescriptor;
+    private transient String lastSuccessfulUser;
 
     public CoverityPostBuildStepDescriptor() {
         super(CoverityPostBuildStep.class);
@@ -67,7 +85,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         coverityCommonDescriptor = new CoverityCommonDescriptor();
     }
 
-    public CoverityInstance getCoverityInstance() {
+    public JenkinsCoverityInstance getCoverityInstance() {
         return coverityInstance;
     }
 
@@ -110,7 +128,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     public boolean configure(final StaplerRequest req, final JSONObject formData) throws Descriptor.FormException {
         String url = formData.getString("url");
         String credentialId = formData.getString("credentialId");
-        coverityInstance = new CoverityInstance(url, credentialId);
+        coverityInstance = new JenkinsCoverityInstance(url, credentialId);
         save();
         return super.configure(req, formData);
     }
@@ -122,10 +140,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         try {
             new URL(url);
         } catch (MalformedURLException e) {
-            final StringWriter sw = new StringWriter();
-            e.printStackTrace(new PrintWriter(sw));
-            System.err.println(sw.toString());
-
+            e.printStackTrace();
             return FormValidation.error(Messages.CoverityPostBuildStep_getUrlError_0(e.getMessage()));
         }
         return FormValidation.ok();
@@ -160,7 +175,47 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         if (StringUtils.isBlank(credentialId)) {
             return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetCoverityCredentials());
         }
-        return FormValidation.ok(Messages.CoverityPostBuildStep_getConnectionSuccessful());
+        JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);
+        URL actualURL = jenkinsCoverityInstance.getCoverityURL().orElse(null);
+        String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
+        String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
+        try {
+            CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+            builder.url(url).username(username).password(password);
+            CoverityServerConfigValidator validator = builder.createValidator();
+            ValidationResults results = validator.assertValid();
+            if (!results.isEmpty() && (results.hasErrors() || results.hasWarnings())) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (Map.Entry<FieldEnum, Set<ValidationResult>> entry : results.getResultMap().entrySet()) {
+                    stringBuilder.append(entry.getKey().name());
+                    stringBuilder.append(": ");
+                    Set<ValidationResult> resultSet = entry.getValue();
+                    List<String> messages = resultSet.stream().map(thing -> thing.getMessage()).collect(Collectors.toList());
+                    String value = String.join(", ", messages);
+                    stringBuilder.append(value);
+                    stringBuilder.append(System.lineSeparator());
+                }
+                return FormValidation.error(stringBuilder.toString());
+            }
+
+            CoverityServerConfig coverityServerConfig = builder.buildObject();
+            WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig);
+
+            FormValidation userPermissionsValidation = checkGetUser(webServiceFactory.createConfigurationService(), username);
+
+            if (!userPermissionsValidation.kind.equals(FormValidation.Kind.OK))
+                return userPermissionsValidation;
+
+            return FormValidation.ok("Successfully connected to the instance.");
+        } catch (WebServiceException e) {
+            if (org.apache.commons.lang.StringUtils.containsIgnoreCase(e.getMessage(), "Unauthorized")) {
+                return FormValidation.error("User authentication failed." + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
+            return FormValidation.error(e, "Web service error occurred. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return FormValidation.error(e, "An unexpected error occurred. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
     }
 
     public ListBoxModel doFillCoverityToolNameItems() {
@@ -170,4 +225,23 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") String coverityToolName) {
         return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
     }
+
+    private FormValidation checkGetUser(ConfigurationService configurationService, String username) throws CovRemoteServiceException_Exception {
+        if (org.apache.commons.lang.StringUtils.isNotEmpty(lastSuccessfulUser)
+                    && lastSuccessfulUser.equalsIgnoreCase(username)) {
+            return FormValidation.ok();
+        }
+        try {
+            configurationService.getUser(username);
+            lastSuccessfulUser = username;
+        } catch (SOAPFaultException e) {
+            e.printStackTrace();
+            if (org.apache.commons.lang.StringUtils.isNotEmpty(e.getMessage())) {
+                return FormValidation.error(e.getMessage());
+            }
+            return FormValidation.error(e, "An unexpected error occurred.");
+        }
+        return FormValidation.ok();
+    }
+
 }
