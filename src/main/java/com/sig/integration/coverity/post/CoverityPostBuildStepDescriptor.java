@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.ws.WebServiceException;
-import javax.xml.ws.soap.SOAPFaultException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
@@ -54,9 +53,9 @@ import com.sig.integration.coverity.common.CoverityCommonDescriptor;
 import com.sig.integration.coverity.config.CoverityServerConfig;
 import com.sig.integration.coverity.config.CoverityServerConfigBuilder;
 import com.sig.integration.coverity.config.CoverityServerConfigValidator;
+import com.sig.integration.coverity.exception.CoverityIntegrationException;
 import com.sig.integration.coverity.tools.CoverityToolInstallation;
 import com.sig.integration.coverity.ws.WebServiceFactory;
-import com.sig.integration.coverity.ws.v9.ConfigurationService;
 import com.sig.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
 
 import hudson.Extension;
@@ -200,10 +199,14 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             CoverityServerConfig coverityServerConfig = builder.buildObject();
             WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig);
 
-            FormValidation userPermissionsValidation = checkGetUser(webServiceFactory.createConfigurationService(), username);
-
-            if (!userPermissionsValidation.kind.equals(FormValidation.Kind.OK))
-                return userPermissionsValidation;
+            try {
+                webServiceFactory.connect();
+            } catch (CoverityIntegrationException | CovRemoteServiceException_Exception e) {
+                e.printStackTrace();
+                return FormValidation.error(e.getMessage());
+            } catch (MalformedURLException e) {
+                return FormValidation.error(e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
 
             return FormValidation.ok("Successfully connected to the instance.");
         } catch (WebServiceException e) {
@@ -223,19 +226,6 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
 
     public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") String coverityToolName) {
         return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
-    }
-
-    private FormValidation checkGetUser(ConfigurationService configurationService, String username) throws CovRemoteServiceException_Exception {
-        try {
-            configurationService.getUser(username);
-        } catch (SOAPFaultException e) {
-            e.printStackTrace();
-            if (org.apache.commons.lang.StringUtils.isNotEmpty(e.getMessage())) {
-                return FormValidation.error(e.getMessage());
-            }
-            return FormValidation.error(e, "An unexpected error occurred.");
-        }
-        return FormValidation.ok();
     }
 
 }
