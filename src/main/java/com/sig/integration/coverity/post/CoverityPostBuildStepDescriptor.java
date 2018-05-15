@@ -228,4 +228,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
     }
 
+    public ListBoxModel doFillBuildStateOnFailureItems() {
+        return coverityCommonDescriptor.doFillBuildStateOnFailureItems();
+    }
 }

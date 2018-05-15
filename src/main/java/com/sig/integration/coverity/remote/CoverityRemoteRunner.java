@@ -23,9 +23,12 @@
  */
 package com.sig.integration.coverity.remote;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,14 +91,19 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
         Executable executable = new Executable(arguments, workspace, environment);
         ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
         int exitCode = -1;
+        ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
         try {
             PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
-            exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, jenkinsPrintStream);
+            exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, new PrintStream(errorOutputStream, true, "UTF-8"));
         } catch (final InterruptedException e) {
             logger.error("Coverity remote thread was interrupted.", e);
             return new CoverityRemoteResponse(e);
         } catch (final IntegrationException e) {
             return new CoverityRemoteResponse(e);
+        } catch (UnsupportedEncodingException e) {
+            return new CoverityRemoteResponse(e);
+        } finally {
+            logger.error(new String(errorOutputStream.toByteArray(), StandardCharsets.UTF_8));
         }
         return new CoverityRemoteResponse(exitCode);
     }

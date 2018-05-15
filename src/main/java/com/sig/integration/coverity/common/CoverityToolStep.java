@@ -83,7 +83,9 @@ public class CoverityToolStep extends BaseCoverityStep {
             RepeatableCommand[] commands = optionalCommands.get();
             Boolean continueOnCommandFailure = optionalContinueOnCommandFailure.orElse(false);
             CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
+
             logger.alwaysLog("-- SIG Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
+            logger.alwaysLog("-- Continue on command failure : " + continueOnCommandFailure);
             try {
                 for (RepeatableCommand repeatableCommand : commands) {
                     String command = repeatableCommand.getCommand();

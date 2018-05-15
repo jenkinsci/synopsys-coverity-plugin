@@ -36,8 +36,12 @@ import com.sig.integration.coverity.config.CoverityServerConfig;
 import com.sig.integration.coverity.config.CoverityServerConfigBuilder;
 import com.sig.integration.coverity.ws.DefectServiceWrapper;
 import com.sig.integration.coverity.ws.WebServiceFactory;
+import com.sig.integration.coverity.ws.v9.ConfigurationService;
 import com.sig.integration.coverity.ws.v9.MergedDefectDataObj;
 import com.sig.integration.coverity.ws.v9.MergedDefectFilterSpecDataObj;
+import com.sig.integration.coverity.ws.v9.ProjectDataObj;
+import com.sig.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
+import com.sig.integration.coverity.ws.v9.StreamDataObj;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -85,6 +89,21 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             CoverityServerConfig coverityServerConfig = builder.build();
             WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
+
+            ConfigurationService configurationService = webServiceFactory.createConfigurationService();
+            final List<ProjectDataObj> projects = configurationService.getProjects(new ProjectFilterSpecDataObj());
+
+            for (ProjectDataObj project : projects) {
+                logger.info("Coverity Project ID: " + project.getId().getName());
+
+                for (StreamDataObj stream : project.getStreams()) {
+                    logger.info("Stream: " + stream.getId().getName());
+                }
+
+                logger.info("   ");
+                logger.info("   ");
+                logger.info("   ");
+            }
 
             DefectServiceWrapper defectServiceWrapper = webServiceFactory.createDefectServiceWrapper();
             List<MergedDefectDataObj> mergedDefectDataObjs = defectServiceWrapper.getDefectsForStreams(streamName, new MergedDefectFilterSpecDataObj());

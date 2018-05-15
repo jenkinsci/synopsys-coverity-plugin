@@ -28,6 +28,7 @@ import java.util.Optional;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import com.sig.integration.coverity.common.CoverityFailureConditionStep;
 import com.sig.integration.coverity.common.CoverityToolStep;
 import com.sig.integration.coverity.common.RepeatableCommand;
 
@@ -105,7 +106,8 @@ public class CoverityPostBuildStep extends Recorder {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
         Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
         if (shouldContinueOurSteps) {
-
+            CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
+            coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateOnFailure), Optional.ofNullable(failOnQualityIssues), Optional.ofNullable(failOnSecurityIssues), Optional.ofNullable(streamName));
         }
 
         return true;

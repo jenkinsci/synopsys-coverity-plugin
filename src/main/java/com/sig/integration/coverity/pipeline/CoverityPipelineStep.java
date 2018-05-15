@@ -36,6 +36,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.sig.integration.coverity.Messages;
 import com.sig.integration.coverity.common.CoverityCommonDescriptor;
+import com.sig.integration.coverity.common.CoverityFailureConditionStep;
 import com.sig.integration.coverity.common.CoverityToolStep;
 import com.sig.integration.coverity.common.RepeatableCommand;
 import com.sig.integration.coverity.post.CoverityPostBuildStepDescriptor;
@@ -143,6 +144,9 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             return coverityCommonDescriptor.doCheckCoverityToolName(getCoverityToolInstallations(), coverityToolName);
         }
 
+        public ListBoxModel doFillBuildStateOnFailureItems() {
+            return coverityCommonDescriptor.doFillBuildStateOnFailureItems();
+        }
     }
 
     public static final class DetectPipelineExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
@@ -166,7 +170,9 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
                     Optional.ofNullable(coverityPipelineStep.getCommands()));
             if (shouldContinueOurSteps) {
-
+                CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
+                coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateOnFailure()), Optional.ofNullable(coverityPipelineStep.getFailOnQualityIssues()),
+                        Optional.ofNullable(coverityPipelineStep.getFailOnSecurityIssues()), Optional.ofNullable(coverityPipelineStep.getStreamName()));
             }
             return null;
         }

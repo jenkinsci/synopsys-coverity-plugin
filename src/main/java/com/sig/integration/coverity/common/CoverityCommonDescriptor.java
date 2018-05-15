@@ -58,4 +58,12 @@ public class CoverityCommonDescriptor {
         }
         return FormValidation.error(Messages.CoverityToolInstallation_getNoToolWithName_0(coverityToolName));
     }
+
+    public ListBoxModel doFillBuildStateOnFailureItems() {
+        ListBoxModel boxModel = new ListBoxModel();
+        for (BuildState buildState : BuildState.values()) {
+            boxModel.add(buildState.getDisplayValue());
+        }
+        return boxModel;
+    }
 }
