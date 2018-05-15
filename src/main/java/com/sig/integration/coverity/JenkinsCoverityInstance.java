@@ -74,7 +74,7 @@ public class JenkinsCoverityInstance {
             BaseStandardCredentials credential = optionalCredential.get();
             if (credential instanceof UsernamePasswordCredentialsImpl) {
                 final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
-                return Optional.of(credentials.getUsername());
+                return Optional.ofNullable(credentials.getUsername());
             }
         }
         return Optional.empty();
@@ -86,7 +86,9 @@ public class JenkinsCoverityInstance {
             BaseStandardCredentials credential = optionalCredential.get();
             if (credential instanceof UsernamePasswordCredentialsImpl) {
                 final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
-                return Optional.of(credentials.getPassword().getPlainText());
+                if (null != credentials.getPassword()) {
+                    return Optional.ofNullable(credentials.getPassword().getPlainText());
+                }
             }
         }
         return Optional.empty();

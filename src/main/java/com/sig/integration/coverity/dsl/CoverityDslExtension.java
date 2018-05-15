@@ -34,8 +34,9 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 @Extension(optional = true)
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(String coverityToolName, Boolean continueOnCommandFailure, final RepeatableCommand[] commands) {
-        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, commands);
+    public Object coverity(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnQualityIssues,
+            Boolean failOnSecurityIssues, String streamName) {
+        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, commands, buildStateOnFailure, failOnQualityIssues, failOnSecurityIssues, streamName);
     }
 
     @DslExtensionMethod(context = StepContext.class)
@@ -43,7 +44,8 @@ public class CoverityDslExtension extends ContextExtensionPoint {
         final CoverityDslContext context = new CoverityDslContext();
         executeInContext(closure, context);
 
-        return new CoverityPostBuildStep(context.getCoverityToolName(), context.getContinueOnCommandFailure(), context.getCommands());
+        return new CoverityPostBuildStep(context.getCoverityToolName(), context.getContinueOnCommandFailure(), context.getCommands(), context.getBuildStateOnFailure(), context.getFailOnQualityIssues(), context.getFailOnSecurityIssues(),
+                context.getStreamName());
     }
 
 }

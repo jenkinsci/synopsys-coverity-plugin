@@ -11,6 +11,7 @@ plugins {
     id 'org.jenkins-ci.jpi' version '0.25.0'
 }
 
+group = 'com.sig.integration'
 version = '0.0.1-SNAPSHOT'
 description = 'SIG Coverity Plugin for Jenkins'
 
@@ -21,11 +22,6 @@ task listrepos {
         println "Repositories:"
         project.repositories.each { println "Name: " + it.name + "; url: " + it.url }
     }
-}
-
-project.afterEvaluate {
-    // the common library plugin sets the group to com.blackducksoftware.integration so we have to override it
-    project.group = 'com.sig.integration'
 }
 
 def jcenterRepo = project.repositories.findByName('BintrayJCenter')

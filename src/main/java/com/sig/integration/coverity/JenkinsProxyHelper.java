@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.blackducksoftware.integration.hub.proxy.ProxyInfo;
-import com.blackducksoftware.integration.hub.proxy.ProxyInfoBuilder;
+import com.blackducksoftware.integration.rest.proxy.ProxyInfo;
+import com.blackducksoftware.integration.rest.proxy.ProxyInfoBuilder;
 import com.blackducksoftware.integration.util.proxy.ProxyUtil;
 import com.google.common.collect.Lists;
 

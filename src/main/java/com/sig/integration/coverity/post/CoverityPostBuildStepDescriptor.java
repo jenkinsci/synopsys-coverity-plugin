@@ -38,6 +38,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import com.blackducksoftware.integration.log.LogLevel;
+import com.blackducksoftware.integration.log.PrintStreamIntLogger;
 import com.blackducksoftware.integration.validator.FieldEnum;
 import com.blackducksoftware.integration.validator.ValidationResult;
 import com.blackducksoftware.integration.validator.ValidationResults;
@@ -56,7 +58,6 @@ import com.sig.integration.coverity.config.CoverityServerConfigValidator;
 import com.sig.integration.coverity.exception.CoverityIntegrationException;
 import com.sig.integration.coverity.tools.CoverityToolInstallation;
 import com.sig.integration.coverity.ws.WebServiceFactory;
-import com.sig.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
@@ -71,11 +72,9 @@ import net.sf.json.JSONObject;
 @Extension()
 public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publisher> implements Serializable {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
-
+    private final transient CoverityCommonDescriptor coverityCommonDescriptor;
     private JenkinsCoverityInstance coverityInstance;
     private CoverityToolInstallation[] coverityToolInstallations;
-
-    private transient CoverityCommonDescriptor coverityCommonDescriptor;
 
     public CoverityPostBuildStepDescriptor() {
         super(CoverityPostBuildStep.class);
@@ -183,6 +182,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             CoverityServerConfigValidator validator = builder.createValidator();
             ValidationResults results = validator.assertValid();
             if (!results.isEmpty() && (results.hasErrors() || results.hasWarnings())) {
+                // Create a nicer more readable string to show the User instead of what the builder exception will provide
                 StringBuilder stringBuilder = new StringBuilder();
                 for (Map.Entry<FieldEnum, Set<ValidationResult>> entry : results.getResultMap().entrySet()) {
                     stringBuilder.append(entry.getKey().name());
@@ -197,11 +197,11 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             }
 
             CoverityServerConfig coverityServerConfig = builder.buildObject();
-            WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig);
+            WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, new PrintStreamIntLogger(System.out, LogLevel.DEBUG));
 
             try {
                 webServiceFactory.connect();
-            } catch (CoverityIntegrationException | CovRemoteServiceException_Exception e) {
+            } catch (CoverityIntegrationException e) {
                 e.printStackTrace();
                 return FormValidation.error(e.getMessage());
             } catch (MalformedURLException e) {

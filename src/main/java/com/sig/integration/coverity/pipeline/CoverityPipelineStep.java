@@ -23,6 +23,8 @@
  */
 package com.sig.integration.coverity.pipeline;
 
+import java.util.Optional;
+
 import javax.inject.Inject;
 
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -34,7 +36,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.sig.integration.coverity.Messages;
 import com.sig.integration.coverity.common.CoverityCommonDescriptor;
-import com.sig.integration.coverity.common.CoverityCommonStep;
+import com.sig.integration.coverity.common.CoverityToolStep;
 import com.sig.integration.coverity.common.RepeatableCommand;
 import com.sig.integration.coverity.post.CoverityPostBuildStepDescriptor;
 import com.sig.integration.coverity.tools.CoverityToolInstallation;
@@ -50,15 +52,24 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 public class CoverityPipelineStep extends AbstractStepImpl {
-    private String coverityToolName;
-    private Boolean continueOnCommandFailure;
-    private RepeatableCommand[] commands;
+    private final String coverityToolName;
+    private final Boolean continueOnCommandFailure;
+    private final RepeatableCommand[] commands;
+    private final String buildStateOnFailure;
+    private final Boolean failOnQualityIssues;
+    private final Boolean failOnSecurityIssues;
+    private final String streamName;
 
     @DataBoundConstructor
-    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands) {
+    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnQualityIssues,
+            Boolean failOnSecurityIssues, String streamName) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
+        this.buildStateOnFailure = buildStateOnFailure;
+        this.failOnQualityIssues = failOnQualityIssues;
+        this.failOnSecurityIssues = failOnSecurityIssues;
+        this.streamName = streamName;
     }
 
     public String getCoverityToolName() {
@@ -76,6 +87,22 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         return commands;
     }
 
+    public String getBuildStateOnFailure() {
+        return buildStateOnFailure;
+    }
+
+    public Boolean getFailOnQualityIssues() {
+        return failOnQualityIssues;
+    }
+
+    public Boolean getFailOnSecurityIssues() {
+        return failOnSecurityIssues;
+    }
+
+    public String getStreamName() {
+        return streamName;
+    }
+
     @Override
     public DetectPipelineStepDescriptor getDescriptor() {
         return (DetectPipelineStepDescriptor) super.getDescriptor();
@@ -83,7 +110,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
     @Extension(optional = true)
     public static final class DetectPipelineStepDescriptor extends AbstractStepDescriptorImpl {
-        private transient CoverityCommonDescriptor coverityCommonDescriptor;
+        private final transient CoverityCommonDescriptor coverityCommonDescriptor;
 
         public DetectPipelineStepDescriptor() {
             super(DetectPipelineExecution.class);
@@ -135,9 +162,12 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
         @Override
         protected Void run() throws Exception {
-            final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(computer.getNode(), listener, envVars, workspace, run, coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getContinueOnCommandFailure(),
-                    coverityPipelineStep.getCommands());
-            coverityCommonStep.runCommonDetectStep();
+            final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run);
+            Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
+                    Optional.ofNullable(coverityPipelineStep.getCommands()));
+            if (shouldContinueOurSteps) {
+
+            }
             return null;
         }
 

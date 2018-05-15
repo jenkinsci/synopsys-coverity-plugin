@@ -28,14 +28,23 @@ import com.sig.integration.coverity.common.RepeatableCommand;
 import javaposse.jobdsl.dsl.Context;
 
 public class CoverityDslContext implements Context {
+    private String buildStateOnFailure;
+    private Boolean failOnQualityIssues;
+    private Boolean failOnSecurityIssues;
+    private String streamName;
     private String coverityToolName;
     private Boolean continueOnCommandFailure;
     private RepeatableCommand[] commands;
 
-    public void commands(String coverityToolName, Boolean continueOnCommandFailure, final RepeatableCommand[] commands) {
+    public void commands(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnQualityIssues,
+            Boolean failOnSecurityIssues, String streamName) {
         setCoverityToolName(coverityToolName);
         setContinueOnCommandFailure(continueOnCommandFailure);
         setCommands(commands);
+        setBuildStateOnFailure(buildStateOnFailure);
+        setFailOnQualityIssues(failOnQualityIssues);
+        setFailOnSecurityIssues(failOnSecurityIssues);
+        setStreamName(streamName);
     }
 
     public RepeatableCommand[] getCommands() {
@@ -60,5 +69,37 @@ public class CoverityDslContext implements Context {
 
     public void setContinueOnCommandFailure(Boolean continueOnCommandFailure) {
         this.continueOnCommandFailure = continueOnCommandFailure;
+    }
+
+    public String getBuildStateOnFailure() {
+        return buildStateOnFailure;
+    }
+
+    public void setBuildStateOnFailure(String buildStateOnFailure) {
+        this.buildStateOnFailure = buildStateOnFailure;
+    }
+
+    public Boolean getFailOnQualityIssues() {
+        return failOnQualityIssues;
+    }
+
+    public void setFailOnQualityIssues(Boolean failOnQualityIssues) {
+        this.failOnQualityIssues = failOnQualityIssues;
+    }
+
+    public Boolean getFailOnSecurityIssues() {
+        return failOnSecurityIssues;
+    }
+
+    public void setFailOnSecurityIssues(Boolean failOnSecurityIssues) {
+        this.failOnSecurityIssues = failOnSecurityIssues;
+    }
+
+    public String getStreamName() {
+        return streamName;
+    }
+
+    public void setStreamName(String streamName) {
+        this.streamName = streamName;
     }
 }

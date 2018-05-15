@@ -24,10 +24,11 @@
 package com.sig.integration.coverity.post;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import com.sig.integration.coverity.common.CoverityCommonStep;
+import com.sig.integration.coverity.common.CoverityToolStep;
 import com.sig.integration.coverity.common.RepeatableCommand;
 
 import hudson.FilePath;
@@ -38,15 +39,24 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Recorder;
 
 public class CoverityPostBuildStep extends Recorder {
-    private String coverityToolName;
-    private Boolean continueOnCommandFailure;
-    private RepeatableCommand[] commands;
+    private final String coverityToolName;
+    private final Boolean continueOnCommandFailure;
+    private final RepeatableCommand[] commands;
+    private final String buildStateOnFailure;
+    private final Boolean failOnQualityIssues;
+    private final Boolean failOnSecurityIssues;
+    private final String streamName;
 
     @DataBoundConstructor
-    public CoverityPostBuildStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands) {
+    public CoverityPostBuildStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnQualityIssues,
+            Boolean failOnSecurityIssues, String streamName) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
+        this.buildStateOnFailure = buildStateOnFailure;
+        this.failOnQualityIssues = failOnQualityIssues;
+        this.failOnSecurityIssues = failOnSecurityIssues;
+        this.streamName = streamName;
     }
 
     public String getCoverityToolName() {
@@ -64,6 +74,22 @@ public class CoverityPostBuildStep extends Recorder {
         return commands;
     }
 
+    public String getBuildStateOnFailure() {
+        return buildStateOnFailure;
+    }
+
+    public Boolean getFailOnQualityIssues() {
+        return failOnQualityIssues;
+    }
+
+    public Boolean getFailOnSecurityIssues() {
+        return failOnSecurityIssues;
+    }
+
+    public String getStreamName() {
+        return streamName;
+    }
+
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
@@ -76,8 +102,12 @@ public class CoverityPostBuildStep extends Recorder {
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
-        final CoverityCommonStep coverityCommonStep = new CoverityCommonStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, coverityToolName, continueOnCommandFailure, commands);
-        coverityCommonStep.runCommonDetectStep();
+        final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
+        Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
+        if (shouldContinueOurSteps) {
+
+        }
+
         return true;
     }
 
