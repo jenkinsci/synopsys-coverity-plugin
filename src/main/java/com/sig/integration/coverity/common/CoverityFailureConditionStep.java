@@ -36,12 +36,8 @@ import com.sig.integration.coverity.config.CoverityServerConfig;
 import com.sig.integration.coverity.config.CoverityServerConfigBuilder;
 import com.sig.integration.coverity.ws.DefectServiceWrapper;
 import com.sig.integration.coverity.ws.WebServiceFactory;
-import com.sig.integration.coverity.ws.v9.ConfigurationService;
 import com.sig.integration.coverity.ws.v9.MergedDefectDataObj;
 import com.sig.integration.coverity.ws.v9.MergedDefectFilterSpecDataObj;
-import com.sig.integration.coverity.ws.v9.ProjectDataObj;
-import com.sig.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
-import com.sig.integration.coverity.ws.v9.StreamDataObj;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -90,28 +86,30 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 
-            ConfigurationService configurationService = webServiceFactory.createConfigurationService();
-            final List<ProjectDataObj> projects = configurationService.getProjects(new ProjectFilterSpecDataObj());
-
-            for (ProjectDataObj project : projects) {
-                logger.info("Coverity Project ID: " + project.getId().getName());
-
-                for (StreamDataObj stream : project.getStreams()) {
-                    logger.info("Stream: " + stream.getId().getName());
-                }
-
-                logger.info("   ");
-                logger.info("   ");
-                logger.info("   ");
-            }
-
             DefectServiceWrapper defectServiceWrapper = webServiceFactory.createDefectServiceWrapper();
-            List<MergedDefectDataObj> mergedDefectDataObjs = defectServiceWrapper.getDefectsForStreams(streamName, new MergedDefectFilterSpecDataObj());
+            List<MergedDefectDataObj> mergedDefectDataObjs = defectServiceWrapper.getDefectsForStream(streamName, new MergedDefectFilterSpecDataObj());
+            Boolean foundQualityIssue = false;
+            Boolean foundSecurityIssue = false;
             for (MergedDefectDataObj defect : mergedDefectDataObjs) {
-                logger.info(String.format("Defect : %s %s %s %s %s %s ", defect.getCheckerName(), defect.getCid(), defect.getComponentName(), defect.getCwe(), defect.getDisplayIssueKind(), defect.getIssueKind()));
-            }
-            if (failOnQualityIssues && mergedDefectDataObjs.size() > 0) {
-                getRun().setResult(buildStateOnFailure.getResult());
+                if (failOnQualityIssues && !foundQualityIssue && null != defect.getIssueKind() && defect.getIssueKind().toUpperCase().equals("QUALITY")) {
+                    logger.warn(String.format("Setting the Build Result to %s because a quality issue was found for the stream %s", buildStateOnFailure.getDisplayValue(), streamName));
+                    getRun().setResult(buildStateOnFailure.getResult());
+                    foundQualityIssue = true;
+                } else if (failOnSecurityIssues && !foundSecurityIssue && null != defect.getIssueKind() && defect.getIssueKind().toUpperCase().equals("SECURITY")) {
+                    logger.warn(String.format("Setting the Build Result to %s because a security issue was found for the stream %s", buildStateOnFailure.getDisplayValue(), streamName));
+                    foundSecurityIssue = true;
+                    getRun().setResult(buildStateOnFailure.getResult());
+                }
+                if (failOnQualityIssues && foundQualityIssue && !failOnSecurityIssues) {
+                    // If they only want to fail on Quality issues and we found one then lets exit the loop
+                    break;
+                } else if (failOnSecurityIssues && foundSecurityIssue && !failOnQualityIssues) {
+                    // If they only want to fail on Security issues and we found one then lets exit the loop
+                    break;
+                } else if (failOnQualityIssues && foundQualityIssue && failOnSecurityIssues && foundSecurityIssue) {
+                    // If they want to fail on Quality and Security issues and we found both then lets exit the loop
+                    break;
+                }
             }
         } catch (final Exception e) {
             logger.error("[ERROR] " + e.getMessage(), e);

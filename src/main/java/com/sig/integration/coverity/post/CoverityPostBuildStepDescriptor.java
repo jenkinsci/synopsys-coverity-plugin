@@ -61,6 +61,7 @@ import com.sig.integration.coverity.ws.WebServiceFactory;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Descriptor;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
@@ -230,5 +231,14 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
 
     public ListBoxModel doFillBuildStateOnFailureItems() {
         return coverityCommonDescriptor.doFillBuildStateOnFailureItems();
+    }
+
+    // for doAutoComplete the variable will always be named value
+    public AutoCompletionCandidates doAutoCompleteStreamName(@QueryParameter("value") String streamName) {
+        return coverityCommonDescriptor.doAutoCompleteStreamName(streamName);
+    }
+
+    public FormValidation doCheckStreamName(@QueryParameter("streamName") String streamName) {
+        return coverityCommonDescriptor.doCheckStreamName(streamName);
     }
 }

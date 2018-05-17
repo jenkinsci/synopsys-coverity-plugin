@@ -23,15 +23,44 @@
  */
 package com.sig.integration.coverity.common;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.lang3.StringUtils;
 
+import com.blackducksoftware.integration.exception.EncryptionException;
+import com.blackducksoftware.integration.log.IntLogger;
+import com.blackducksoftware.integration.log.LogLevel;
+import com.blackducksoftware.integration.log.PrintStreamIntLogger;
+import com.sig.integration.coverity.JenkinsCoverityInstance;
 import com.sig.integration.coverity.Messages;
+import com.sig.integration.coverity.config.CoverityServerConfig;
+import com.sig.integration.coverity.config.CoverityServerConfigBuilder;
+import com.sig.integration.coverity.exception.CoverityIntegrationException;
+import com.sig.integration.coverity.post.CoverityPostBuildStepDescriptor;
 import com.sig.integration.coverity.tools.CoverityToolInstallation;
+import com.sig.integration.coverity.ws.WebServiceFactory;
+import com.sig.integration.coverity.ws.v9.ConfigurationService;
+import com.sig.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
+import com.sig.integration.coverity.ws.v9.ProjectDataObj;
+import com.sig.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
+import com.sig.integration.coverity.ws.v9.StreamDataObj;
 
+import hudson.model.AutoCompletionCandidates;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 
 public class CoverityCommonDescriptor {
+
+    private List<String> cachedStreams = null;
+    private Instant lastTimeStreamsRetrieved = null;
+    private Boolean retrievingStreamsNow = false;
 
     public ListBoxModel doFillCoverityToolNameItems(CoverityToolInstallation[] coverityToolInstallations) {
         ListBoxModel boxModel = new ListBoxModel();
@@ -65,5 +94,95 @@ public class CoverityCommonDescriptor {
             boxModel.add(buildState.getDisplayValue());
         }
         return boxModel;
+    }
+
+    public AutoCompletionCandidates doAutoCompleteStreamName(String streamName) {
+        AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+        if (StringUtils.isNotBlank(streamName)) {
+            checkAndUpdateCachedProjects();
+            if (null != cachedStreams) {
+                for (String stream : cachedStreams) {
+                    if (stream.startsWith(streamName)) {
+                        autoCompletionCandidates.add(stream);
+                    }
+                }
+            }
+        }
+        return autoCompletionCandidates;
+    }
+
+    public FormValidation doCheckStreamName(String streamName) {
+        if (StringUtils.isBlank(streamName)) {
+            return FormValidation.ok();
+        }
+        checkAndUpdateCachedProjects();
+        if (null == cachedStreams) {
+            return FormValidation.ok();
+        }
+        for (String stream : cachedStreams) {
+            if (stream.equals(streamName)) {
+                return FormValidation.ok();
+            }
+        }
+        return FormValidation.error(String.format("The stream %s does not exist or you do not have permission to access it.", streamName));
+    }
+
+    private void checkAndUpdateCachedProjects() {
+        if (!retrievingStreamsNow) {
+            retrievingStreamsNow = true;
+            IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
+            Instant now = Instant.now();
+            if (null == cachedStreams || null == lastTimeStreamsRetrieved) {
+                updateCachedStreams(now);
+            } else if (null != lastTimeStreamsRetrieved) {
+                Duration timeLapsed = Duration.between(lastTimeStreamsRetrieved, now);
+                // only update the cached streams every 5 minutes
+                if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(5)) {
+                    updateCachedStreams(now);
+                }
+            }
+        }
+    }
+
+    private void updateCachedStreams(Instant now) {
+        IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
+        try {
+            logger.info("Attempting retrieval of Coverity streams.");
+            JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+            CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+            URL coverityURL = coverityInstance.getCoverityURL().get();
+            builder.url(coverityURL.toString());
+            builder.username(coverityInstance.getCoverityUsername().orElse(null));
+            builder.password(coverityInstance.getCoverityPassword().orElse(null));
+
+            CoverityServerConfig coverityServerConfig = builder.build();
+            WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
+            webServiceFactory.connect();
+
+            cachedStreams = new ArrayList<>();
+            ConfigurationService configurationService = webServiceFactory.createConfigurationService();
+            List<ProjectDataObj> projects = configurationService.getProjects(new ProjectFilterSpecDataObj());
+            for (ProjectDataObj project : projects) {
+                if (null != project.getStreams() && !project.getStreams().isEmpty()) {
+                    for (StreamDataObj stream : project.getStreams()) {
+                        if (null != stream.getId() && null != stream.getId().getName()) {
+                            cachedStreams.add(stream.getId().getName());
+                        }
+                    }
+                }
+            }
+            lastTimeStreamsRetrieved = now;
+            logger.info("Updated the cached Coverity streams.");
+        } catch (EncryptionException | MalformedURLException | CoverityIntegrationException | CovRemoteServiceException_Exception e) {
+            logger.error(e);
+        }
+    }
+
+    public CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
+    }
+
+    public JenkinsCoverityInstance getCoverityInstance() {
+        return getCoverityPostBuildStepDescriptor().getCoverityInstance();
     }
 }

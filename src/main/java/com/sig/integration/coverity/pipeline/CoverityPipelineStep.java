@@ -45,6 +45,7 @@ import com.sig.integration.coverity.tools.CoverityToolInstallation;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -146,6 +147,15 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
         public ListBoxModel doFillBuildStateOnFailureItems() {
             return coverityCommonDescriptor.doFillBuildStateOnFailureItems();
+        }
+
+        // for doAutoComplete the variable will always be named value
+        public AutoCompletionCandidates doAutoCompleteStreamName(@QueryParameter("value") String streamName) {
+            return coverityCommonDescriptor.doAutoCompleteStreamName(streamName);
+        }
+
+        public FormValidation doCheckStreamName(@QueryParameter("streamName") String streamName) {
+            return coverityCommonDescriptor.doCheckStreamName(streamName);
         }
     }
 
