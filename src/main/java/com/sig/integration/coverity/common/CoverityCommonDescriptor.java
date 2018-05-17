@@ -124,6 +124,11 @@ public class CoverityCommonDescriptor {
                 return FormValidation.ok();
             }
         }
+        if (streamName.contains("$")) {
+            return FormValidation.warning(
+                    String.format("The stream %s does not exist or you do not have permission to access it.%s The name appears to contain a variable which can only be resolved at the time of the build.", streamName,
+                            System.lineSeparator()));
+        }
         return FormValidation.error(String.format("The stream %s does not exist or you do not have permission to access it.", streamName));
     }
 
