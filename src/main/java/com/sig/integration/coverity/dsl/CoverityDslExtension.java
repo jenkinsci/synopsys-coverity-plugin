@@ -23,6 +23,8 @@
  */
 package com.sig.integration.coverity.dsl;
 
+import java.util.List;
+
 import com.sig.integration.coverity.common.RepeatableCommand;
 import com.sig.integration.coverity.post.CoverityPostBuildStep;
 
@@ -34,18 +36,23 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 @Extension(optional = true)
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnQualityIssues,
+    public Object coverity(String coverityToolName, Boolean continueOnCommandFailure, List<String> commands, String buildStateOnFailure, Boolean failOnQualityIssues,
             Boolean failOnSecurityIssues, String streamName) {
-        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, commands, buildStateOnFailure, failOnQualityIssues, failOnSecurityIssues, streamName);
+        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateOnFailure, failOnQualityIssues, failOnSecurityIssues, streamName);
     }
 
-    @DslExtensionMethod(context = StepContext.class)
-    public Object detect(final Runnable closure) {
-        final CoverityDslContext context = new CoverityDslContext();
-        executeInContext(closure, context);
-
-        return new CoverityPostBuildStep(context.getCoverityToolName(), context.getContinueOnCommandFailure(), context.getCommands(), context.getBuildStateOnFailure(), context.getFailOnQualityIssues(), context.getFailOnSecurityIssues(),
-                context.getStreamName());
+    private RepeatableCommand[] stringsToCommands(List<String> commands) {
+        if (null == commands) {
+            return null;
+        }
+        if (commands.isEmpty()) {
+            return new RepeatableCommand[0];
+        }
+        RepeatableCommand[] repeatableCommands = new RepeatableCommand[commands.size()];
+        for (int i = 0; i < repeatableCommands.length; i++) {
+            repeatableCommands[i] = new RepeatableCommand(commands.get(i));
+        }
+        return repeatableCommands;
     }
 
 }
