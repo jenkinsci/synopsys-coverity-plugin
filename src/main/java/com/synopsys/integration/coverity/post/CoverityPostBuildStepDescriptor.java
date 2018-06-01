@@ -37,6 +37,7 @@ import javax.xml.ws.WebServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.verb.POST;
 
 import com.blackducksoftware.integration.log.LogLevel;
 import com.blackducksoftware.integration.log.PrintStreamIntLogger;
@@ -68,6 +69,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 @Extension()
@@ -131,7 +133,10 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return super.configure(req, formData);
     }
 
+    ///////// Global configuration methods /////////
+    @POST
     public FormValidation doCheckUrl(@QueryParameter("url") String url) {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         if (StringUtils.isBlank(url)) {
             return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetServerUrl());
         }
@@ -145,6 +150,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     public ListBoxModel doFillCredentialIdItems() {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         ListBoxModel boxModel = null;
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         boolean changed = false;
@@ -155,9 +161,8 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             }
             final CredentialsMatcher credentialsMatcher = CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
             // Dont want to limit the search to a particular project for the drop down menu
-            final AbstractProject<?, ?> project = null;
             boxModel = new StandardListBoxModel().withEmptySelection()
-                    .withMatching(credentialsMatcher, CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, project, ACL.SYSTEM, Collections.emptyList()));
+                    .withMatching(credentialsMatcher, CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()));
         } finally {
             if (changed) {
                 Thread.currentThread().setContextClassLoader(originalClassLoader);
@@ -166,7 +171,9 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return boxModel;
     }
 
+    @POST
     public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("credentialId") String credentialId) {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         if (StringUtils.isBlank(url)) {
             return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetServerUrl());
         }
@@ -220,6 +227,8 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             return FormValidation.error(e, "An unexpected error occurred. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
+
+    ///////// End of global configuration methods /////////
 
     public ListBoxModel doFillCoverityToolNameItems() {
         return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolInstallations);

@@ -37,8 +37,8 @@ import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 
-import hudson.model.AbstractProject;
 import hudson.security.ACL;
+import jenkins.model.Jenkins;
 
 public class JenkinsCoverityInstance {
     private final String url;
@@ -97,8 +97,7 @@ public class JenkinsCoverityInstance {
     public Optional<BaseStandardCredentials> getCredential() {
         Optional<BaseStandardCredentials> optionalCredential = Optional.empty();
         if (StringUtils.isNotBlank(credentialId)) {
-            final AbstractProject<?, ?> project = null;
-            final List<BaseStandardCredentials> credentials = CredentialsProvider.lookupCredentials(BaseStandardCredentials.class, project, ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+            final List<BaseStandardCredentials> credentials = CredentialsProvider.lookupCredentials(BaseStandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
             final IdMatcher matcher = new IdMatcher(credentialId);
             for (final BaseStandardCredentials c : credentials) {
                 if (matcher.matches(c)) {
