@@ -121,7 +121,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "sig_coverity";
+            return "synopsys_coverity";
         }
 
         @Override

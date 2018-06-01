@@ -11,7 +11,7 @@
     <f:block>
         <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
             <table style="width:100%" id="coverityCommandTable">
-                <f:entry title="${%Command}" field="command" help="/plugin/sig-coverity/help/CoverityPostBuildStep/help-command.html">
+                <f:entry title="${%Command}" field="command" help="/plugin/synopsys-coverity/help/CoverityPostBuildStep/help-command.html">
                     <f:textbox/>
                 </f:entry>
             </table>
