@@ -11,9 +11,9 @@ plugins {
     id 'org.jenkins-ci.jpi' version '0.25.0'
 }
 
-group = 'com.sig.integration'
+group = 'com.synopsys.integration'
 version = '0.0.1-SNAPSHOT'
-description = 'SIG Coverity Plugin for Jenkins'
+description = 'Synopsys Coverity Plugin for Jenkins'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 
@@ -37,15 +37,15 @@ project.repositories.remove(mavenRepo)
 
 jenkinsPlugin {
     coreVersion = '2.60.1'
-    displayName = 'SIG Coverity Plugin'
+    displayName = 'Synopsys Coverity Plugin'
     url = 'N/A'
-    gitHubUrl = 'https://github.com/blackducksoftware/sig-coverity'
+    gitHubUrl = 'https://github.com/blackducksoftware/synopsys-coverity'
 }
 
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:1.9.4'
 
-    compile 'com.sig.integration:coverity-common:0.0.1-SNAPSHOT'
+    compile 'com.synopsys.integration:coverity-common:0.0.1-SNAPSHOT'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
