@@ -57,11 +57,16 @@ public class CoverityToolStep extends BaseCoverityStep {
         return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
     }
 
-    public boolean runCoverityToolStep(Optional<String> optionalCoverityToolName, Optional<Boolean> optionalContinueOnCommandFailure, Optional<RepeatableCommand[]> optionalCommands) {
+    public boolean runCoverityToolStep(Optional<String> optionalCoverityToolName, Optional<String> optionalStreamName, Optional<Boolean> optionalContinueOnCommandFailure, Optional<RepeatableCommand[]> optionalCommands) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
             logger.alwaysLog("Running Synopsys Coverity version : " + pluginVersion);
+
+            if (optionalStreamName.isPresent()) {
+                String streamName = optionalStreamName.get();
+                getEnvVars().put("COV_STREAM", streamName);
+            }
 
             JenkinsCoverityInstance coverityInstance = getCoverityInstance();
             logGlobalConfiguration(coverityInstance, logger);

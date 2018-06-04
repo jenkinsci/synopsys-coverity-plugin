@@ -177,8 +177,9 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         @Override
         protected Void run() throws Exception {
             final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run);
-            Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
-                    Optional.ofNullable(coverityPipelineStep.getCommands()));
+            Boolean shouldContinueOurSteps = coverityToolStep
+                    .runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getStreamName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
+                            Optional.ofNullable(coverityPipelineStep.getCommands()));
             if (shouldContinueOurSteps) {
                 CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
                 coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateOnFailure()), Optional.ofNullable(coverityPipelineStep.getFailOnQualityIssues()),

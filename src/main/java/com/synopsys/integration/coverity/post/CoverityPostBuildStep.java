@@ -104,7 +104,7 @@ public class CoverityPostBuildStep extends Recorder {
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
-        Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
+        Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
         if (shouldContinueOurSteps) {
             CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
             coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateOnFailure), Optional.ofNullable(failOnQualityIssues), Optional.ofNullable(failOnSecurityIssues), Optional.ofNullable(streamName));

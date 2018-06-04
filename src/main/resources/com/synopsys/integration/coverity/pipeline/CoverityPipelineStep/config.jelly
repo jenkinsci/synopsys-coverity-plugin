@@ -4,6 +4,9 @@
     <f:entry field="coverityToolName" title="${%CoverityToolName}">
         <f:select id="coverityToolNameId"/>
     </f:entry>
+    <f:entry field="streamName" title="${%StreamName}">
+        <f:textbox value="${it.streamName}"/>
+    </f:entry>
     <f:entry field="continueOnCommandFailure">
         <f:checkbox default="false" />
         <label>${%ContinueOnCommandFailure}</label>
@@ -20,9 +23,6 @@
     </f:block>
 
     <f:advanced title="${%FailureConditionTitle}">
-        <f:entry field="streamName" title="${%StreamName}">
-                <f:textbox value="${it.streamName}"/>
-            </f:entry>
         <f:entry title="${%BuildStateOnFailureTitle}" field="buildStateOnFailure" >
             <f:select/>
         </f:entry>
