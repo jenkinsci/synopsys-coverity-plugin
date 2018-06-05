@@ -108,6 +108,7 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
                 errorWithProjectOrView = true;
             }
             if (errorWithProjectOrView) {
+                logger.error("Skipping the Failure Condition check because of problems with the Project or View.");
                 getRun().setResult(Result.FAILURE);
                 return false;
             }
