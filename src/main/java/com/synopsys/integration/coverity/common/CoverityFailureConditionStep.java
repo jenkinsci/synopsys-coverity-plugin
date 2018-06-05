@@ -113,31 +113,9 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             int defectSize = getIssueCountVorView(projectId, viewId, viewService, logger);
             logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, projectName, viewName));
 
-            //            DefectServiceWrapper defectServiceWrapper = webServiceFactory.createDefectServiceWrapper();
-            //            List<MergedDefectDataObj> mergedDefectDataObjs = defectServiceWrapper.getDefectsForStream(streamName, new MergedDefectFilterSpecDataObj());
-            //            Boolean foundQualityIssue = false;
-            //            Boolean foundSecurityIssue = false;
-            //            for (MergedDefectDataObj defect : mergedDefectDataObjs) {
-            //                if (failOnQualityIssues && !foundQualityIssue && null != defect.getIssueKind() && defect.getIssueKind().toUpperCase().equals("QUALITY")) {
-            //                    logger.warn(String.format("Setting the Build Result to %s because a quality issue was found for the stream %s", buildStateOnFailure.getDisplayValue(), streamName));
-            //                    getRun().setResult(buildStateOnFailure.getResult());
-            //                    foundQualityIssue = true;
-            //                } else if (failOnSecurityIssues && !foundSecurityIssue && null != defect.getIssueKind() && defect.getIssueKind().toUpperCase().equals("SECURITY")) {
-            //                    logger.warn(String.format("Setting the Build Result to %s because a security issue was found for the stream %s", buildStateOnFailure.getDisplayValue(), streamName));
-            //                    foundSecurityIssue = true;
-            //                    getRun().setResult(buildStateOnFailure.getResult());
-            //                }
-            //                if (failOnQualityIssues && foundQualityIssue && !failOnSecurityIssues) {
-            //                    // If they only want to fail on Quality issues and we found one then lets exit the loop
-            //                    break;
-            //                } else if (failOnSecurityIssues && foundSecurityIssue && !failOnQualityIssues) {
-            //                    // If they only want to fail on Security issues and we found one then lets exit the loop
-            //                    break;
-            //                } else if (failOnQualityIssues && foundQualityIssue && failOnSecurityIssues && foundSecurityIssue) {
-            //                    // If they want to fail on Quality and Security issues and we found both then lets exit the loop
-            //                    break;
-            //                }
-            //            }
+            if (failOnViewIssues && defectSize > 0) {
+                getRun().setResult(buildStateOnFailure.getResult());
+            }
         } catch (final Exception e) {
             logger.error("[ERROR] " + e.getMessage(), e);
             getRun().setResult(Result.UNSTABLE);
