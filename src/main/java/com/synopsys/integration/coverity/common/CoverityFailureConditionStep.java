@@ -109,6 +109,7 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             }
             if (errorWithProjectOrView) {
                 getRun().setResult(Result.FAILURE);
+                return false;
             }
 
             String projectId = optionalProjectId.orElse("");
