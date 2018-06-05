@@ -95,16 +95,20 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 
+            boolean errorWithProjectOrView = false;
             Optional<String> optionalProjectId = getProjectIdFromName(projectName, webServiceFactory.createConfigurationService());
             if (!optionalProjectId.isPresent()) {
                 logger.error(String.format("Could not find the Id for project \"%s\". It no longer exists or the current user does not have access to it.", projectName));
+                errorWithProjectOrView = true;
             }
-
             ViewService viewService = webServiceFactory.createViewService();
-
             Optional<String> optionalViewId = getViewIdFromName(viewName, viewService);
             if (!optionalViewId.isPresent()) {
                 logger.error(String.format("Could not find the Id for view \"%s\". It no longer exists or the current user does not have access to it.", viewName));
+                errorWithProjectOrView = true;
+            }
+            if (errorWithProjectOrView) {
+                getRun().setResult(Result.FAILURE);
             }
 
             String projectId = optionalProjectId.orElse("");
