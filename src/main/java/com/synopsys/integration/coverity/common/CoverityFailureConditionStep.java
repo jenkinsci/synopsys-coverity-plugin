@@ -26,6 +26,8 @@ package com.synopsys.integration.coverity.common;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.blackducksoftware.integration.exception.IntegrationException;
@@ -36,6 +38,10 @@ import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
+import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
+import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
+import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 
@@ -89,8 +95,22 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 
+            Optional<String> optionalProjectId = getProjectIdFromName(projectName, webServiceFactory.createConfigurationService());
+            if (!optionalProjectId.isPresent()) {
+                logger.error(String.format("Could not find the Id for project \"%s\". It no longer exists or the current user does not have access to it.", projectName));
+            }
+
             ViewService viewService = webServiceFactory.createViewService();
-            int defectSize = getIssueCountVorView(projectName, viewName, viewService, logger);
+
+            Optional<String> optionalViewId = getViewIdFromName(viewName, viewService);
+            if (!optionalViewId.isPresent()) {
+                logger.error(String.format("Could not find the Id for view \"%s\". It no longer exists or the current user does not have access to it.", viewName));
+            }
+
+            String projectId = optionalProjectId.orElse("");
+            String viewId = optionalViewId.orElse("");
+
+            int defectSize = getIssueCountVorView(projectId, viewId, viewService, logger);
             logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, projectName, viewName));
 
             //            DefectServiceWrapper defectServiceWrapper = webServiceFactory.createDefectServiceWrapper();
@@ -182,14 +202,37 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         logger.alwaysLog("-- Coverity view name : " + viewName);
     }
 
-    public int getIssueCountVorView(String projectName, String viewName, ViewService viewService, IntLogger logger) throws IntegrationException {
+    private Optional<String> getProjectIdFromName(String projectName, ConfigurationService configurationService) throws CovRemoteServiceException_Exception {
+        ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
+        List<ProjectDataObj> projects = configurationService.getProjects(projectFilterSpecDataObj);
+        for (ProjectDataObj projectDataObj : projects) {
+            if (null != projectDataObj.getId() && null != projectDataObj.getId().getName() && projectDataObj.getId().getName().equals(projectName)) {
+                if (null != projectDataObj.getProjectKey()) {
+                    return Optional.of(String.valueOf(projectDataObj.getProjectKey()));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> getViewIdFromName(String viewName, ViewService viewService) throws IntegrationException, IOException, URISyntaxException {
+        Map<Long, String> views = viewService.getViews();
+        for (Map.Entry<Long, String> view : views.entrySet()) {
+            if (view.getValue().equals(viewName)) {
+                return Optional.of(String.valueOf(view.getKey()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    private int getIssueCountVorView(String projectId, String viewId, ViewService viewService, IntLogger logger) throws IntegrationException {
         try {
             int pageSize = 1;
             int defectSize = 0;
 
-            final ViewContents viewContents = viewService.getViewContents(projectName, viewName, pageSize, 0);
+            final ViewContents viewContents = viewService.getViewContents(projectId, viewId, pageSize, 0);
 
-            defectSize = viewContents.getTotalRows().intValue();
+            defectSize = viewContents.totalRows.intValue();
 
             return defectSize;
         } catch (IOException | URISyntaxException e) {
