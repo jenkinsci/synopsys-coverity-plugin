@@ -107,4 +107,8 @@ public class JenkinsCoverityInstance {
         }
         return optionalCredential;
     }
+
+    public boolean isEmpty() {
+        return null == url && null == credentialId;
+    }
 }

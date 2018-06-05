@@ -243,11 +243,29 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     // for doAutoComplete the variable will always be named value
+    public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter("value") String projectName) {
+        return coverityCommonDescriptor.doAutoCompleteProjectName(projectName);
+    }
+
+    public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
+        return coverityCommonDescriptor.doCheckProjectName(projectName);
+    }
+
+    // for doAutoComplete the variable will always be named value
     public AutoCompletionCandidates doAutoCompleteStreamName(@QueryParameter("value") String streamName) {
         return coverityCommonDescriptor.doAutoCompleteStreamName(streamName);
     }
 
-    public FormValidation doCheckStreamName(@QueryParameter("streamName") String streamName) {
-        return coverityCommonDescriptor.doCheckStreamName(streamName);
+    public FormValidation doCheckStreamName(@QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
+        return coverityCommonDescriptor.doCheckStreamName(projectName, streamName);
+    }
+
+    // for doAutoComplete the variable will always be named value
+    public AutoCompletionCandidates doAutoCompleteViewName(@QueryParameter("value") String viewName) {
+        return coverityCommonDescriptor.doAutoCompleteViewName(viewName);
+    }
+
+    public FormValidation doCheckViewName(@QueryParameter("viewName") String viewName) {
+        return coverityCommonDescriptor.doCheckViewName(viewName);
     }
 }

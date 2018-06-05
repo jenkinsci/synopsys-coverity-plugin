@@ -23,32 +23,18 @@
  */
 package com.synopsys.integration.coverity.common;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.blackducksoftware.integration.exception.EncryptionException;
-import com.blackducksoftware.integration.log.IntLogger;
-import com.blackducksoftware.integration.log.LogLevel;
-import com.blackducksoftware.integration.log.PrintStreamIntLogger;
+import com.blackducksoftware.integration.exception.IntegrationException;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.Messages;
-import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
-import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
+import com.synopsys.integration.coverity.common.cache.ProjectCacheData;
+import com.synopsys.integration.coverity.common.cache.ViewCacheData;
 import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
-import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 
 import hudson.model.AutoCompletionCandidates;
@@ -57,10 +43,8 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 public class CoverityCommonDescriptor {
-
-    private List<String> cachedStreams = null;
-    private Instant lastTimeStreamsRetrieved = null;
-    private Boolean retrievingStreamsNow = false;
+    private ProjectCacheData projectCacheData = new ProjectCacheData();
+    private ViewCacheData viewCacheData = new ViewCacheData();
 
     public ListBoxModel doFillCoverityToolNameItems(CoverityToolInstallation[] coverityToolInstallations) {
         ListBoxModel boxModel = new ListBoxModel();
@@ -96,14 +80,80 @@ public class CoverityCommonDescriptor {
         return boxModel;
     }
 
+    public AutoCompletionCandidates doAutoCompleteProjectName(String projectName) {
+        AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+        if (StringUtils.isNotBlank(projectName)) {
+            JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+            if (null == coverityInstance || coverityInstance.isEmpty()) {
+                return autoCompletionCandidates;
+            }
+            try {
+                projectCacheData.checkAndWaitForData(coverityInstance);
+            } catch (IntegrationException | InterruptedException e) {
+                e.printStackTrace();
+                return autoCompletionCandidates;
+            }
+            for (ProjectDataObj project : projectCacheData.getCachedData()) {
+                if (null != project.getId() && null != project.getId().getName() && project.getId().getName().startsWith(projectName)) {
+                    autoCompletionCandidates.add(project.getId().getName());
+                }
+            }
+
+        }
+        return autoCompletionCandidates;
+    }
+
+    public FormValidation doCheckProjectName(String projectName) {
+        if (StringUtils.isBlank(projectName)) {
+            return FormValidation.ok();
+        }
+        if (projectName.contains("$")) {
+            return FormValidation.warning(
+                    String.format("The name \"%s\" appears to contain a variable which can only be resolved at the time of the build.", projectName));
+        }
+        JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+        if (null == coverityInstance || coverityInstance.isEmpty()) {
+            return FormValidation.error("Global coverity instance is not configured.");
+        }
+        try {
+            projectCacheData.checkAndWaitForData(coverityInstance);
+        } catch (IntegrationException e) {
+            return FormValidation.error(e.getMessage());
+        } catch (InterruptedException e) {
+            return FormValidation.error(e.toString());
+        }
+        List<ProjectDataObj> projects = projectCacheData.getCachedData();
+        for (ProjectDataObj project : projects) {
+            if (null != project.getId() && null != project.getId().getName() && project.getId().getName().equals(projectName)) {
+                return FormValidation.ok();
+            }
+        }
+        return FormValidation.error(String.format("The project \"%s\" does not exist or you do not have permission to access it.", projectName));
+    }
+
     public AutoCompletionCandidates doAutoCompleteStreamName(String streamName) {
         AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
-        if (StringUtils.isNotBlank(streamName)) {
-            checkAndUpdateCachedProjects();
-            if (null != cachedStreams) {
-                for (String stream : cachedStreams) {
-                    if (stream.startsWith(streamName)) {
-                        autoCompletionCandidates.add(stream);
+        if (StringUtils.isBlank(streamName)) {
+            return autoCompletionCandidates;
+        }
+        JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+        if (null == coverityInstance || coverityInstance.isEmpty()) {
+            return autoCompletionCandidates;
+        }
+        try {
+            projectCacheData.checkAndWaitForData(coverityInstance);
+        } catch (IntegrationException | InterruptedException e) {
+            e.printStackTrace();
+            return autoCompletionCandidates;
+        }
+        for (ProjectDataObj project : projectCacheData.getCachedData()) {
+            if (null != project.getStreams() && !project.getStreams().isEmpty()) {
+                for (StreamDataObj stream : project.getStreams()) {
+                    if (null != stream.getId() && null != stream.getId().getName()) {
+                        String currentStreamName = stream.getId().getName();
+                        if (currentStreamName.startsWith(streamName)) {
+                            autoCompletionCandidates.add(currentStreamName);
+                        }
                     }
                 }
             }
@@ -111,76 +161,88 @@ public class CoverityCommonDescriptor {
         return autoCompletionCandidates;
     }
 
-    public FormValidation doCheckStreamName(String streamName) {
-        if (StringUtils.isBlank(streamName)) {
+    public FormValidation doCheckStreamName(String projectName, String streamName) {
+        if (StringUtils.isBlank(projectName) || StringUtils.isBlank(streamName)) {
             return FormValidation.ok();
-        }
-        checkAndUpdateCachedProjects();
-        if (null == cachedStreams) {
-            return FormValidation.ok();
-        }
-        for (String stream : cachedStreams) {
-            if (stream.equals(streamName)) {
-                return FormValidation.ok();
-            }
         }
         if (streamName.contains("$")) {
             return FormValidation.warning(
-                    String.format("The stream \"%s\" does not exist or you do not have permission to access it.%s The name appears to contain a variable which can only be resolved at the time of the build.", streamName,
-                            System.lineSeparator()));
+                    String.format("The name \"%s\" appears to contain a variable which can only be resolved at the time of the build.", streamName));
         }
-        return FormValidation.error(String.format("The stream \"%s\" does not exist or you do not have permission to access it.", streamName));
-    }
-
-    private void checkAndUpdateCachedProjects() {
-        if (!retrievingStreamsNow) {
-            retrievingStreamsNow = true;
-            IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
-            Instant now = Instant.now();
-            if (null == cachedStreams || null == lastTimeStreamsRetrieved) {
-                updateCachedStreams(now);
-            } else if (null != lastTimeStreamsRetrieved) {
-                Duration timeLapsed = Duration.between(lastTimeStreamsRetrieved, now);
-                // only update the cached streams every 5 minutes
-                if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(5)) {
-                    updateCachedStreams(now);
-                }
-            }
+        JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+        if (null == coverityInstance || coverityInstance.isEmpty()) {
+            return FormValidation.error("Global coverity instance is not configured.");
         }
-    }
-
-    private void updateCachedStreams(Instant now) {
-        IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
         try {
-            logger.info("Attempting retrieval of Coverity streams.");
-            JenkinsCoverityInstance coverityInstance = getCoverityInstance();
-            CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            URL coverityURL = coverityInstance.getCoverityURL().get();
-            builder.url(coverityURL.toString());
-            builder.username(coverityInstance.getCoverityUsername().orElse(null));
-            builder.password(coverityInstance.getCoverityPassword().orElse(null));
-
-            CoverityServerConfig coverityServerConfig = builder.build();
-            WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
-            webServiceFactory.connect();
-
-            cachedStreams = new ArrayList<>();
-            ConfigurationService configurationService = webServiceFactory.createConfigurationService();
-            List<ProjectDataObj> projects = configurationService.getProjects(new ProjectFilterSpecDataObj());
-            for (ProjectDataObj project : projects) {
+            projectCacheData.checkAndWaitForData(coverityInstance);
+        } catch (IntegrationException e) {
+            return FormValidation.error(e.getMessage());
+        } catch (InterruptedException e) {
+            return FormValidation.error(e.toString());
+        }
+        List<ProjectDataObj> projects = projectCacheData.getCachedData();
+        for (ProjectDataObj project : projects) {
+            if (null != project.getId() && null != project.getId().getName() && project.getId().getName().equals(projectName)) {
                 if (null != project.getStreams() && !project.getStreams().isEmpty()) {
                     for (StreamDataObj stream : project.getStreams()) {
                         if (null != stream.getId() && null != stream.getId().getName()) {
-                            cachedStreams.add(stream.getId().getName());
+                            String currentStreamName = stream.getId().getName();
+                            if (currentStreamName.equals(streamName)) {
+                                return FormValidation.ok();
+                            }
                         }
                     }
                 }
             }
-            lastTimeStreamsRetrieved = now;
-            logger.info("Updated the cached Coverity streams.");
-        } catch (EncryptionException | MalformedURLException | CoverityIntegrationException | CovRemoteServiceException_Exception e) {
-            logger.error(e);
         }
+        return FormValidation.error(String.format("The stream \"%s\" does not exist for project \"%s\" or you do not have permission to access it.", streamName, projectName));
+    }
+
+    public AutoCompletionCandidates doAutoCompleteViewName(String viewName) {
+        AutoCompletionCandidates autoCompletionCandidates = new AutoCompletionCandidates();
+        JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+        if (null == coverityInstance || coverityInstance.isEmpty() || StringUtils.isBlank(viewName)) {
+            return autoCompletionCandidates;
+        }
+        try {
+            viewCacheData.checkAndWaitForData(coverityInstance);
+        } catch (IntegrationException | InterruptedException e) {
+            e.printStackTrace();
+            return autoCompletionCandidates;
+        }
+        for (String view : viewCacheData.getCachedData()) {
+            if (view.startsWith(viewName)) {
+                autoCompletionCandidates.add(view);
+            }
+        }
+        return autoCompletionCandidates;
+    }
+
+    public FormValidation doCheckViewName(String viewName) {
+        if (StringUtils.isBlank(viewName)) {
+            return FormValidation.ok();
+        }
+        if (viewName.contains("$")) {
+            return FormValidation.warning(
+                    String.format("The name \"%s\" appears to contain a variable which can only be resolved at the time of the build.", viewName));
+        }
+        JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+        if (null == coverityInstance || coverityInstance.isEmpty()) {
+            return FormValidation.error("Global coverity instance is not configured.");
+        }
+        try {
+            viewCacheData.checkAndWaitForData(coverityInstance);
+        } catch (IntegrationException e) {
+            return FormValidation.error(e.getMessage());
+        } catch (InterruptedException e) {
+            return FormValidation.error(e.toString());
+        }
+        for (String view : viewCacheData.getCachedData()) {
+            if (view.equals(viewName)) {
+                return FormValidation.ok();
+            }
+        }
+        return FormValidation.error(String.format("The view \"%s\" does not exist or you do not have permission to access it.", viewName));
     }
 
     public CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {

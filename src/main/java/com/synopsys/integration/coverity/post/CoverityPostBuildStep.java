@@ -44,20 +44,22 @@ public class CoverityPostBuildStep extends Recorder {
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
     private final String buildStateOnFailure;
-    private final Boolean failOnQualityIssues;
-    private final Boolean failOnSecurityIssues;
+    private final Boolean failOnViewIssues;
+    private final String projectName;
     private final String streamName;
+    private final String viewName;
 
     @DataBoundConstructor
-    public CoverityPostBuildStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnQualityIssues,
-            Boolean failOnSecurityIssues, String streamName) {
+    public CoverityPostBuildStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnViewIssues,
+            String projectName, String streamName, String viewName) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
         this.buildStateOnFailure = buildStateOnFailure;
-        this.failOnQualityIssues = failOnQualityIssues;
-        this.failOnSecurityIssues = failOnSecurityIssues;
+        this.failOnViewIssues = failOnViewIssues;
+        this.projectName = projectName;
         this.streamName = streamName;
+        this.viewName = viewName;
     }
 
     public String getCoverityToolName() {
@@ -79,16 +81,20 @@ public class CoverityPostBuildStep extends Recorder {
         return buildStateOnFailure;
     }
 
-    public Boolean getFailOnQualityIssues() {
-        return failOnQualityIssues;
+    public Boolean getFailOnViewIssues() {
+        return failOnViewIssues;
     }
 
-    public Boolean getFailOnSecurityIssues() {
-        return failOnSecurityIssues;
+    public String getProjectName() {
+        return projectName;
     }
 
     public String getStreamName() {
         return streamName;
+    }
+
+    public String getViewName() {
+        return viewName;
     }
 
     @Override
@@ -107,7 +113,7 @@ public class CoverityPostBuildStep extends Recorder {
         Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
         if (shouldContinueOurSteps) {
             CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
-            coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateOnFailure), Optional.ofNullable(failOnQualityIssues), Optional.ofNullable(failOnSecurityIssues), Optional.ofNullable(streamName));
+            coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateOnFailure), Optional.ofNullable(failOnViewIssues), Optional.ofNullable(projectName), Optional.ofNullable(viewName));
         }
 
         return true;

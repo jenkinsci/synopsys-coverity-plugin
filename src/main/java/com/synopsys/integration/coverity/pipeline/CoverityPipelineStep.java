@@ -58,20 +58,22 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
     private final String buildStateOnFailure;
-    private final Boolean failOnQualityIssues;
-    private final Boolean failOnSecurityIssues;
+    private final Boolean failOnViewIssues;
+    private final String projectName;
     private final String streamName;
+    private final String viewName;
 
     @DataBoundConstructor
-    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnQualityIssues,
-            Boolean failOnSecurityIssues, String streamName) {
+    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnViewIssues,
+            String projectName, String streamName, String viewName) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
         this.buildStateOnFailure = buildStateOnFailure;
-        this.failOnQualityIssues = failOnQualityIssues;
-        this.failOnSecurityIssues = failOnSecurityIssues;
+        this.failOnViewIssues = failOnViewIssues;
+        this.projectName = projectName;
         this.streamName = streamName;
+        this.viewName = viewName;
     }
 
     public String getCoverityToolName() {
@@ -93,16 +95,20 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         return buildStateOnFailure;
     }
 
-    public Boolean getFailOnQualityIssues() {
-        return failOnQualityIssues;
+    public Boolean getFailOnViewIssues() {
+        return failOnViewIssues;
     }
 
-    public Boolean getFailOnSecurityIssues() {
-        return failOnSecurityIssues;
+    public String getProjectName() {
+        return projectName;
     }
 
     public String getStreamName() {
         return streamName;
+    }
+
+    public String getViewName() {
+        return viewName;
     }
 
     @Override
@@ -150,12 +156,30 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         }
 
         // for doAutoComplete the variable will always be named value
+        public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter("value") String projectName) {
+            return coverityCommonDescriptor.doAutoCompleteProjectName(projectName);
+        }
+
+        public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
+            return coverityCommonDescriptor.doCheckProjectName(projectName);
+        }
+
+        // for doAutoComplete the variable will always be named value
         public AutoCompletionCandidates doAutoCompleteStreamName(@QueryParameter("value") String streamName) {
             return coverityCommonDescriptor.doAutoCompleteStreamName(streamName);
         }
 
-        public FormValidation doCheckStreamName(@QueryParameter("streamName") String streamName) {
-            return coverityCommonDescriptor.doCheckStreamName(streamName);
+        public FormValidation doCheckStreamName(@QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
+            return coverityCommonDescriptor.doCheckStreamName(projectName, streamName);
+        }
+
+        // for doAutoComplete the variable will always be named value
+        public AutoCompletionCandidates doAutoCompleteViewName(@QueryParameter("value") String viewName) {
+            return coverityCommonDescriptor.doAutoCompleteViewName(viewName);
+        }
+
+        public FormValidation doCheckViewName(@QueryParameter("viewName") String viewName) {
+            return coverityCommonDescriptor.doCheckViewName(viewName);
         }
     }
 
@@ -182,8 +206,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
                             Optional.ofNullable(coverityPipelineStep.getCommands()));
             if (shouldContinueOurSteps) {
                 CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
-                coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateOnFailure()), Optional.ofNullable(coverityPipelineStep.getFailOnQualityIssues()),
-                        Optional.ofNullable(coverityPipelineStep.getFailOnSecurityIssues()), Optional.ofNullable(coverityPipelineStep.getStreamName()));
+                coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateOnFailure()), Optional.ofNullable(coverityPipelineStep.getFailOnViewIssues()),
+                        Optional.ofNullable(coverityPipelineStep.getProjectName()), Optional.ofNullable(coverityPipelineStep.getViewName()));
             }
             return null;
         }
