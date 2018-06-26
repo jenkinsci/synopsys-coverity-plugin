@@ -76,15 +76,16 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
 
             String buildStateOnFailureString = optionalBuildStateOnFailure.orElse("");
             BuildState buildStateForIssues = BuildState.getBuildStateFromDisplayValue(buildStateOnFailureString).orElse(BuildState.FAILURE);
-            if (BuildState.NONE != buildStateForIssues) {
-                String projectName = handleVariableReplacement(getEnvVars(), optionalProjectName.orElse(""));
-                String viewName = handleVariableReplacement(getEnvVars(), optionalViewName.orElse(""));
+            String projectName = handleVariableReplacement(getEnvVars(), optionalProjectName.orElse(""));
+            String viewName = handleVariableReplacement(getEnvVars(), optionalViewName.orElse(""));
 
+            logGlobalConfiguration(coverityInstance, logger);
+            logFailureConditionConfiguration(buildStateForIssues, projectName, viewName, logger);
+
+            if (BuildState.NONE == buildStateForIssues) {
+                logger.error(String.format("Skipping the Failure Condition check because the Build state configured is '%s'.", buildStateForIssues.getDisplayValue()));
+            } else {
                 logger.alwaysLog("Checking Synopsys Coverity Failure conditions.");
-
-                logGlobalConfiguration(coverityInstance, logger);
-                logFailureConditionConfiguration(buildStateForIssues, projectName, viewName, logger);
-
                 CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
                 URL coverityURL = coverityInstance.getCoverityURL().get();
                 builder.url(coverityURL.toString());
