@@ -72,7 +72,7 @@ public class CoverityCommonDescriptor {
         return FormValidation.error(Messages.CoverityToolInstallation_getNoToolWithName_0(coverityToolName));
     }
 
-    public ListBoxModel doFillBuildStateOnFailureItems() {
+    public ListBoxModel doFillBuildStateForIssuesItems() {
         ListBoxModel boxModel = new ListBoxModel();
         for (BuildState buildState : BuildState.values()) {
             boxModel.add(buildState.getDisplayValue());

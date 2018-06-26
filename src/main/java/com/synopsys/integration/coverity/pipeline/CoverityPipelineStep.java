@@ -145,8 +145,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             return coverityCommonDescriptor.doCheckCoverityToolName(getCoverityToolInstallations(), coverityToolName);
         }
 
-        public ListBoxModel doFillBuildStateOnFailureItems() {
-            return coverityCommonDescriptor.doFillBuildStateOnFailureItems();
+        public ListBoxModel doFillBuildStateForIssuesItems() {
+            return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
         }
 
         // for doAutoComplete the variable will always be named value

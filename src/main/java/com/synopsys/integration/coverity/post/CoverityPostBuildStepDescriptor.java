@@ -238,8 +238,8 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
     }
 
-    public ListBoxModel doFillBuildStateOnFailureItems() {
-        return coverityCommonDescriptor.doFillBuildStateOnFailureItems();
+    public ListBoxModel doFillBuildStateForIssuesItems() {
+        return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
     }
 
     // for doAutoComplete the variable will always be named value
