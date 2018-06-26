@@ -58,11 +58,11 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean runCommonCoverityFailureStep(Optional<String> optionalBuildStateOnFailure, Optional<Boolean> optionalFailOnViewIssues, Optional<String> optionalProjectName,
+    public boolean runCommonCoverityFailureStep(Optional<String> optionalBuildStateOnFailure, Optional<String> optionalProjectName,
             Optional<String> optionalViewName) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
-            if (!shouldRunFailureStep(logger, optionalBuildStateOnFailure, optionalFailOnViewIssues, optionalProjectName, optionalViewName)) {
+            if (!shouldRunFailureStep(logger, optionalBuildStateOnFailure, optionalProjectName, optionalViewName)) {
                 logger.warn("Skipping Synopsys Coverity failure condition check.");
                 getRun().setResult(Result.UNSTABLE);
                 return false;
@@ -75,52 +75,53 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             }
 
             String buildStateOnFailureString = optionalBuildStateOnFailure.orElse("");
-            BuildState buildStateOnFailure = BuildState.getBuildStateFromDisplayValue(buildStateOnFailureString).orElse(BuildState.FAILURE);
-            Boolean failOnViewIssues = optionalFailOnViewIssues.orElse(false);
-            String projectName = handleVariableReplacement(getEnvVars(), optionalProjectName.orElse(""));
-            String viewName = handleVariableReplacement(getEnvVars(), optionalViewName.orElse(""));
+            BuildState buildStateForIssues = BuildState.getBuildStateFromDisplayValue(buildStateOnFailureString).orElse(BuildState.FAILURE);
+            if (BuildState.NONE != buildStateForIssues) {
+                String projectName = handleVariableReplacement(getEnvVars(), optionalProjectName.orElse(""));
+                String viewName = handleVariableReplacement(getEnvVars(), optionalViewName.orElse(""));
 
-            logger.alwaysLog("Checking Synopsys Coverity Failure conditions.");
+                logger.alwaysLog("Checking Synopsys Coverity Failure conditions.");
 
-            logGlobalConfiguration(coverityInstance, logger);
-            logFailureConditionConfiguration(buildStateOnFailure, failOnViewIssues, projectName, viewName, logger);
+                logGlobalConfiguration(coverityInstance, logger);
+                logFailureConditionConfiguration(buildStateForIssues, projectName, viewName, logger);
 
-            CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            URL coverityURL = coverityInstance.getCoverityURL().get();
-            builder.url(coverityURL.toString());
-            builder.username(coverityInstance.getCoverityUsername().orElse(null));
-            builder.password(coverityInstance.getCoverityPassword().orElse(null));
+                CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+                URL coverityURL = coverityInstance.getCoverityURL().get();
+                builder.url(coverityURL.toString());
+                builder.username(coverityInstance.getCoverityUsername().orElse(null));
+                builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
-            CoverityServerConfig coverityServerConfig = builder.build();
-            WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
-            webServiceFactory.connect();
+                CoverityServerConfig coverityServerConfig = builder.build();
+                WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
+                webServiceFactory.connect();
 
-            boolean errorWithProjectOrView = false;
-            Optional<String> optionalProjectId = getProjectIdFromName(projectName, webServiceFactory.createConfigurationService());
-            if (!optionalProjectId.isPresent()) {
-                logger.error(String.format("Could not find the Id for project \"%s\". It no longer exists or the current user does not have access to it.", projectName));
-                errorWithProjectOrView = true;
-            }
-            ViewService viewService = webServiceFactory.createViewService();
-            Optional<String> optionalViewId = getViewIdFromName(viewName, viewService);
-            if (!optionalViewId.isPresent()) {
-                logger.error(String.format("Could not find the Id for view \"%s\". It no longer exists or the current user does not have access to it.", viewName));
-                errorWithProjectOrView = true;
-            }
-            if (errorWithProjectOrView) {
-                logger.error("Skipping the Failure Condition check because of problems with the Project or View.");
-                getRun().setResult(Result.FAILURE);
-                return false;
-            }
+                boolean errorWithProjectOrView = false;
+                Optional<String> optionalProjectId = getProjectIdFromName(projectName, webServiceFactory.createConfigurationService());
+                if (!optionalProjectId.isPresent()) {
+                    logger.error(String.format("Could not find the Id for project \"%s\". It no longer exists or the current user does not have access to it.", projectName));
+                    errorWithProjectOrView = true;
+                }
+                ViewService viewService = webServiceFactory.createViewService();
+                Optional<String> optionalViewId = getViewIdFromName(viewName, viewService);
+                if (!optionalViewId.isPresent()) {
+                    logger.error(String.format("Could not find the Id for view \"%s\". It no longer exists or the current user does not have access to it.", viewName));
+                    errorWithProjectOrView = true;
+                }
+                if (errorWithProjectOrView) {
+                    logger.error("Skipping the Failure Condition check because of problems with the Project or View.");
+                    getRun().setResult(Result.FAILURE);
+                    return false;
+                }
 
-            String projectId = optionalProjectId.orElse("");
-            String viewId = optionalViewId.orElse("");
+                String projectId = optionalProjectId.orElse("");
+                String viewId = optionalViewId.orElse("");
 
-            int defectSize = getIssueCountVorView(projectId, viewId, viewService, logger);
-            logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, projectName, viewName));
+                int defectSize = getIssueCountVorView(projectId, viewId, viewService, logger);
+                logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, projectName, viewName));
 
-            if (failOnViewIssues && defectSize > 0) {
-                getRun().setResult(buildStateOnFailure.getResult());
+                if (defectSize > 0) {
+                    getRun().setResult(buildStateForIssues.getResult());
+                }
             }
         } catch (final Exception e) {
             logger.error("[ERROR] " + e.getMessage(), e);
@@ -130,16 +131,11 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         return true;
     }
 
-    private boolean shouldRunFailureStep(JenkinsCoverityLogger logger, Optional<String> optionalBuildStateOnFailure, Optional<Boolean> optionalFailOnViewIssues,
+    private boolean shouldRunFailureStep(JenkinsCoverityLogger logger, Optional<String> optionalBuildStateOnFailure,
             Optional<String> optionalProjectName, Optional<String> optionalViewName) {
-        Boolean failOnViewIssues = optionalFailOnViewIssues.orElse(false);
         Boolean shouldContinue = true;
         if (!optionalBuildStateOnFailure.isPresent()) {
             logger.debug("Missing build state to set on failure.");
-            shouldContinue = false;
-        }
-        if ((!optionalFailOnViewIssues.isPresent() || !failOnViewIssues)) {
-            logger.debug("No failure condition is configured to check.");
             shouldContinue = false;
         }
         if (!optionalProjectName.isPresent()) {
@@ -179,9 +175,8 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         return shouldContinue;
     }
 
-    private void logFailureConditionConfiguration(BuildState buildState, Boolean failOnViewIssues, String projectName, String viewName, IntLogger logger) {
-        logger.alwaysLog("-- Build State on Failure Condition : " + buildState.getDisplayValue());
-        logger.alwaysLog("-- Fail on view issues : " + failOnViewIssues);
+    private void logFailureConditionConfiguration(BuildState buildState, String projectName, String viewName, IntLogger logger) {
+        logger.alwaysLog("-- Build state for issues in the view : " + buildState.getDisplayValue());
         logger.alwaysLog("-- Coverity project name : " + projectName);
         logger.alwaysLog("-- Coverity view name : " + viewName);
     }

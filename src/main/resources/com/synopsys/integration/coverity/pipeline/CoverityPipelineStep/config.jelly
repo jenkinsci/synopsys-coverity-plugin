@@ -26,15 +26,11 @@
     </f:block>
 
     <f:advanced title="${%FailureConditionTitle}">
-        <f:entry field="viewName" title="${%ViewName}">
+        <f:entry title="${%ViewName}" field="viewName">
             <f:textbox value="${it.viewName}"/>
         </f:entry>
-        <f:entry title="${%BuildStateOnFailureTitle}" field="buildStateOnFailure" >
+        <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues" >
             <f:select/>
-        </f:entry>
-        <f:entry field="failOnViewIssues">
-            <f:checkbox default="false" />
-            <label>${%FailOnViewIssues}</label>
         </f:entry>
     </f:advanced>
 </j:jelly>

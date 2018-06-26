@@ -57,20 +57,18 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
-    private final String buildStateOnFailure;
-    private final Boolean failOnViewIssues;
+    private final String buildStateForIssues;
     private final String projectName;
     private final String streamName;
     private final String viewName;
 
     @DataBoundConstructor
-    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateOnFailure, Boolean failOnViewIssues,
+    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateForIssues,
             String projectName, String streamName, String viewName) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
-        this.buildStateOnFailure = buildStateOnFailure;
-        this.failOnViewIssues = failOnViewIssues;
+        this.buildStateForIssues = buildStateForIssues;
         this.projectName = projectName;
         this.streamName = streamName;
         this.viewName = viewName;
@@ -91,12 +89,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         return commands;
     }
 
-    public String getBuildStateOnFailure() {
-        return buildStateOnFailure;
-    }
-
-    public Boolean getFailOnViewIssues() {
-        return failOnViewIssues;
+    public String getBuildStateForIssues() {
+        return buildStateForIssues;
     }
 
     public String getProjectName() {
@@ -206,7 +200,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
                             Optional.ofNullable(coverityPipelineStep.getCommands()));
             if (shouldContinueOurSteps) {
                 CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
-                coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateOnFailure()), Optional.ofNullable(coverityPipelineStep.getFailOnViewIssues()),
+                coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateForIssues()),
                         Optional.ofNullable(coverityPipelineStep.getProjectName()), Optional.ofNullable(coverityPipelineStep.getViewName()));
             }
             return null;

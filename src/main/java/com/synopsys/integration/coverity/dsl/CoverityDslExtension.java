@@ -36,9 +36,9 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 @Extension(optional = true)
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(String coverityToolName, Boolean continueOnCommandFailure, List<String> commands, String buildStateOnFailure, Boolean failOnViewIssues,
+    public Object coverity(String coverityToolName, Boolean continueOnCommandFailure, List<String> commands, String buildStateForIssues,
             String projectName, String streamName, String viewName) {
-        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateOnFailure, failOnViewIssues, projectName, streamName, viewName);
+        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, viewName);
     }
 
     private RepeatableCommand[] stringsToCommands(List<String> commands) {

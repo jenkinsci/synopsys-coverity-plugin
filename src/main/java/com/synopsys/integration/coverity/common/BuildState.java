@@ -30,7 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import hudson.model.Result;
 
 public enum BuildState {
-    SUCCESS("Success", Result.SUCCESS), FAILURE("Failure", Result.FAILURE), UNSTABLE("Unstable", Result.UNSTABLE);
+    SUCCESS("Success", Result.SUCCESS), FAILURE("Failure", Result.FAILURE), UNSTABLE("Unstable", Result.UNSTABLE), NONE("None (Will not look for issues in the view)", null);
 
     private final String displayValue;
     private final Result result;
