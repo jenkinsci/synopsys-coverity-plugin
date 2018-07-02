@@ -35,6 +35,7 @@ import com.blackducksoftware.integration.log.PrintStreamIntLogger;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 
 public abstract class BaseCacheData<T> {
+    public static final int CACHE_TIME = 5;
     private boolean retrievingNow = false;
     private Instant lastTimeRetrieved = null;
     private List<T> cachedData = null;
@@ -52,10 +53,10 @@ public abstract class BaseCacheData<T> {
         while (null == cachedData) {
             now = Instant.now();
             Duration timeLapsed = Duration.between(startingTime, now);
-            if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(2)) {
-                throw new IntegrationException(String.format("Validation timed out. Retrieving the %s information took longer than 2 minutes.", getDataType()));
+            if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(5)) {
+                throw new IntegrationException(String.format("Validation timed out. Retrieving the %s information took longer than 5 minutes.", getDataType()));
             }
-            System.out.println("Waiting for views");
+            System.out.println(String.format("Waiting for %s", getDataType()));
             Thread.sleep(500);
         }
     }
@@ -72,8 +73,8 @@ public abstract class BaseCacheData<T> {
                     lastTimeRetrieved = now;
                 } else if (null != lastTimeRetrieved) {
                     Duration timeLapsed = Duration.between(lastTimeRetrieved, now);
-                    // only update the cached views every 2 minutes
-                    if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(2)) {
+                    // only update the cached views every 5 minutes
+                    if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(CACHE_TIME)) {
                         cachedData = null;
                         List<T> views = retrieveData(coverityInstance);
                         cachedData = views;

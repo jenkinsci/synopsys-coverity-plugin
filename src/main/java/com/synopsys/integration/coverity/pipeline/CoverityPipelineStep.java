@@ -45,7 +45,6 @@ import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -141,7 +140,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             return coverityCommonDescriptor.doFillCoverityToolNameItems(getCoverityToolInstallations());
         }
 
-        public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") String coverityToolName) {
+        public FormValidation doCheckCoverityToolName(final @QueryParameter("coverityToolName") String coverityToolName) {
             return coverityCommonDescriptor.doCheckCoverityToolName(getCoverityToolInstallations(), coverityToolName);
         }
 
@@ -149,31 +148,16 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
         }
 
-        // for doAutoComplete the variable will always be named value
-        public AutoCompletionCandidates doAutoCompleteProjectName(@QueryParameter("value") String projectName) {
-            return coverityCommonDescriptor.doAutoCompleteProjectName(projectName);
+        public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName) {
+            return coverityCommonDescriptor.doFillProjectNameItems(projectName);
         }
 
-        public FormValidation doCheckProjectName(@QueryParameter("projectName") String projectName) {
-            return coverityCommonDescriptor.doCheckProjectName(projectName);
+        public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName) {
+            return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName);
         }
 
-        // for doAutoComplete the variable will always be named value
-        public AutoCompletionCandidates doAutoCompleteStreamName(@QueryParameter("value") String streamName) {
-            return coverityCommonDescriptor.doAutoCompleteStreamName(streamName);
-        }
-
-        public FormValidation doCheckStreamName(@QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
-            return coverityCommonDescriptor.doCheckStreamName(projectName, streamName);
-        }
-
-        // for doAutoComplete the variable will always be named value
-        public AutoCompletionCandidates doAutoCompleteViewName(@QueryParameter("value") String viewName) {
-            return coverityCommonDescriptor.doAutoCompleteViewName(viewName);
-        }
-
-        public FormValidation doCheckViewName(@QueryParameter("viewName") String viewName) {
-            return coverityCommonDescriptor.doCheckViewName(viewName);
+        public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName) {
+            return coverityCommonDescriptor.doFillViewNameItems(viewName);
         }
     }
 

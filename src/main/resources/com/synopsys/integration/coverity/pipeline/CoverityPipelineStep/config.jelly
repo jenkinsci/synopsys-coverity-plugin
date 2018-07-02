@@ -5,14 +5,10 @@
         <f:select id="coverityToolNameId"/>
     </f:entry>
     <f:entry field="projectName" title="${%ProjectName}">
-           <f:textbox value="${it.projectName}"/>
-       </f:entry>
-       <f:entry field="streamName" title="${%StreamName}">
-           <f:textbox value="${it.streamName}"/>
-       </f:entry>
-    <f:entry field="continueOnCommandFailure">
-        <f:checkbox default="false" />
-        <label>${%ContinueOnCommandFailure}</label>
+           <f:select id="projectNameId"/>
+    </f:entry>
+    <f:entry field="streamName" title="${%StreamName}">
+            <f:select id="streamNameId"/>
     </f:entry>
     <f:block>
         <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
@@ -24,10 +20,12 @@
             <f:repeatableDeleteButton value="${%DeleteCommand}"/>
         </f:repeatable>
     </f:block>
-
+    <f:entry field="continueOnCommandFailure" title="${%ContinueOnCommandFailure}">
+        <f:checkbox default="false" />
+    </f:entry>
     <f:advanced title="${%FailureConditionTitle}">
         <f:entry title="${%ViewName}" field="viewName">
-            <f:textbox value="${it.viewName}"/>
+            <f:select id="viewNameId"/>
         </f:entry>
         <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues" >
             <f:select/>
