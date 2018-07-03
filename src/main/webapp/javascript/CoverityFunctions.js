@@ -55,6 +55,8 @@ function loadList(selectId, loadingId, loadingText, fillURL, requestParameters) 
                     select.appendChild(opt);
                 });
                 select.value = selectedOption;
+            } else {
+                console.log("Failed to load from " + fillURL + ". Error: " + t.statusText + " status: " + t.status);
             }
             hideLoading(selectId, loadingId);
         }
