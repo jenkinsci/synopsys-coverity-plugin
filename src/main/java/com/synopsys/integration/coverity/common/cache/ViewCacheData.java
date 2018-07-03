@@ -63,7 +63,7 @@ public class ViewCacheData extends BaseCacheData<String> {
 
             ViewService viewService = webServiceFactory.createViewService();
             logger.info("Completed retrieval of Coverity Views.");
-            return new ArrayList<String>(viewService.getViews().values());
+            return new ArrayList<>(viewService.getViews().values());
         } catch (IOException | IntegrationException | URISyntaxException e) {
             logger.error(e);
         }
