@@ -77,7 +77,7 @@ public class CoverityCommonDescriptor {
         return boxModel;
     }
 
-    public ListBoxModel doFillProjectNameItems(final String projectName) {
+    public ListBoxModel doFillProjectNameItems(final String projectName, final Boolean updateNow) {
         final ListBoxModel boxModel = new ListBoxModel();
 
         final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
@@ -85,7 +85,7 @@ public class CoverityCommonDescriptor {
             return boxModel;
         }
         try {
-            projectCacheData.checkAndWaitForData(coverityInstance);
+            projectCacheData.checkAndWaitForData(coverityInstance, updateNow);
         } catch (IntegrationException | InterruptedException e) {
             e.printStackTrace();
             return boxModel;
@@ -104,7 +104,7 @@ public class CoverityCommonDescriptor {
         return boxModel;
     }
 
-    public ListBoxModel doFillStreamNameItems(final String projectName, final String streamName) {
+    public ListBoxModel doFillStreamNameItems(final String projectName, final String streamName, final Boolean updateNow) {
         final ListBoxModel boxModel = new ListBoxModel();
         if (StringUtils.isBlank(projectName)) {
             return boxModel;
@@ -114,7 +114,7 @@ public class CoverityCommonDescriptor {
             return boxModel;
         }
         try {
-            projectCacheData.checkAndWaitForData(coverityInstance);
+            projectCacheData.checkAndWaitForData(coverityInstance, updateNow);
         } catch (IntegrationException | InterruptedException e) {
             e.printStackTrace();
             return boxModel;
@@ -123,7 +123,7 @@ public class CoverityCommonDescriptor {
             if (isMatchingProject(project, projectName) && null != project.getStreams() && !project.getStreams().isEmpty()) {
                 for (final StreamDataObj stream : project.getStreams()) {
                     if (null != stream.getId() && null != stream.getId().getName()) {
-                        String currentStreamName = stream.getId().getName();
+                        final String currentStreamName = stream.getId().getName();
                         if (StringUtils.isNotBlank(streamName) && currentStreamName.equals(streamName)) {
                             boxModel.add(new ListBoxModel.Option(currentStreamName, currentStreamName, true));
                         } else {
@@ -141,14 +141,14 @@ public class CoverityCommonDescriptor {
 
     }
 
-    public ListBoxModel doFillViewNameItems(final String viewName) {
+    public ListBoxModel doFillViewNameItems(final String viewName, final Boolean updateNow) {
         final ListBoxModel boxModel = new ListBoxModel();
         final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
         if (null == coverityInstance || coverityInstance.isEmpty()) {
             return boxModel;
         }
         try {
-            viewCacheData.checkAndWaitForData(coverityInstance);
+            viewCacheData.checkAndWaitForData(coverityInstance, updateNow);
         } catch (IntegrationException | InterruptedException e) {
             e.printStackTrace();
             return boxModel;

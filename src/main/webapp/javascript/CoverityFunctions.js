@@ -4,43 +4,61 @@ function setRootURL(rootUrl) {
     jenkinsRootUrl = rootUrl;
 }
 
-
 function loadProjects() {
-    var projectSelect = document.getElementById("projectNameId");
-    var oldSelected = projectSelect.value;
-    new Ajax.Request(jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.post.CoverityPostBuildStep/fillProjectNameItems", {
-        parameters: {projectName: oldSelected},
-        onLoading: showLoadingProjects(),
+    var projectSelect = document.getElementById('projectNameId');
+    var oldProjectSelected = projectSelect.value;
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.post.CoverityPostBuildStep/fillProjectNameItems";
+    var requestParameters = {projectName: oldProjectSelected, updateNow: true};
+    loadList('projectNameId', 'projectsLoading', 'Loading projects...', fillURL, requestParameters);
+}
+
+function loadStreams() {
+    var projectSelect = document.getElementById('projectNameId');
+    var oldProjectSelected = projectSelect.value;
+
+    var streamSelect = document.getElementById('streamNameId');
+    var oldStreamSelected = streamSelect.value;
+
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.post.CoverityPostBuildStep/fillStreamNameItems";
+    var requestParameters = {projectName: oldProjectSelected, streamName: oldStreamSelected, updateNow: true};
+    loadList('streamNameId', 'streamsLoading', 'Loading streams...', fillURL, requestParameters);
+}
+
+function loadViews() {
+    var viewSelect = document.getElementById('viewNameId');
+    var oldViewSelected = viewSelect.value;
+
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.post.CoverityPostBuildStep/fillViewNameItems";
+    var requestParameters = {viewName: oldViewSelected, updateNow: true};
+    loadList('viewNameId', 'viewsLoading', 'Loading views...', fillURL, requestParameters);
+}
+
+function loadList(selectId, loadingId, loadingText, fillURL, requestParameters) {
+    var select = document.getElementById(selectId);
+    new Ajax.Request(fillURL, {
+        parameters: requestParameters,
+        onLoading: showLoading(selectId, loadingId, loadingText),
         onComplete: function (t) {
             if (t.status == 200) {
                 var json = t.responseText.evalJSON();
 
-                projectSelect.options.length = 0;
+                select.options.length = 0;
 
-                var selectedProject = "";
-                json.values.each(function (project) {
+                var selectedOption = "";
+                json.values.each(function (currentOption) {
                     var opt = document.createElement("option");
-                    opt.value = project.value;
-                    opt.text = project.name;
-                    if (project.selected) {
-                        selectedProject = project.value;
+                    opt.value = currentOption.value;
+                    opt.text = currentOption.name;
+                    if (currentOption.selected) {
+                        selectedOption = currentOption.value;
                     }
-                    projectSelect.appendChild(opt);
+                    select.appendChild(opt);
                 });
-                projectSelect.value = selectedProject;
+                select.value = selectedOption;
             }
-            hideLoadingProjects();
+            hideLoading(selectId, loadingId);
         }
     });
-}
-
-
-function showLoadingProjects() {
-    showLoading('projectNameId', 'projectsloading', 'Loading projects...');
-}
-
-function hideLoadingProjects() {
-    hideLoading('projectNameId', 'projectsloading');
 }
 
 function showLoading(nameId, loadingId, loadingText) {

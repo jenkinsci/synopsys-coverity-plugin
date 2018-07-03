@@ -241,16 +241,16 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
     }
 
-    public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName) {
-        return coverityCommonDescriptor.doFillProjectNameItems(projectName);
+    public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
     }
 
-    public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName) {
-        return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName);
+    public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName, updateNow);
     }
 
-    public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName) {
-        return coverityCommonDescriptor.doFillViewNameItems(viewName);
+    public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillViewNameItems(viewName, updateNow);
     }
 
 }

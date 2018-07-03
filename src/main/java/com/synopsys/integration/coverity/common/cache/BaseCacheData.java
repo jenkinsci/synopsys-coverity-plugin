@@ -46,8 +46,8 @@ public abstract class BaseCacheData<T> {
 
     public abstract String getDataType();
 
-    public void checkAndWaitForData(JenkinsCoverityInstance coverityInstance) throws InterruptedException, IntegrationException {
-        checkAndUpdateCachedData(coverityInstance);
+    public void checkAndWaitForData(final JenkinsCoverityInstance coverityInstance, final Boolean updateNow) throws InterruptedException, IntegrationException {
+        checkAndUpdateCachedData(coverityInstance, updateNow);
         Instant startingTime = Instant.now();
         Instant now;
         while (null == cachedData) {
@@ -61,7 +61,11 @@ public abstract class BaseCacheData<T> {
         }
     }
 
-    public void checkAndUpdateCachedData(JenkinsCoverityInstance coverityInstance) {
+    public void checkAndUpdateCachedData(final JenkinsCoverityInstance coverityInstance, final Boolean updateNow) {
+        boolean forceUpdate = false;
+        if (null != updateNow) {
+            forceUpdate = updateNow;
+        }
         if (!retrievingNow) {
             retrievingNow = true;
             try {
@@ -74,7 +78,7 @@ public abstract class BaseCacheData<T> {
                 } else if (null != lastTimeRetrieved) {
                     Duration timeLapsed = Duration.between(lastTimeRetrieved, now);
                     // only update the cached views every 5 minutes
-                    if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(CACHE_TIME)) {
+                    if (forceUpdate || timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(CACHE_TIME)) {
                         cachedData = null;
                         List<T> views = retrieveData(coverityInstance);
                         cachedData = views;

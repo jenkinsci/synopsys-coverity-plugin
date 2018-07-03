@@ -25,7 +25,6 @@ package com.synopsys.integration.coverity.common.cache;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,10 +63,9 @@ public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
             WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 
-            List<ProjectDataObj> projects = new ArrayList<>();
             ConfigurationService configurationService = webServiceFactory.createConfigurationService();
             ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
-            projects = configurationService.getProjects(projectFilterSpecDataObj);
+            List<ProjectDataObj> projects = configurationService.getProjects(projectFilterSpecDataObj);
             logger.info("Completed retrieval of Coverity Projects.");
             return projects;
         } catch (EncryptionException | MalformedURLException | CoverityIntegrationException | CovRemoteServiceException_Exception e) {
