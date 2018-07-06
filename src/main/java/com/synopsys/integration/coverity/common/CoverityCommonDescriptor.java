@@ -71,8 +71,11 @@ public class CoverityCommonDescriptor {
 
     public ListBoxModel doFillBuildStateForIssuesItems() {
         final ListBoxModel boxModel = new ListBoxModel();
+        boxModel.add(BuildState.NONE.getDisplayValue(), BuildState.NONE.name());
         for (final BuildState buildState : BuildState.values()) {
-            boxModel.add(buildState.getDisplayValue());
+            if (BuildState.NONE != buildState) {
+                boxModel.add(buildState.getDisplayValue(), buildState.name());
+            }
         }
         return boxModel;
     }

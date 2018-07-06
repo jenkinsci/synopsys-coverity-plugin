@@ -75,7 +75,7 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             }
 
             String buildStateOnFailureString = optionalBuildStateOnFailure.orElse("");
-            BuildState buildStateForIssues = BuildState.getBuildStateFromDisplayValue(buildStateOnFailureString).orElse(BuildState.FAILURE);
+            BuildState buildStateForIssues = BuildState.valueOf(buildStateOnFailureString);
             String projectName = handleVariableReplacement(getEnvVars(), optionalProjectName.orElse(""));
             String viewName = handleVariableReplacement(getEnvVars(), optionalViewName.orElse(""));
 

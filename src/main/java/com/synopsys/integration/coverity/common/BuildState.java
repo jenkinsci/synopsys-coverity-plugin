@@ -23,10 +23,6 @@
  */
 package com.synopsys.integration.coverity.common;
 
-import java.util.Optional;
-
-import org.apache.commons.lang.StringUtils;
-
 import hudson.model.Result;
 
 public enum BuildState {
@@ -38,18 +34,6 @@ public enum BuildState {
     BuildState(String displayValue, Result result) {
         this.displayValue = displayValue;
         this.result = result;
-    }
-
-    public static Optional<BuildState> getBuildStateFromDisplayValue(final String displayValue) {
-        if (StringUtils.isBlank(displayValue)) {
-            return Optional.empty();
-        }
-        for (final BuildState currentEnum : BuildState.values()) {
-            if (currentEnum.getDisplayValue().equalsIgnoreCase(displayValue)) {
-                return Optional.of(currentEnum);
-            }
-        }
-        return Optional.empty();
     }
 
     public String getDisplayValue() {

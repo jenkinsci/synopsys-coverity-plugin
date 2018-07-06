@@ -28,7 +28,6 @@ import java.util.Optional;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import com.synopsys.integration.coverity.common.BuildState;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
@@ -44,8 +43,7 @@ public class CoverityPostBuildStep extends Recorder {
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
-    // set the build state value here so that NONE is the default value for new jobs
-    private String buildStateForIssues = BuildState.NONE.getDisplayValue();
+    private String buildStateForIssues;
     private final String projectName;
     private final String streamName;
     private final String viewName;
