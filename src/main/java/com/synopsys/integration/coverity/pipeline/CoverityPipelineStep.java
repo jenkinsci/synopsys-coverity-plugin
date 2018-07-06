@@ -35,6 +35,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.Messages;
+import com.synopsys.integration.coverity.common.BuildState;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
@@ -56,7 +57,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
-    private final String buildStateForIssues;
+    // set the build state value here so that NONE is the default value for new jobs
+    private String buildStateForIssues = BuildState.NONE.getDisplayValue();
     private final String projectName;
     private final String streamName;
     private final String viewName;
