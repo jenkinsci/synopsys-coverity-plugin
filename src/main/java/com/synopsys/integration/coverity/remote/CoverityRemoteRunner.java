@@ -27,7 +27,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +47,6 @@ import hudson.remoting.Callable;
 public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, IntegrationException> {
     private final JenkinsCoverityLogger logger;
 
-    private final URL coverityUrl;
     private final String coverityUsername;
     private final String coverityPassword;
 
@@ -59,10 +57,10 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
 
     private final EnvVars envVars;
 
-    public CoverityRemoteRunner(JenkinsCoverityLogger logger, URL coverityUrl, String coverityUsername, String coverityPassword,
-            String coverityStaticAnalysisDirectory, List<String> arguments, String workspacePath, EnvVars envVars) {
+    public CoverityRemoteRunner(final JenkinsCoverityLogger logger, final String coverityUsername, final String coverityPassword,
+            final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath, final EnvVars envVars) {
         this.logger = logger;
-        this.coverityUrl = coverityUrl;
+
         this.coverityUsername = coverityUsername;
         this.coverityPassword = coverityPassword;
         this.coverityStaticAnalysisDirectory = coverityStaticAnalysisDirectory;
@@ -76,12 +74,6 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
         File workspace = new File(workspacePath);
         Map<String, String> environment = new HashMap<>();
         environment.putAll(envVars);
-        if (null != coverityUrl) {
-            setEnvironmentVariableString(environment, Executable.COVERITY_HOST_ENVIRONMENT_VARIABLE, coverityUrl.getHost());
-            if (coverityUrl.getPort() > -1) {
-                setEnvironmentVariableString(environment, Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getPort()));
-            }
-        }
         if (null != coverityUsername) {
             setEnvironmentVariableString(environment, Executable.COVERITY_USER_ENVIRONMENT_VARIABLE, coverityUsername);
         }

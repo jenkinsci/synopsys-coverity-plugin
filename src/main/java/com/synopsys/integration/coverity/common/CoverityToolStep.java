@@ -24,6 +24,7 @@
 package com.synopsys.integration.coverity.common;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,7 @@ import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.PluginHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
+import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.remote.CoverityRemoteResponse;
 import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
@@ -92,13 +94,21 @@ public class CoverityToolStep extends BaseCoverityStep {
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
             logger.alwaysLog("-- Continue on command failure : " + continueOnCommandFailure);
             try {
+                URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
+                if (null != coverityUrl) {
+                    getEnvVars().put(Executable.COVERITY_HOST_ENVIRONMENT_VARIABLE, coverityUrl.getHost());
+                    if (coverityUrl.getPort() > -1) {
+                        getEnvVars().put(Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getPort()));
+                    }
+                }
+
                 for (RepeatableCommand repeatableCommand : commands) {
                     String command = repeatableCommand.getCommand();
                     if (StringUtils.isBlank(command)) {
                         continue;
                     }
                     List<String> arguments = getCorrectedParameters(command);
-                    CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityURL().orElse(null), coverityInstance.getCoverityUsername().orElse(null),
+                    CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityUsername().orElse(null),
                             coverityInstance.getCoverityPassword().orElse(null),
                             coverityToolInstallation.getHome(), arguments, getWorkspace().getRemote(), getEnvVars());
                     final CoverityRemoteResponse response = getNode().getChannel().call(coverityRemoteRunner);
