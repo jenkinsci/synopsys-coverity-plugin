@@ -65,6 +65,10 @@ public class CoverityToolStep extends BaseCoverityStep {
             final String pluginVersion = PluginHelper.getPluginVersion();
             logger.alwaysLog("Running Synopsys Coverity version : " + pluginVersion);
 
+            if (Result.ABORTED == getRun().getResult()) {
+                logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
+                return false;
+            }
             if (optionalStreamName.isPresent()) {
                 String streamName = optionalStreamName.get();
                 getEnvVars().put("COV_STREAM", streamName);

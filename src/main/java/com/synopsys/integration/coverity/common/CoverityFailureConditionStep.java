@@ -62,6 +62,11 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             Optional<String> optionalViewName) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
+            if (Result.SUCCESS != getRun().getResult()) {
+                logger.alwaysLog("Skipping the Synopsys Coverity Failure Condition step because the build was not successful.");
+                return false;
+            }
+
             if (!shouldRunFailureStep(logger, optionalBuildStateOnFailure, optionalProjectName, optionalViewName)) {
                 logger.warn("Skipping Synopsys Coverity failure condition check.");
                 getRun().setResult(Result.UNSTABLE);
