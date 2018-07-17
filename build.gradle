@@ -40,6 +40,8 @@ jenkinsPlugin {
     displayName = 'Synopsys Coverity Plugin'
     url = 'N/A'
     gitHubUrl = 'https://github.com/blackducksoftware/synopsys-coverity'
+
+    pluginFirstClassLoader = true
 }
 
 dependencies {
