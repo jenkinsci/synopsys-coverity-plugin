@@ -31,6 +31,7 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -45,8 +46,8 @@ import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
-import hudson.model.Build;
 import hudson.model.Computer;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -163,9 +164,9 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
     public static final class DetectPipelineExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
         @StepContextParameter
-        transient TaskListener listener;
+        private transient TaskListener listener;
         @StepContextParameter
-        transient EnvVars envVars;
+        private transient EnvVars envVars;
         @Inject
         private transient CoverityPipelineStep coverityPipelineStep;
         @StepContextParameter
@@ -173,16 +174,17 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         @StepContextParameter
         private transient FilePath workspace;
         @StepContextParameter
-        private transient Build build;
+        private transient Run run;
 
         @Override
         protected Void run() throws Exception {
-            final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, build);
+            final RunWrapper runWrapper = new RunWrapper(run, true);
+            final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
             final Boolean shouldContinueOurSteps = coverityToolStep
                     .runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getStreamName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
                             Optional.ofNullable(coverityPipelineStep.getCommands()));
             if (shouldContinueOurSteps) {
-                final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, build);
+                final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
                 coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateForIssues()),
                         Optional.ofNullable(coverityPipelineStep.getProjectName()), Optional.ofNullable(coverityPipelineStep.getViewName()));
             }

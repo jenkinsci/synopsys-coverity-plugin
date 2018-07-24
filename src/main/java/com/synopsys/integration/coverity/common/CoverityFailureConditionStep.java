@@ -47,15 +47,15 @@ import com.synopsys.integration.coverity.ws.view.ViewService;
 
 import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 
 public class CoverityFailureConditionStep extends BaseCoverityStep {
 
-    public CoverityFailureConditionStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final AbstractBuild build) {
-        super(node, listener, envVars, workspace, build);
+    public CoverityFailureConditionStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+        super(node, listener, envVars, workspace, run);
     }
 
     public boolean runCommonCoverityFailureStep(final Optional<String> optionalBuildStateOnFailure, final Optional<String> optionalProjectName,

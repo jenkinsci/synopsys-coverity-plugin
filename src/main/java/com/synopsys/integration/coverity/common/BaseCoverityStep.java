@@ -38,9 +38,9 @@ import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Util;
-import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
@@ -50,14 +50,14 @@ public abstract class BaseCoverityStep {
     private final TaskListener listener;
     private final EnvVars envVars;
     private final FilePath workspace;
-    private final AbstractBuild build;
+    private final Run run;
 
-    public BaseCoverityStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final AbstractBuild build) {
+    public BaseCoverityStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
         this.node = node;
         this.listener = listener;
         this.envVars = envVars;
         this.workspace = workspace;
-        this.build = build;
+        this.run = run;
     }
 
     public Node getNode() {
@@ -76,16 +76,16 @@ public abstract class BaseCoverityStep {
         return workspace;
     }
 
-    public AbstractBuild getBuild() {
-        return build;
+    public Run getRun() {
+        return run;
     }
 
     public Result getResult() {
-        return getBuild().getResult();
+        return getRun().getResult();
     }
 
     public void setResult(final Result result) {
-        getBuild().setResult(result);
+        getRun().setResult(result);
     }
 
     public CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {

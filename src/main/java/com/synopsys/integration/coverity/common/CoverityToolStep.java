@@ -48,16 +48,18 @@ import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 
 import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.model.AbstractBuild;
 import hudson.model.Node;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.scm.ChangeLogSet;
 
 public class CoverityToolStep extends BaseCoverityStep {
+    private final List<ChangeLogSet<?>> changeLogSets;
 
-    public CoverityToolStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final AbstractBuild build) {
-        super(node, listener, envVars, workspace, build);
+    public CoverityToolStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run, final List<ChangeLogSet<?>> changeLogSets) {
+        super(node, listener, envVars, workspace, run);
+        this.changeLogSets = changeLogSets;
     }
 
     private CoverityToolInstallation[] getCoverityToolInstallations() {
@@ -71,7 +73,7 @@ public class CoverityToolStep extends BaseCoverityStep {
             final String pluginVersion = PluginHelper.getPluginVersion();
             logger.alwaysLog("Running Synopsys Coverity version : " + pluginVersion);
 
-            if (Result.ABORTED == getBuild().getResult()) {
+            if (Result.ABORTED == getResult()) {
                 logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
                 return false;
             }
@@ -80,14 +82,13 @@ public class CoverityToolStep extends BaseCoverityStep {
                 getEnvVars().put("COV_STREAM", streamName);
             }
 
-            final List<ChangeLogSet<ChangeLogSet.Entry>> changeLogSets = getBuild().getChangeSets();
             if (!changeLogSets.isEmpty()) {
-                for (final ChangeLogSet<ChangeLogSet.Entry> changeLogSet : changeLogSets) {
+                for (final ChangeLogSet<?> changeLogSet : changeLogSets) {
                     if (!changeLogSet.isEmptySet()) {
                         final Object[] changeEntryObjects = changeLogSet.getItems();
                         for (final Object changeEntryObject : changeEntryObjects) {
                             final ChangeLogSet.Entry changeEntry = (ChangeLogSet.Entry) changeEntryObject;
-                            
+
                             final Date date = new Date(changeEntry.getTimestamp());
                             final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
                             sdf.setTimeZone(TimeZone.getTimeZone("UTC"));

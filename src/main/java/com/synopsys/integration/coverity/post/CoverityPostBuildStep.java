@@ -43,14 +43,14 @@ public class CoverityPostBuildStep extends Recorder {
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
-    private String buildStateForIssues;
+    private final String buildStateForIssues;
     private final String projectName;
     private final String streamName;
     private final String viewName;
 
     @DataBoundConstructor
-    public CoverityPostBuildStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateForIssues,
-            String projectName, String streamName, String viewName) {
+    public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
+            final String projectName, final String streamName, final String viewName) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
@@ -103,10 +103,10 @@ public class CoverityPostBuildStep extends Recorder {
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
-        final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
-        Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
+        final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
+        final Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
         if (shouldContinueOurSteps) {
-            CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
+            final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
             coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateForIssues), Optional.ofNullable(projectName), Optional.ofNullable(viewName));
         }
 
