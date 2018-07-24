@@ -87,7 +87,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                         final Object[] changeEntryObjects = changeLogSet.getItems();
                         for (final Object changeEntryObject : changeEntryObjects) {
                             final ChangeLogSet.Entry changeEntry = (ChangeLogSet.Entry) changeEntryObject;
-                            //
+                            
                             final Date date = new Date(changeEntry.getTimestamp());
                             final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
                             sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
