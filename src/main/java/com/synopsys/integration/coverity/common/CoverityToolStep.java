@@ -94,7 +94,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                             logger.info(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
                             final List<ChangeLogSet.AffectedFile> affectedFiles = new ArrayList<>(changeEntry.getAffectedFiles());
                             for (final ChangeLogSet.AffectedFile affectedFile : affectedFiles) {
-                                logger.info(String.format("Type: %s File Path: %s", affectedFile.getEditType(), affectedFile.getPath()));
+                                logger.info(String.format("Type: %s -- %s File Path: %s", affectedFile.getEditType().getName(), affectedFile.getEditType().getDescription(), affectedFile.getPath()));
                             }
                         }
                     }
