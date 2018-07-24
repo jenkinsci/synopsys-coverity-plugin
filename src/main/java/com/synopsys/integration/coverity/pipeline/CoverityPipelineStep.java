@@ -45,8 +45,8 @@ import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.model.Build;
 import hudson.model.Computer;
-import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -56,14 +56,14 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
-    private String buildStateForIssues;
+    private final String buildStateForIssues;
     private final String projectName;
     private final String streamName;
     private final String viewName;
 
     @DataBoundConstructor
-    public CoverityPipelineStep(String coverityToolName, Boolean continueOnCommandFailure, RepeatableCommand[] commands, String buildStateForIssues,
-            String projectName, String streamName, String viewName) {
+    public CoverityPipelineStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
+            final String projectName, final String streamName, final String viewName) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
@@ -172,18 +172,17 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         private transient Computer computer;
         @StepContextParameter
         private transient FilePath workspace;
-
         @StepContextParameter
-        private transient Run run;
+        private transient Build build;
 
         @Override
         protected Void run() throws Exception {
-            final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run);
-            Boolean shouldContinueOurSteps = coverityToolStep
+            final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, build);
+            final Boolean shouldContinueOurSteps = coverityToolStep
                     .runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getStreamName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
                             Optional.ofNullable(coverityPipelineStep.getCommands()));
             if (shouldContinueOurSteps) {
-                CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
+                final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, build);
                 coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateForIssues()),
                         Optional.ofNullable(coverityPipelineStep.getProjectName()), Optional.ofNullable(coverityPipelineStep.getViewName()));
             }

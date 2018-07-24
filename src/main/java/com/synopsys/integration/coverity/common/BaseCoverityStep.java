@@ -38,8 +38,9 @@ import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Util;
+import hudson.model.AbstractBuild;
 import hudson.model.Node;
-import hudson.model.Run;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
@@ -49,14 +50,14 @@ public abstract class BaseCoverityStep {
     private final TaskListener listener;
     private final EnvVars envVars;
     private final FilePath workspace;
-    private final Run run;
+    private final AbstractBuild build;
 
-    public BaseCoverityStep(Node node, TaskListener listener, EnvVars envVars, FilePath workspace, Run run) {
+    public BaseCoverityStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final AbstractBuild build) {
         this.node = node;
         this.listener = listener;
         this.envVars = envVars;
         this.workspace = workspace;
-        this.run = run;
+        this.build = build;
     }
 
     public Node getNode() {
@@ -75,8 +76,16 @@ public abstract class BaseCoverityStep {
         return workspace;
     }
 
-    public Run getRun() {
-        return run;
+    public AbstractBuild getBuild() {
+        return build;
+    }
+
+    public Result getResult() {
+        return getBuild().getResult();
+    }
+
+    public void setResult(final Result result) {
+        getBuild().setResult(result);
     }
 
     public CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
@@ -110,17 +119,17 @@ public abstract class BaseCoverityStep {
         return new JenkinsProxyHelper();
     }
 
-    public void logGlobalConfiguration(JenkinsCoverityInstance coverityInstance, IntLogger logger) {
+    public void logGlobalConfiguration(final JenkinsCoverityInstance coverityInstance, final IntLogger logger) {
         if (null == coverityInstance) {
             logger.warn("No global Synopsys Coverity configuration found.");
         } else {
-            Optional<URL> optionalCoverityURL = coverityInstance.getCoverityURL();
+            final Optional<URL> optionalCoverityURL = coverityInstance.getCoverityURL();
             if (!optionalCoverityURL.isPresent()) {
                 logger.warn("No Coverity URL configured.");
             } else {
                 logger.alwaysLog("-- Coverity URL : " + optionalCoverityURL.get().toString());
             }
-            Optional<String> optionalCoverityUsername = coverityInstance.getCoverityUsername();
+            final Optional<String> optionalCoverityUsername = coverityInstance.getCoverityUsername();
             if (!optionalCoverityUsername.isPresent()) {
                 logger.warn("No Coverity Username configured.");
             } else {

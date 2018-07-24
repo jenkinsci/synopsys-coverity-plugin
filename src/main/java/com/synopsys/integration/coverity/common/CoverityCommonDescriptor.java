@@ -82,7 +82,6 @@ public class CoverityCommonDescriptor {
 
     public ListBoxModel doFillProjectNameItems(final String projectName, final Boolean updateNow) {
         final ListBoxModel boxModel = new ListBoxModel();
-
         final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
         if (null == coverityInstance || coverityInstance.isEmpty()) {
             return boxModel;
@@ -95,7 +94,7 @@ public class CoverityCommonDescriptor {
         }
         for (final ProjectDataObj project : projectCacheData.getCachedData()) {
             if (null != project.getId() && null != project.getId().getName()) {
-                String currentProjectName = project.getId().getName();
+                final String currentProjectName = project.getId().getName();
                 if (StringUtils.isNotBlank(projectName) && isMatchingProject(project, projectName)) {
                     boxModel.add(new ListBoxModel.Option(currentProjectName, currentProjectName, true));
                 } else {
@@ -103,7 +102,6 @@ public class CoverityCommonDescriptor {
                 }
             }
         }
-
         return boxModel;
     }
 
