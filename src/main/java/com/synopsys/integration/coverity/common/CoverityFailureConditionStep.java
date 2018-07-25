@@ -216,9 +216,9 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             int defectSize = 0;
 
             final ViewContents viewContents = viewService.getViewContents(projectId, viewId, pageSize, 0);
-
-            defectSize = viewContents.totalRows.intValue();
-
+            if (null != viewContents) {
+                defectSize = viewContents.totalRows.intValue();
+            }
             return defectSize;
         } catch (IOException | URISyntaxException e) {
             throw new CoverityIntegrationException(e.getMessage(), e);

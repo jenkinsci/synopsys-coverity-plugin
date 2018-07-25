@@ -128,7 +128,7 @@ public class JenkinsProxyHelper {
         }
     }
 
-    private class ProxyUsernameWrapper {
+    private static class ProxyUsernameWrapper {
         private final String proxyUsername;
         private final String ntlmDomain;
 

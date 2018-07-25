@@ -29,9 +29,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.blackducksoftware.integration.exception.IntegrationException;
-import com.blackducksoftware.integration.log.IntLogger;
-import com.blackducksoftware.integration.log.LogLevel;
-import com.blackducksoftware.integration.log.PrintStreamIntLogger;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 
 public abstract class BaseCacheData<T> {
@@ -48,11 +45,11 @@ public abstract class BaseCacheData<T> {
 
     public void checkAndWaitForData(final JenkinsCoverityInstance coverityInstance, final Boolean updateNow) throws InterruptedException, IntegrationException {
         checkAndUpdateCachedData(coverityInstance, updateNow);
-        Instant startingTime = Instant.now();
+        final Instant startingTime = Instant.now();
         Instant now;
         while (null == cachedData) {
             now = Instant.now();
-            Duration timeLapsed = Duration.between(startingTime, now);
+            final Duration timeLapsed = Duration.between(startingTime, now);
             if (timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(5)) {
                 throw new IntegrationException(String.format("Validation timed out. Retrieving the %s information took longer than 5 minutes.", getDataType()));
             }
@@ -69,18 +66,17 @@ public abstract class BaseCacheData<T> {
         if (!retrievingNow) {
             retrievingNow = true;
             try {
-                IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
-                Instant now = Instant.now();
+                final Instant now = Instant.now();
                 if (null == cachedData || null == lastTimeRetrieved) {
-                    List<T> views = retrieveData(coverityInstance);
+                    final List<T> views = retrieveData(coverityInstance);
                     cachedData = views;
                     lastTimeRetrieved = now;
                 } else if (null != lastTimeRetrieved) {
-                    Duration timeLapsed = Duration.between(lastTimeRetrieved, now);
+                    final Duration timeLapsed = Duration.between(lastTimeRetrieved, now);
                     // only update the cached views every 5 minutes
                     if (forceUpdate || timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(CACHE_TIME)) {
                         cachedData = null;
-                        List<T> views = retrieveData(coverityInstance);
+                        final List<T> views = retrieveData(coverityInstance);
                         cachedData = views;
                         lastTimeRetrieved = now;
                     }

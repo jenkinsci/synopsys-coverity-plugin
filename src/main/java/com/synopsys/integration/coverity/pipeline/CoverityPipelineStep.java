@@ -163,6 +163,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     }
 
     public static final class DetectPipelineExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
+        private static final long serialVersionUID = 4838600483787700636L;
         @StepContextParameter
         private transient TaskListener listener;
         @StepContextParameter

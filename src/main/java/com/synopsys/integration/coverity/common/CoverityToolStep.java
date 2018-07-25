@@ -233,7 +233,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                         for (final ChangeLogSet.AffectedFile affectedFile : affectedFiles) {
                             final String filePath = affectedFile.getPath();
                             logger.info(String.format("Type: %s File Path: %s", affectedFile.getEditType().getName(), filePath));
-                            //TODO get the extensions to match from the User 
+                            //TODO get the extensions to match from the User
                             if (FilenameUtils.getExtension(filePath).matches("java")) {
                                 filePaths.add(filePath);
                             }

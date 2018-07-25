@@ -74,6 +74,7 @@ import net.sf.json.JSONObject;
 @Extension()
 public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publisher> implements Serializable {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
+    private static final long serialVersionUID = -7146909743946288527L;
     private final transient CoverityCommonDescriptor coverityCommonDescriptor;
     private JenkinsCoverityInstance coverityInstance;
     private CoverityToolInstallation[] coverityToolInstallations;
@@ -180,7 +181,6 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetCoverityCredentials());
         }
         final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);
-        final URL actualURL = jenkinsCoverityInstance.getCoverityURL().orElse(null);
         final String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
         final String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
         try {

@@ -23,6 +23,7 @@
  */
 package com.synopsys.integration.coverity;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -40,11 +41,12 @@ import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
 
-public class JenkinsCoverityInstance {
+public class JenkinsCoverityInstance implements Serializable {
+    private static final long serialVersionUID = -7638734141012629078L;
     private final String url;
     private final String credentialId;
 
-    public JenkinsCoverityInstance(String url, String credentialId) {
+    public JenkinsCoverityInstance(final String url, final String credentialId) {
         this.url = url;
         this.credentialId = credentialId;
     }
@@ -61,7 +63,7 @@ public class JenkinsCoverityInstance {
         if (null != url) {
             try {
                 return Optional.of(new URL(url));
-            } catch (MalformedURLException e) {
+            } catch (final MalformedURLException e) {
                 // problems with the URL will be shown in the global configuration
             }
         }
@@ -69,9 +71,9 @@ public class JenkinsCoverityInstance {
     }
 
     public Optional<String> getCoverityUsername() {
-        Optional<BaseStandardCredentials> optionalCredential = getCredential();
+        final Optional<BaseStandardCredentials> optionalCredential = getCredential();
         if (optionalCredential.isPresent()) {
-            BaseStandardCredentials credential = optionalCredential.get();
+            final BaseStandardCredentials credential = optionalCredential.get();
             if (credential instanceof UsernamePasswordCredentialsImpl) {
                 final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
                 return Optional.ofNullable(credentials.getUsername());
@@ -81,9 +83,9 @@ public class JenkinsCoverityInstance {
     }
 
     public Optional<String> getCoverityPassword() {
-        Optional<BaseStandardCredentials> optionalCredential = getCredential();
+        final Optional<BaseStandardCredentials> optionalCredential = getCredential();
         if (optionalCredential.isPresent()) {
-            BaseStandardCredentials credential = optionalCredential.get();
+            final BaseStandardCredentials credential = optionalCredential.get();
             if (credential instanceof UsernamePasswordCredentialsImpl) {
                 final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
                 if (null != credentials.getPassword()) {
