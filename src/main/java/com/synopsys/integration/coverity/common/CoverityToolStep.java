@@ -82,26 +82,6 @@ public class CoverityToolStep extends BaseCoverityStep {
                 getEnvVars().put("COV_STREAM", streamName);
             }
 
-            if (!changeLogSets.isEmpty()) {
-                for (final ChangeLogSet<?> changeLogSet : changeLogSets) {
-                    if (!changeLogSet.isEmptySet()) {
-                        final Object[] changeEntryObjects = changeLogSet.getItems();
-                        for (final Object changeEntryObject : changeEntryObjects) {
-                            final ChangeLogSet.Entry changeEntry = (ChangeLogSet.Entry) changeEntryObject;
-
-                            final Date date = new Date(changeEntry.getTimestamp());
-                            final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
-                            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                            logger.info(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
-                            final List<ChangeLogSet.AffectedFile> affectedFiles = new ArrayList<>(changeEntry.getAffectedFiles());
-                            for (final ChangeLogSet.AffectedFile affectedFile : affectedFiles) {
-                                logger.info(String.format("Type: %s -- %s File Path: %s", affectedFile.getEditType().getName(), affectedFile.getEditType().getDescription(), affectedFile.getPath()));
-                            }
-                        }
-                    }
-                }
-            }
-
             final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
             logGlobalConfiguration(coverityInstance, logger);
 
@@ -139,7 +119,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                     if (StringUtils.isBlank(command)) {
                         continue;
                     }
-                    final List<String> arguments = getCorrectedParameters(command);
+                    final List<String> arguments = getCorrectedParameters(logger, command);
                     final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityUsername().orElse(null),
                             coverityInstance.getCoverityPassword().orElse(null),
                             coverityToolInstallation.getHome(), arguments, getWorkspace().getRemote(), getEnvVars());
@@ -231,8 +211,54 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
-    private List<String> getCorrectedParameters(final String command) throws CoverityJenkinsException {
-        final String[] separatedParameters = Commandline.translateCommandline(command);
+    public List<ChangeLogSet<?>> getChangeLogSets() {
+        return changeLogSets;
+    }
+
+    public String getChangeSetFilePaths(final IntLogger logger) {
+        final List<String> filePaths = new ArrayList<>();
+        if (!getChangeLogSets().isEmpty()) {
+            for (final ChangeLogSet<?> changeLogSet : getChangeLogSets()) {
+                if (!changeLogSet.isEmptySet()) {
+                    final Object[] changeEntryObjects = changeLogSet.getItems();
+                    for (final Object changeEntryObject : changeEntryObjects) {
+                        final ChangeLogSet.Entry changeEntry = (ChangeLogSet.Entry) changeEntryObject;
+
+                        final Date date = new Date(changeEntry.getTimestamp());
+                        final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
+                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                        logger.info(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
+                        final List<ChangeLogSet.AffectedFile> affectedFiles = new ArrayList<>(changeEntry.getAffectedFiles());
+                        for (final ChangeLogSet.AffectedFile affectedFile : affectedFiles) {
+                            logger.info(String.format("Type: %s File Path: %s", affectedFile.getEditType().getName(), affectedFile.getPath()));
+                            filePaths.add(affectedFile.getPath());
+                        }
+                    }
+                }
+            }
+        }
+        return StringUtils.join(filePaths, " ");
+    }
+
+    private String updateCommandWithChangeSet(final IntLogger logger, final String command) {
+        String resolvedChangeSetCommand = command;
+        String variable = "";
+        if (command.contains("$CHANGE_SET") || command.contains("${CHANGE_SET}")) {
+            if (command.contains("$CHANGE_SET")) {
+                variable = "$CHANGE_SET";
+            }
+            if (command.contains("${CHANGE_SET}")) {
+                variable = "${CHANGE_SET}";
+            }
+            final String filePaths = getChangeSetFilePaths(logger);
+            resolvedChangeSetCommand = command.replace(variable, filePaths);
+        }
+        return resolvedChangeSetCommand;
+    }
+
+    private List<String> getCorrectedParameters(final IntLogger logger, final String command) throws CoverityJenkinsException {
+        final String resolvedChangeSetCommand = updateCommandWithChangeSet(logger, command);
+        final String[] separatedParameters = Commandline.translateCommandline(resolvedChangeSetCommand);
         final List<String> correctedParameters = new ArrayList<>();
         for (final String parameter : separatedParameters) {
             correctedParameters.add(handleVariableReplacement(getEnvVars(), parameter));
