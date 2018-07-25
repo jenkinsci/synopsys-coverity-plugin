@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
@@ -230,8 +231,12 @@ public class CoverityToolStep extends BaseCoverityStep {
                         logger.info(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
                         final List<ChangeLogSet.AffectedFile> affectedFiles = new ArrayList<>(changeEntry.getAffectedFiles());
                         for (final ChangeLogSet.AffectedFile affectedFile : affectedFiles) {
-                            logger.info(String.format("Type: %s File Path: %s", affectedFile.getEditType().getName(), affectedFile.getPath()));
-                            filePaths.add(affectedFile.getPath());
+                            final String filePath = affectedFile.getPath();
+                            //TODO get the extensions to match from the User
+                            if (FilenameUtils.getExtension(filePath).matches("\\.java")) {
+                                logger.info(String.format("Type: %s File Path: %s", affectedFile.getEditType().getName(), filePath));
+                                filePaths.add(filePath);
+                            }
                         }
                     }
                 }
