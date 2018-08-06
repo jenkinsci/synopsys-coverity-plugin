@@ -68,7 +68,7 @@ public class CoverityToolStep extends BaseCoverityStep {
     }
 
     public boolean runCoverityToolStep(final Optional<String> optionalCoverityToolName, final Optional<String> optionalStreamName, final Optional<Boolean> optionalContinueOnCommandFailure,
-            final Optional<RepeatableCommand[]> optionalCommands, final Optional<String> changeSetNamesIncludePatterns, final Optional<String> changeSetNamesExcludePatterns) {
+            final Optional<RepeatableCommand[]> optionalCommands, final Optional<String> optionalChangeSetNamesIncludePatterns, final Optional<String> optionalChangeSetNamesExcludePatterns) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
@@ -78,8 +78,9 @@ public class CoverityToolStep extends BaseCoverityStep {
                 logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
                 return false;
             }
+            String streamName = "";
             if (optionalStreamName.isPresent()) {
-                final String streamName = optionalStreamName.get();
+                streamName = optionalStreamName.get();
                 getEnvVars().put("COV_STREAM", streamName);
             }
 
@@ -104,8 +105,14 @@ public class CoverityToolStep extends BaseCoverityStep {
             final Boolean continueOnCommandFailure = optionalContinueOnCommandFailure.orElse(false);
             final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
 
+            final String changeSetNamesIncludePatterns = optionalChangeSetNamesIncludePatterns.orElse("");
+            final String changeSetNamesExcludePatterns = optionalChangeSetNamesExcludePatterns.orElse("");
+
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
+            logger.alwaysLog("-- Synopsys stream : " + continueOnCommandFailure);
             logger.alwaysLog("-- Continue on command failure : " + continueOnCommandFailure);
+            logger.alwaysLog("-- Change Set Include Patterns: " + changeSetNamesIncludePatterns);
+            logger.alwaysLog("-- Change Set Exclude Patterns: " + changeSetNamesExcludePatterns);
             try {
                 final URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
                 if (null != coverityUrl) {
@@ -122,7 +129,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                     }
                     final String resolvedCommand;
                     try {
-                        resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns.orElse(""), changeSetNamesIncludePatterns.orElse(""));
+                        resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
                     } catch (final EmptyChangeSetException e) {
                         if (continueOnCommandFailure) {
                             logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
