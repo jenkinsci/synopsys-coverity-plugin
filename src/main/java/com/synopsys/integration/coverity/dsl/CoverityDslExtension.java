@@ -36,19 +36,19 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 @Extension(optional = true)
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(String coverityToolName, Boolean continueOnCommandFailure, List<String> commands, String buildStateForIssues,
-            String projectName, String streamName, String viewName) {
-        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, viewName);
+    public Object coverity(final String coverityToolName, final Boolean continueOnCommandFailure, final List<String> commands, final String buildStateForIssues,
+            final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
+        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns);
     }
 
-    private RepeatableCommand[] stringsToCommands(List<String> commands) {
+    private RepeatableCommand[] stringsToCommands(final List<String> commands) {
         if (null == commands) {
             return null;
         }
         if (commands.isEmpty()) {
             return new RepeatableCommand[0];
         }
-        RepeatableCommand[] repeatableCommands = new RepeatableCommand[commands.size()];
+        final RepeatableCommand[] repeatableCommands = new RepeatableCommand[commands.size()];
         for (int i = 0; i < repeatableCommands.length; i++) {
             repeatableCommands[i] = new RepeatableCommand(commands.get(i));
         }

@@ -1,0 +1,38 @@
+<div>
+    <p>
+        Please provide a comma separated list of File name patterns that you would like to exclude from the change set. This will only effect the CHANGE_SET variable.
+        Examples:<br/>
+    <table>
+        <tr>
+            <th>File Name</th>
+            <th>Pattern</th>
+            <th>Will be excluded</th>
+        </tr>
+        <tr>
+            <td>test.java</td>
+            <td>*.java</td>
+            <td>Yes</td>
+        </tr>
+        <tr>
+            <td>test.java</td>
+            <td>*.jpg</td>
+            <td>No</td>
+        </tr>
+        <tr>
+            <td>test.java</td>
+            <td>test.*</td>
+            <td>Yes</td>
+        </tr>
+        <tr>
+            <td>test.java</td>
+            <td>test.????</td>
+            <td>Yes</td>
+        </tr>
+        <tr>
+            <td>test.java</td>
+            <td>test.?????</td>
+            <td>No</td>
+        </tr>
+    </table>
+    </p>
+</div>

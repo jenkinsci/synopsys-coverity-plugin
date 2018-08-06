@@ -23,17 +23,8 @@
  */
 package com.synopsys.integration.coverity.exception;
 
-public class CoverityJenkinsException extends CoverityIntegrationException {
-    public CoverityJenkinsException(final String message) {
-        super(message);
+public class EmptyChangeSetException extends CoverityIntegrationException {
+    public EmptyChangeSetException() {
+        super();
     }
-
-    public CoverityJenkinsException(final Throwable cause) {
-        super(cause);
-    }
-
-    public CoverityJenkinsException(final String message, final Throwable cause) {
-        super(message, cause);
-    }
-
 }

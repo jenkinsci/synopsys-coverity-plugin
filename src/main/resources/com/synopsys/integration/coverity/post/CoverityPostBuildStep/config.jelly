@@ -1,5 +1,5 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
 
     <script src="${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js"/>
     <script type="text/javascript">
@@ -10,13 +10,13 @@
         <f:select id="coverityToolNameId"/>
     </f:entry>
     <f:entry field="projectName" title="${%ProjectName}">
-            <f:select id="projectNameId"/>
+        <f:select id="projectNameId"/>
     </f:entry>
     <f:entry field="streamName" title="${%StreamName}">
-            <f:select id="streamNameId"/>
+        <f:select id="streamNameId"/>
     </f:entry>
-    <f:block >
-        <button type="button" onClick="loadProjects();loadStreams();loadViews();" >${%UpdateNow}</button>
+    <f:block>
+        <button type="button" onClick="loadProjects();loadStreams();loadViews();">${%UpdateNow}</button>
     </f:block>
     <f:block>
         <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
@@ -29,13 +29,21 @@
         </f:repeatable>
     </f:block>
     <f:entry field="continueOnCommandFailure" title="${%ContinueOnCommandFailure}">
-        <f:checkbox default="false" />
+        <f:checkbox default="false"/>
     </f:entry>
+    <f:advanced title="${%AdditionalCommandConfigTitle}">
+        <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns" description="${%ChangeSetNamePatternsIncludeDescription}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="${%ChangeSetNameExcludePatterns}" field="changeSetNameExcludePatterns" description="${%ChangeSetNamePatternsExcludeDescription}">
+            <f:textbox/>
+        </f:entry>
+    </f:advanced>
     <f:advanced title="${%FailureConditionTitle}">
         <f:entry title="${%ViewName}" field="viewName">
             <f:select id="viewNameId"/>
         </f:entry>
-        <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues" >
+        <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues">
             <f:select/>
         </f:entry>
     </f:advanced>

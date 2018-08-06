@@ -61,10 +61,12 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final String projectName;
     private final String streamName;
     private final String viewName;
+    private final String changeSetNameExcludePatterns;
+    private final String changeSetNameIncludePatterns;
 
     @DataBoundConstructor
     public CoverityPipelineStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
-            final String projectName, final String streamName, final String viewName) {
+            final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
@@ -72,6 +74,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         this.projectName = projectName;
         this.streamName = streamName;
         this.viewName = viewName;
+        this.changeSetNameExcludePatterns = changeSetNameExcludePatterns;
+        this.changeSetNameIncludePatterns = changeSetNameIncludePatterns;
     }
 
     public String getCoverityToolName() {
@@ -103,6 +107,14 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
     public String getViewName() {
         return viewName;
+    }
+
+    public String getChangeSetNameExcludePatterns() {
+        return changeSetNameExcludePatterns;
+    }
+
+    public String getChangeSetNameIncludePatterns() {
+        return changeSetNameIncludePatterns;
     }
 
     @Override
@@ -183,7 +195,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
             final Boolean shouldContinueOurSteps = coverityToolStep
                     .runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getStreamName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
-                            Optional.ofNullable(coverityPipelineStep.getCommands()));
+                            Optional.ofNullable(coverityPipelineStep.getCommands()), Optional.ofNullable(coverityPipelineStep.getChangeSetNameIncludePatterns()), Optional.ofNullable(coverityPipelineStep.getChangeSetNameExcludePatterns()));
             if (shouldContinueOurSteps) {
                 final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
                 coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateForIssues()),

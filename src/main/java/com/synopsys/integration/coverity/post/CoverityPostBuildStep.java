@@ -47,10 +47,12 @@ public class CoverityPostBuildStep extends Recorder {
     private final String projectName;
     private final String streamName;
     private final String viewName;
+    private final String changeSetNameExcludePatterns;
+    private final String changeSetNameIncludePatterns;
 
     @DataBoundConstructor
     public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
-            final String projectName, final String streamName, final String viewName) {
+            final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
@@ -58,6 +60,8 @@ public class CoverityPostBuildStep extends Recorder {
         this.projectName = projectName;
         this.streamName = streamName;
         this.viewName = viewName;
+        this.changeSetNameExcludePatterns = changeSetNameExcludePatterns;
+        this.changeSetNameIncludePatterns = changeSetNameIncludePatterns;
     }
 
     public String getCoverityToolName() {
@@ -91,6 +95,14 @@ public class CoverityPostBuildStep extends Recorder {
         return viewName;
     }
 
+    public String getChangeSetNameExcludePatterns() {
+        return changeSetNameExcludePatterns;
+    }
+
+    public String getChangeSetNameIncludePatterns() {
+        return changeSetNameIncludePatterns;
+    }
+
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
@@ -104,7 +116,8 @@ public class CoverityPostBuildStep extends Recorder {
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
-        final Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands));
+        final Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands),
+                Optional.ofNullable(changeSetNameIncludePatterns), Optional.ofNullable(changeSetNameExcludePatterns));
         if (shouldContinueOurSteps) {
             final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
             coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateForIssues), Optional.ofNullable(projectName), Optional.ofNullable(viewName));
