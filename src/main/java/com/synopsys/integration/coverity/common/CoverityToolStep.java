@@ -111,8 +111,8 @@ public class CoverityToolStep extends BaseCoverityStep {
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
             logger.alwaysLog("-- Synopsys stream : " + continueOnCommandFailure);
             logger.alwaysLog("-- Continue on command failure : " + continueOnCommandFailure);
-            logger.alwaysLog("-- Change Set Include Patterns: " + changeSetNamesIncludePatterns);
-            logger.alwaysLog("-- Change Set Exclude Patterns: " + changeSetNamesExcludePatterns);
+            logger.alwaysLog("-- Change Set Inclusion Patterns: " + changeSetNamesIncludePatterns);
+            logger.alwaysLog("-- Change Set Exclusion Patterns: " + changeSetNamesExcludePatterns);
             try {
                 final URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
                 if (null != coverityUrl) {
