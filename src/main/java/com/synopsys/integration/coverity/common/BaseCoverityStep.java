@@ -98,10 +98,15 @@ public abstract class BaseCoverityStep {
 
     public JenkinsCoverityLogger createJenkinsCoverityLogger() {
         final JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
-        final IntEnvironmentVariables variables = new IntEnvironmentVariables();
-        variables.putAll(envVars);
+        final IntEnvironmentVariables variables = createIntEnvironmentVariables();
         logger.setLogLevel(variables);
         return logger;
+    }
+
+    public IntEnvironmentVariables createIntEnvironmentVariables() {
+        final IntEnvironmentVariables variables = new IntEnvironmentVariables();
+        variables.putAll(envVars);
+        return variables;
     }
 
     public String handleVariableReplacement(final Map<String, String> variables, final String value) throws CoverityJenkinsException {
