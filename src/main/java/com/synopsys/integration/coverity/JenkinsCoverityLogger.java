@@ -27,13 +27,11 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 
-import com.blackducksoftware.integration.log.IntLogger;
 import com.blackducksoftware.integration.log.LogLevel;
-import com.blackducksoftware.integration.util.IntEnvironmentVariables;
 
 import hudson.model.TaskListener;
 
-public class JenkinsCoverityLogger extends IntLogger implements Serializable {
+public class JenkinsCoverityLogger extends CoverityIntLogger implements Serializable {
     private static final long serialVersionUID = -3861734697709150463L;
     private final TaskListener jenkinsLogger;
 
@@ -56,17 +54,7 @@ public class JenkinsCoverityLogger extends IntLogger implements Serializable {
     public void setLogLevel(final LogLevel level) {
         this.level = level;
     }
-
-    @Override
-    public void setLogLevel(final IntEnvironmentVariables variables) {
-        final String logLevel = variables.getValue("COVERITY_LOG_LEVEL", "INFO");
-        try {
-            setLogLevel(LogLevel.valueOf(logLevel.toUpperCase()));
-        } catch (final IllegalArgumentException e) {
-            setLogLevel(LogLevel.INFO);
-        }
-    }
-
+    
     /**
      * Prints the message regardless of the log level
      */

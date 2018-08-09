@@ -36,16 +36,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import com.blackducksoftware.integration.log.IntLogger;
+import com.blackducksoftware.integration.phonehome.PhoneHomeCallable;
+import com.blackducksoftware.integration.phonehome.PhoneHomeResponse;
+import com.blackducksoftware.integration.phonehome.PhoneHomeService;
 import com.blackducksoftware.integration.rest.RestConstants;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.PluginHelper;
+import com.synopsys.integration.coverity.config.CoverityServerConfig;
+import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.coverity.exception.EmptyChangeSetException;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.remote.CoverityRemoteResponse;
 import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
+import com.synopsys.integration.coverity.ws.WebServiceFactory;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -101,6 +107,7 @@ public class CoverityToolStep extends BaseCoverityStep {
             if (configurationErrors) {
                 return false;
             }
+
             final RepeatableCommand[] commands = optionalCommands.get();
             final Boolean continueOnCommandFailure = optionalContinueOnCommandFailure.orElse(false);
             final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
@@ -113,6 +120,7 @@ public class CoverityToolStep extends BaseCoverityStep {
             logger.alwaysLog("-- Continue on command failure : " + continueOnCommandFailure);
             logger.alwaysLog("-- Change Set Inclusion Patterns: " + changeSetNamesIncludePatterns);
             logger.alwaysLog("-- Change Set Exclusion Patterns: " + changeSetNamesExcludePatterns);
+            PhoneHomeResponse phoneHomeResponse = null;
             try {
                 final URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
                 if (null != coverityUrl) {
@@ -120,6 +128,24 @@ public class CoverityToolStep extends BaseCoverityStep {
                     if (coverityUrl.getPort() > -1) {
                         getEnvVars().put(Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getPort()));
                     }
+                }
+
+                try {
+                    final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+                    builder.url(coverityUrl.toString());
+                    builder.username(coverityInstance.getCoverityUsername().orElse(null));
+                    builder.password(coverityInstance.getCoverityPassword().orElse(null));
+
+                    final CoverityServerConfig coverityServerConfig = builder.build();
+                    final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
+                    webServiceFactory.connect();
+
+                    final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService();
+                    //FIXME change to match the final artifact name
+                    final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl, "synopsys-coverity", pluginVersion);
+                    phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
+                } catch (final Exception e) {
+                    logger.debug(e.getMessage(), e);
                 }
 
                 for (final RepeatableCommand repeatableCommand : commands) {
@@ -153,6 +179,9 @@ public class CoverityToolStep extends BaseCoverityStep {
                     if (null != response.getException()) {
                         final Exception exception = response.getException();
                         if (exception instanceof InterruptedException) {
+                            if (null != phoneHomeResponse) {
+                                phoneHomeResponse.endPhoneHome();
+                            }
                             setResult(Result.ABORTED);
                             Thread.currentThread().interrupt();
                             break;
@@ -168,6 +197,9 @@ public class CoverityToolStep extends BaseCoverityStep {
                     }
                 }
             } catch (final InterruptedException e) {
+                if (null != phoneHomeResponse) {
+                    phoneHomeResponse.endPhoneHome();
+                }
                 logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
                 setResult(Result.ABORTED);
                 Thread.currentThread().interrupt();
