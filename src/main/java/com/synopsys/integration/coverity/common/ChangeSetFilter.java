@@ -46,7 +46,10 @@ public class ChangeSetFilter {
 
     public boolean shouldInclude(final String filePath) {
         // ChangeLogSet.AffectedFile getPath is normalized to use the / separator
-        final String fileName = filePath.substring(filePath.lastIndexOf("/"));
+        String fileName = filePath;
+        if (filePath.contains("/")) {
+            fileName = filePath.substring(filePath.lastIndexOf("/"));
+        }
         for (final String excludePattern : excludedSet) {
             if (FilenameUtils.wildcardMatch(fileName, excludePattern, IOCase.INSENSITIVE)) {
                 return false;
