@@ -98,7 +98,7 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
                 builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
                 final CoverityServerConfig coverityServerConfig = builder.build();
-                final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
+                final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
                 webServiceFactory.connect();
 
                 boolean errorWithProjectOrView = false;

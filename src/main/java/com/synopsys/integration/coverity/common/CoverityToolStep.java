@@ -36,10 +36,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import com.blackducksoftware.integration.log.IntLogger;
-import com.blackducksoftware.integration.phonehome.PhoneHomeClient;
-import com.blackducksoftware.integration.phonehome.google.analytics.GoogleAnalyticsConstants;
+import com.blackducksoftware.integration.phonehome.PhoneHomeCallable;
+import com.blackducksoftware.integration.phonehome.PhoneHomeResponse;
+import com.blackducksoftware.integration.phonehome.PhoneHomeService;
 import com.blackducksoftware.integration.rest.RestConstants;
-import com.google.gson.Gson;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.PluginHelper;
@@ -51,8 +51,6 @@ import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.remote.CoverityRemoteResponse;
 import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
-import com.synopsys.integration.coverity.ws.PhoneHomeResponse;
-import com.synopsys.integration.coverity.ws.PhoneHomeService;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 
 import hudson.EnvVars;
@@ -134,17 +132,18 @@ public class CoverityToolStep extends BaseCoverityStep {
 
                 try {
                     final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+                    builder.url(coverityUrl.toString());
                     builder.username(coverityInstance.getCoverityUsername().orElse(null));
                     builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
                     final CoverityServerConfig coverityServerConfig = builder.build();
-                    final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
+                    final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
                     webServiceFactory.connect();
 
-                    final PhoneHomeClient phoneHomeClient = new PhoneHomeClient(GoogleAnalyticsConstants.PRODUCTION_INTEGRATIONS_TRACKING_ID, new Gson());
-                    final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService(createIntEnvironmentVariables(), phoneHomeClient);
+                    final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService();
                     //FIXME change to match the final artifact name
-                    phoneHomeResponse = phoneHomeService.startPhoneHome(coverityUrl, "synopsys-coverity", pluginVersion);
+                    final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl, "synopsys-coverity", pluginVersion);
+                    phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
                 } catch (final Exception e) {
                     logger.debug(e.getMessage(), e);
                 }
