@@ -25,7 +25,6 @@ package com.synopsys.integration.coverity.common;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.blackducksoftware.integration.exception.IntegrationException;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.Messages;
 import com.synopsys.integration.coverity.common.cache.ProjectCacheData;
@@ -34,6 +33,7 @@ import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
+import com.synopsys.integration.exception.IntegrationException;
 
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;

@@ -30,15 +30,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.blackducksoftware.integration.exception.IntegrationException;
-import com.blackducksoftware.integration.log.IntLogger;
-import com.blackducksoftware.integration.log.LogLevel;
-import com.blackducksoftware.integration.log.PrintStreamIntLogger;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
+import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.log.LogLevel;
+import com.synopsys.integration.log.PrintStreamIntLogger;
 
 public class ViewCacheData extends BaseCacheData<String> {
     @Override
@@ -48,20 +48,20 @@ public class ViewCacheData extends BaseCacheData<String> {
 
     @Override
     public List<String> retrieveData(final JenkinsCoverityInstance coverityInstance) {
-        IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
+        final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
         try {
             logger.info("Attempting retrieval of Coverity Views.");
-            CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            URL coverityURL = coverityInstance.getCoverityURL().get();
+            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+            final URL coverityURL = coverityInstance.getCoverityURL().get();
             builder.url(coverityURL.toString());
             builder.username(coverityInstance.getCoverityUsername().orElse(null));
             builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
-            CoverityServerConfig coverityServerConfig = builder.build();
-            WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
+            final CoverityServerConfig coverityServerConfig = builder.build();
+            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 
-            ViewService viewService = webServiceFactory.createViewService();
+            final ViewService viewService = webServiceFactory.createViewService();
             logger.info("Completed retrieval of Coverity Views.");
             return new ArrayList<>(viewService.getViews().values());
         } catch (IOException | IntegrationException | URISyntaxException e) {

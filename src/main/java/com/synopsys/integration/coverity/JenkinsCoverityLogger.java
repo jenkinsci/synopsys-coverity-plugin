@@ -27,7 +27,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 
-import com.blackducksoftware.integration.log.LogLevel;
+import com.synopsys.integration.log.LogLevel;
 
 import hudson.model.TaskListener;
 
@@ -54,7 +54,7 @@ public class JenkinsCoverityLogger extends CoverityIntLogger implements Serializ
     public void setLogLevel(final LogLevel level) {
         this.level = level;
     }
-    
+
     /**
      * Prints the message regardless of the log level
      */

@@ -30,10 +30,10 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.blackducksoftware.integration.rest.proxy.ProxyInfo;
-import com.blackducksoftware.integration.rest.proxy.ProxyInfoBuilder;
-import com.blackducksoftware.integration.util.proxy.ProxyUtil;
 import com.google.common.collect.Lists;
+import com.synopsys.integration.rest.proxy.ProxyInfo;
+import com.synopsys.integration.rest.proxy.ProxyInfoBuilder;
+import com.synopsys.integration.util.proxy.ProxyUtil;
 
 import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;

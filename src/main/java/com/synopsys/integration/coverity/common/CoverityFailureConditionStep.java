@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.blackducksoftware.integration.exception.IntegrationException;
-import com.blackducksoftware.integration.log.IntLogger;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
@@ -44,6 +42,8 @@ import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
+import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.log.IntLogger;
 
 import hudson.EnvVars;
 import hudson.FilePath;

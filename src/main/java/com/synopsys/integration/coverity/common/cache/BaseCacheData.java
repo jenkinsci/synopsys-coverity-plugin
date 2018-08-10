@@ -28,8 +28,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.blackducksoftware.integration.exception.IntegrationException;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
+import com.synopsys.integration.exception.IntegrationException;
 
 public abstract class BaseCacheData<T> {
     public static final int CACHE_TIME = 5;

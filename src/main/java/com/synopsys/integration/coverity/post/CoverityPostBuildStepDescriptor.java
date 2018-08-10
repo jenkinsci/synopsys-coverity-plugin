@@ -39,11 +39,6 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.verb.POST;
 
-import com.blackducksoftware.integration.log.LogLevel;
-import com.blackducksoftware.integration.log.PrintStreamIntLogger;
-import com.blackducksoftware.integration.validator.FieldEnum;
-import com.blackducksoftware.integration.validator.ValidationResult;
-import com.blackducksoftware.integration.validator.ValidationResults;
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -59,6 +54,11 @@ import com.synopsys.integration.coverity.config.CoverityServerConfigValidator;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.log.LogLevel;
+import com.synopsys.integration.log.PrintStreamIntLogger;
+import com.synopsys.integration.validator.FieldEnum;
+import com.synopsys.integration.validator.ValidationResult;
+import com.synopsys.integration.validator.ValidationResults;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;

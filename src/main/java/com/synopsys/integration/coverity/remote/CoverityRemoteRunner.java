@@ -36,10 +36,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.remoting.Role;
 import org.jenkinsci.remoting.RoleChecker;
 
-import com.blackducksoftware.integration.exception.IntegrationException;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.executable.ExecutableManager;
+import com.synopsys.integration.exception.IntegrationException;
 
 import hudson.EnvVars;
 import hudson.remoting.Callable;
@@ -71,8 +71,8 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
 
     @Override
     public CoverityRemoteResponse call() throws IntegrationException {
-        File workspace = new File(workspacePath);
-        Map<String, String> environment = new HashMap<>();
+        final File workspace = new File(workspacePath);
+        final Map<String, String> environment = new HashMap<>();
         environment.putAll(envVars);
         if (null != coverityUsername) {
             setEnvironmentVariableString(environment, Executable.COVERITY_USER_ENVIRONMENT_VARIABLE, coverityUsername);
@@ -80,19 +80,19 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
         if (null != coverityPassword) {
             setEnvironmentVariableString(environment, Executable.COVERITY_PASSWORD_ENVIRONMENT_VARIABLE, coverityPassword);
         }
-        Executable executable = new Executable(arguments, workspace, environment);
-        ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
+        final Executable executable = new Executable(arguments, workspace, environment);
+        final ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
         int exitCode = -1;
-        ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
+        final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
         try {
-            PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
+            final PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
             exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, new PrintStream(errorOutputStream, true, "UTF-8"));
         } catch (final InterruptedException e) {
             logger.error("Coverity remote thread was interrupted.", e);
             return new CoverityRemoteResponse(e);
         } catch (final IntegrationException e) {
             return new CoverityRemoteResponse(e);
-        } catch (UnsupportedEncodingException e) {
+        } catch (final UnsupportedEncodingException e) {
             return new CoverityRemoteResponse(e);
         } finally {
             logger.error(new String(errorOutputStream.toByteArray(), StandardCharsets.UTF_8));
@@ -100,7 +100,7 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
         return new CoverityRemoteResponse(exitCode);
     }
 
-    private void setEnvironmentVariableString(Map<String, String> environment, final String key, final String value) {
+    private void setEnvironmentVariableString(final Map<String, String> environment, final String key, final String value) {
         if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
             environment.put(key, value);
         }

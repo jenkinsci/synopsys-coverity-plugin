@@ -31,15 +31,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
-import com.blackducksoftware.integration.log.IntLogger;
-import com.blackducksoftware.integration.phonehome.PhoneHomeCallable;
-import com.blackducksoftware.integration.phonehome.PhoneHomeResponse;
-import com.blackducksoftware.integration.phonehome.PhoneHomeService;
-import com.blackducksoftware.integration.rest.RestConstants;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.PluginHelper;
@@ -52,6 +49,11 @@ import com.synopsys.integration.coverity.remote.CoverityRemoteResponse;
 import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.phonehome.PhoneHomeCallable;
+import com.synopsys.integration.phonehome.PhoneHomeResponse;
+import com.synopsys.integration.phonehome.PhoneHomeService;
+import com.synopsys.integration.rest.RestConstants;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -140,10 +142,15 @@ public class CoverityToolStep extends BaseCoverityStep {
                     final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
                     webServiceFactory.connect();
 
-                    final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService();
-                    //FIXME change to match the final artifact name
-                    final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl, "synopsys-coverity", pluginVersion);
-                    phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
+                    final ExecutorService executor = Executors.newSingleThreadExecutor();
+                    try {
+                        final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService(executor);
+                        //FIXME change to match the final artifact name
+                        final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl, "synopsys-coverity", pluginVersion);
+                        phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
+                    } finally {
+                        executor.shutdownNow();
+                    }
                 } catch (final Exception e) {
                     logger.debug(e.getMessage(), e);
                 }

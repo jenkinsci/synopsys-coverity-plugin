@@ -27,13 +27,13 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
 
-import com.blackducksoftware.integration.log.IntLogger;
-import com.blackducksoftware.integration.util.IntEnvironmentVariables;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.JenkinsProxyHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
+import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
 import hudson.FilePath;
