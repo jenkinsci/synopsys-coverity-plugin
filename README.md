@@ -1,5 +1,5 @@
 ## Overview ##
-The synopsys-coverity plugin for Jenkins
+The synopsys-coverity plugin for Jenkins, allows Users to run Coverity commands in their builds. 
 
 ## Build ##
 
@@ -9,7 +9,9 @@ The synopsys-coverity plugin for Jenkins
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=com.blackducksoftware.integration%3Asig-coverity&metric=alert_status)](https://sonarcloud.io/dashboard?id=com.blackducksoftware.integration%3Asig-coverity)
 
 ## Where can I get the latest release? ##
-
+N/A
 
 ## Documentation ##
-All documentation for synopsys-coverity can be found on the base project:  https://github.com/blackducksoftware/synopsys-coverity/wiki
+All documentation for synopsys-coverity can be found at:  https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/314015745/Synopsys+Coverity+Jenkins
+
+Examples of commands, as well as variables that can be used, can be found here: https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/314081286/Coverity+Command+Examples

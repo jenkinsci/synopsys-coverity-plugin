@@ -13,7 +13,7 @@ plugins {
 
 group = 'com.synopsys.integration'
 version = '1.0.0-SNAPSHOT'
-description = 'Synopsys Coverity Plugin for Jenkins'
+description = 'Allows Users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
 
