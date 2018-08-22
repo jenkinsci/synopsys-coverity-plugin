@@ -44,7 +44,7 @@ project.afterEvaluate {
 jenkinsPlugin {
     coreVersion = '2.60.1'
     displayName = 'Synopsys Coverity Plugin'
-    url = 'N/A'
+    url = 'https://wiki.jenkins.io/display/JENKINS/Synopsys+Coverity+Plugin'
     gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
 
     pluginFirstClassLoader = false
