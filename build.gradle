@@ -45,7 +45,7 @@ jenkinsPlugin {
     coreVersion = '2.60.1'
     displayName = 'Synopsys Coverity Plugin'
     url = 'N/A'
-    gitHubUrl = 'https://github.com/blackducksoftware/synopsys-coverity'
+    gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
 
     pluginFirstClassLoader = false
 }
