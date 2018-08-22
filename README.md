@@ -6,10 +6,6 @@ The synopsys-coverity plugin for Jenkins, allows Users to run Coverity commands 
 [![Build Status](https://travis-ci.org/jenkinsci/synopsys-coverity-plugin.svg?branch=master)](https://travis-ci.org/jenkinsci/synopsys-coverity-plugin)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) 
 [![Black Duck Security Risk](https://copilot.blackducksoftware.com/github/repos/jenkinsci/synopsys-coverity-plugin/branches/master/badge-risk.svg)](https://copilot.blackducksoftware.com/github/repos/jenkinsci/synopsys-coverity-plugin/branches/master)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=org.jenkins-ci.plugins%3Asig-coverity&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.jenkins-ci.plugins%3Asig-coverity)
-
-## Where can I get the latest release? ##
-N/A
 
 ## Documentation ##
 All documentation for synopsys-coverity can be found at:  https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/314015745/Synopsys+Coverity+Jenkins
