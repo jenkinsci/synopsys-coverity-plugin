@@ -51,6 +51,7 @@ import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeCallable;
+import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.phonehome.PhoneHomeService;
 import com.synopsys.integration.rest.RestConstants;
@@ -62,6 +63,7 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.scm.ChangeLogSet;
+import jenkins.model.Jenkins;
 
 public class CoverityToolStep extends BaseCoverityStep {
     private final List<ChangeLogSet<?>> changeLogSets;
@@ -146,7 +148,9 @@ public class CoverityToolStep extends BaseCoverityStep {
                     try {
                         final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService(executor);
                         //FIXME change to match the final artifact name
-                        final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl, "synopsys-coverity", pluginVersion);
+                        final PhoneHomeRequestBody.Builder phoneHomeRequestBuilder = new PhoneHomeRequestBody.Builder();
+                        phoneHomeRequestBuilder.addToMetaData("jenkins.version", Jenkins.getVersion().toString());
+                        final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl, "synopsys-coverity", pluginVersion, phoneHomeRequestBuilder);
                         phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
                     } finally {
                         executor.shutdownNow();
