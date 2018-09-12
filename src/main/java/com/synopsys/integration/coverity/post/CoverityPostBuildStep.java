@@ -21,6 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.post;
 
 import java.io.IOException;
@@ -49,16 +50,23 @@ public class CoverityPostBuildStep extends Recorder {
     private final String viewName;
     private final String changeSetNameExcludePatterns;
     private final String changeSetNameIncludePatterns;
+    private final String coverityRunConfiguration;
+    private final String analysisType;
+    private final String buildCommand;
 
     @DataBoundConstructor
     public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
-            final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
+        final String projectName, final String streamName, final String coverityRunConfiguration, final String analysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
+        final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
         this.buildStateForIssues = buildStateForIssues;
         this.projectName = projectName;
         this.streamName = streamName;
+        this.coverityRunConfiguration = coverityRunConfiguration;
+        this.analysisType = analysisType;
+        this.buildCommand = buildCommand;
         this.viewName = viewName;
         this.changeSetNameExcludePatterns = changeSetNameExcludePatterns;
         this.changeSetNameIncludePatterns = changeSetNameIncludePatterns;
@@ -91,6 +99,18 @@ public class CoverityPostBuildStep extends Recorder {
         return streamName;
     }
 
+    public String getCoverityRunConfiguration() {
+        return coverityRunConfiguration;
+    }
+
+    public String getAnalysisType() {
+        return analysisType;
+    }
+
+    public String getBuildCommand() {
+        return buildCommand;
+    }
+
     public String getViewName() {
         return viewName;
     }
@@ -117,7 +137,7 @@ public class CoverityPostBuildStep extends Recorder {
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
         final Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands),
-                Optional.ofNullable(changeSetNameIncludePatterns), Optional.ofNullable(changeSetNameExcludePatterns));
+            Optional.ofNullable(changeSetNameIncludePatterns), Optional.ofNullable(changeSetNameExcludePatterns));
         if (shouldContinueOurSteps) {
             final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
             coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateForIssues), Optional.ofNullable(projectName), Optional.ofNullable(viewName));

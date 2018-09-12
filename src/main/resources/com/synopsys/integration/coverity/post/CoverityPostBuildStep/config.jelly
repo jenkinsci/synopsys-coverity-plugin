@@ -19,7 +19,7 @@
         <button type="button" onClick="loadProjects();loadStreams();loadViews();">${%UpdateNow}</button>
     </f:block>
 
-    <f:radioBlock name="coverityRunConfiguration" value="simple" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'advanced'}">
+    <f:radioBlock name="coverityRunConfiguration" value="simple" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'advanced'}" inline="true">
         <f:entry field="analysisCommandToRun" title="${%AnalysisCommandToRunTitle}">
             <f:select/>
         </f:entry>
@@ -28,7 +28,7 @@
         </f:entry>
     </f:radioBlock>
 
-    <f:radioBlock name="coverityRunConfiguration" value="advanced" title="${%AdvancedRunTitle}" checked="${instance.coverityRunConfiguration == 'advanced'}">
+    <f:radioBlock name="coverityRunConfiguration" value="advanced" title="${%AdvancedRunTitle}" checked="${instance.coverityRunConfiguration == 'advanced'}" inline="true">
         <f:block>
             <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
                 <table style="width:100%" id="coverityCommandTable">

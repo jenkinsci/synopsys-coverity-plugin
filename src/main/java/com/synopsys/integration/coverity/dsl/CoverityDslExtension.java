@@ -21,6 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.dsl;
 
 import java.util.List;
@@ -37,8 +38,10 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
     public Object coverity(final String coverityToolName, final Boolean continueOnCommandFailure, final List<String> commands, final String buildStateForIssues,
-            final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
-        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns);
+        final String projectName, final String streamName, final String viewName, final String coverityRunConfiguration, final String analysisType, final String buildCommand, final String changeSetNameExcludePatterns,
+        final String changeSetNameIncludePatterns) {
+        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, coverityRunConfiguration, analysisType, buildCommand, viewName,
+            changeSetNameExcludePatterns, changeSetNameIncludePatterns);
     }
 
     private RepeatableCommand[] stringsToCommands(final List<String> commands) {

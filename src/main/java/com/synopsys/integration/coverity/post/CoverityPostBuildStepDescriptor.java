@@ -218,15 +218,15 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             return FormValidation.error(e.getClass().getSimpleName() + ": " + e.getMessage());
         } catch (final WebServiceException e) {
             if (org.apache.commons.lang.StringUtils.containsIgnoreCase(e.getMessage(), "Unauthorized")) {
-                return FormValidation.error("User authentication failed." + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+                return FormValidation.error("User authentication failed when attempting to connect to Coverity server." + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
             }
-            return FormValidation.error(e, "Web service error occurred. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return FormValidation.error(e, "Web service error occurred when attempting to connect to Coverity server. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
         } catch (final CoverityIntegrationException e) {
             e.printStackTrace();
             return FormValidation.error(e.getMessage());
         } catch (final Exception e) {
             e.printStackTrace();
-            return FormValidation.error(e, "An unexpected error occurred. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return FormValidation.error(e, "An unexpected error occurred when attempting to connect to Coverity server. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
@@ -251,6 +251,10 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     public FormValidation doCheckStreamName() {
+        return testConnection(coverityInstance);
+    }
+
+    public FormValidation doCheckViewName() {
         return testConnection(coverityInstance);
     }
 
