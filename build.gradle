@@ -30,15 +30,13 @@ def mavenRepo = project.repositories.findByName('maven')
 project.repositories.remove(mavenRepo)
 
 project.afterEvaluate {
-    if (false) {
-        // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluate
-        List<String> repoNames = new ArrayList()
-        repoNames.addAll(project.repositories.getNames())
-        for (String repoName : repoNames) {
-            if (repoName.contains('MavenLocal')) {
-                def repoToRemove = project.repositories.findByName(repoName)
-                project.repositories.remove(repoToRemove)
-            }
+    // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluate
+    List<String> repoNames = new ArrayList()
+    repoNames.addAll(project.repositories.getNames())
+    for (String repoName : repoNames) {
+        if (repoName.contains('MavenLocal')) {
+            def repoToRemove = project.repositories.findByName(repoName)
+            project.repositories.remove(repoToRemove)
         }
     }
 }
@@ -46,7 +44,7 @@ project.afterEvaluate {
 jenkinsPlugin {
     coreVersion = '2.60.1'
     displayName = 'Synopsys Coverity Plugin'
-    url = 'https:/ / wiki.jenkins.io / display / JENKINS / Synopsys + Coverity + Plugin '
+    url = 'https://wiki.jenkins.io/display/JENKINS/Synopsys+Coverity+Plugin'
     gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
 
     pluginFirstClassLoader = false
