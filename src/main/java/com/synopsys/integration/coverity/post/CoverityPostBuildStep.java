@@ -127,7 +127,7 @@ public class CoverityPostBuildStep extends Recorder {
     }
 
     public FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) {
-        FilePath workingDirectory = null;
+        final FilePath workingDirectory;
         if (build.getWorkspace() == null) {
             // might be using custom workspace
             workingDirectory = new FilePath(build.getBuiltOn().getChannel(), build.getProject().getCustomWorkspace());

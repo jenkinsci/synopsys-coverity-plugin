@@ -21,7 +21,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.common;
+
+import java.util.Arrays;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -80,66 +83,75 @@ public class CoverityCommonDescriptor {
         return boxModel;
     }
 
+    public ListBoxModel doFillAnalysisCommandToRunItems() {
+        return Arrays.stream(CoverityAnalysisType.values()).collect(ListBoxModel::new, (listBoxModel, coverityAnalysisType) -> listBoxModel.add(coverityAnalysisType.getDisplayName(), coverityAnalysisType.name()), ListBoxModel::addAll);
+    }
+
     public ListBoxModel doFillProjectNameItems(final String projectName, final Boolean updateNow) {
         final ListBoxModel boxModel = new ListBoxModel();
-        final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
-        if (null == coverityInstance || coverityInstance.isEmpty()) {
-            return boxModel;
-        }
         try {
-            projectCacheData.checkAndWaitForData(coverityInstance, updateNow);
-        } catch (IntegrationException | InterruptedException e) {
-            e.printStackTrace();
-            return boxModel;
-        }
-        for (final ProjectDataObj project : projectCacheData.getCachedData()) {
-            if (null != project.getId() && null != project.getId().getName()) {
-                final String currentProjectName = project.getId().getName();
-                if (StringUtils.isNotBlank(projectName) && isMatchingProject(project, projectName)) {
-                    boxModel.add(new ListBoxModel.Option(currentProjectName, currentProjectName, true));
-                } else {
-                    boxModel.add(currentProjectName);
+            final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+            if (null == coverityInstance || coverityInstance.isEmpty()) {
+                return boxModel;
+            }
+            try {
+                projectCacheData.checkAndWaitForData(coverityInstance, updateNow);
+            } catch (IntegrationException | InterruptedException e) {
+                e.printStackTrace();
+                return boxModel;
+            }
+            for (final ProjectDataObj project : projectCacheData.getCachedData()) {
+                if (null != project.getId() && null != project.getId().getName()) {
+                    final String currentProjectName = project.getId().getName();
+                    if (StringUtils.isNotBlank(projectName) && isMatchingProject(project, projectName)) {
+                        boxModel.add(new ListBoxModel.Option(currentProjectName, currentProjectName, true));
+                    } else {
+                        boxModel.add(currentProjectName);
+                    }
                 }
             }
+        } catch (IllegalStateException handledByFormValidation) {
         }
         return boxModel;
     }
 
     public ListBoxModel doFillStreamNameItems(final String projectName, final String streamName, final Boolean updateNow) {
         final ListBoxModel boxModel = new ListBoxModel();
-        if (StringUtils.isBlank(projectName)) {
-            return boxModel;
-        }
-        final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
-        if (null == coverityInstance || coverityInstance.isEmpty()) {
-            return boxModel;
-        }
         try {
-            projectCacheData.checkAndWaitForData(coverityInstance, updateNow);
-        } catch (IntegrationException | InterruptedException e) {
-            e.printStackTrace();
-            return boxModel;
-        }
-        for (final ProjectDataObj project : projectCacheData.getCachedData()) {
-            if (isMatchingProject(project, projectName) && null != project.getStreams() && !project.getStreams().isEmpty()) {
-                for (final StreamDataObj stream : project.getStreams()) {
-                    if (null != stream.getId() && null != stream.getId().getName()) {
-                        final String currentStreamName = stream.getId().getName();
-                        if (StringUtils.isNotBlank(streamName) && currentStreamName.equals(streamName)) {
-                            boxModel.add(new ListBoxModel.Option(currentStreamName, currentStreamName, true));
-                        } else {
-                            boxModel.add(currentStreamName);
+            if (StringUtils.isBlank(projectName)) {
+                return boxModel;
+            }
+            final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+            if (null == coverityInstance || coverityInstance.isEmpty()) {
+                return boxModel;
+            }
+            try {
+                projectCacheData.checkAndWaitForData(coverityInstance, updateNow);
+            } catch (IntegrationException | InterruptedException e) {
+                e.printStackTrace();
+                return boxModel;
+            }
+            for (final ProjectDataObj project : projectCacheData.getCachedData()) {
+                if (isMatchingProject(project, projectName) && null != project.getStreams() && !project.getStreams().isEmpty()) {
+                    for (final StreamDataObj stream : project.getStreams()) {
+                        if (null != stream.getId() && null != stream.getId().getName()) {
+                            final String currentStreamName = stream.getId().getName();
+                            if (StringUtils.isNotBlank(streamName) && currentStreamName.equals(streamName)) {
+                                boxModel.add(new ListBoxModel.Option(currentStreamName, currentStreamName, true));
+                            } else {
+                                boxModel.add(currentStreamName);
+                            }
                         }
                     }
                 }
             }
+        } catch (IllegalStateException handledByFormValidation) {
         }
         return boxModel;
     }
 
     private Boolean isMatchingProject(final ProjectDataObj projectDataObj, final String projectName) {
         return null != projectDataObj && null != projectDataObj.getId() && null != projectDataObj.getId().getName() && projectDataObj.getId().getName().equals(projectName);
-
     }
 
     public ListBoxModel doFillViewNameItems(final String viewName, final Boolean updateNow) {

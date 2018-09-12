@@ -51,11 +51,11 @@ public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
     @Override
     public List<ProjectDataObj> retrieveData(final JenkinsCoverityInstance coverityInstance) {
         final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
+        List<ProjectDataObj> projects = Collections.emptyList();
         try {
             logger.info("Attempting retrieval of Coverity Projects.");
             final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            final URL coverityURL = coverityInstance.getCoverityURL().get();
-            builder.url(coverityURL.toString());
+            builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
             builder.username(coverityInstance.getCoverityUsername().orElse(null));
             builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
@@ -65,12 +65,11 @@ public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
 
             final ConfigurationService configurationService = webServiceFactory.createConfigurationService();
             final ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
-            final List<ProjectDataObj> projects = configurationService.getProjects(projectFilterSpecDataObj);
+            projects = configurationService.getProjects(projectFilterSpecDataObj);
             logger.info("Completed retrieval of Coverity Projects.");
-            return projects;
         } catch (EncryptionException | MalformedURLException | CoverityIntegrationException | CovRemoteServiceException_Exception e) {
             logger.error(e);
         }
-        return Collections.emptyList();
+        return projects;
     }
 }

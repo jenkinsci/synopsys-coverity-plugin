@@ -49,11 +49,11 @@ public class ViewCacheData extends BaseCacheData<String> {
     @Override
     public List<String> retrieveData(final JenkinsCoverityInstance coverityInstance) {
         final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
+        List<String> data = Collections.emptyList();
         try {
             logger.info("Attempting retrieval of Coverity Views.");
             final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            final URL coverityURL = coverityInstance.getCoverityURL().get();
-            builder.url(coverityURL.toString());
+            builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
             builder.username(coverityInstance.getCoverityUsername().orElse(null));
             builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
@@ -63,10 +63,10 @@ public class ViewCacheData extends BaseCacheData<String> {
 
             final ViewService viewService = webServiceFactory.createViewService();
             logger.info("Completed retrieval of Coverity Views.");
-            return new ArrayList<>(viewService.getViews().values());
+            data = new ArrayList<>(viewService.getViews().values());
         } catch (IOException | IntegrationException | URISyntaxException e) {
             logger.error(e);
         }
-        return Collections.emptyList();
+        return data;
     }
 }

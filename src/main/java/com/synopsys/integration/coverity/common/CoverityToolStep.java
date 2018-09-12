@@ -78,7 +78,7 @@ public class CoverityToolStep extends BaseCoverityStep {
     }
 
     public boolean runCoverityToolStep(final Optional<String> optionalCoverityToolName, final Optional<String> optionalStreamName, final Optional<Boolean> optionalContinueOnCommandFailure,
-            final Optional<RepeatableCommand[]> optionalCommands, final Optional<String> optionalChangeSetNamesIncludePatterns, final Optional<String> optionalChangeSetNamesExcludePatterns) {
+        final Optional<RepeatableCommand[]> optionalCommands, final Optional<String> optionalChangeSetNamesIncludePatterns, final Optional<String> optionalChangeSetNamesExcludePatterns) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
@@ -88,10 +88,8 @@ public class CoverityToolStep extends BaseCoverityStep {
                 logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
                 return false;
             }
-            String streamName = "";
             if (optionalStreamName.isPresent()) {
-                streamName = optionalStreamName.get();
-                getEnvVars().put("COV_STREAM", streamName);
+                getEnvVars().put("COV_STREAM", optionalStreamName.get());
             }
 
             final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
@@ -178,8 +176,8 @@ public class CoverityToolStep extends BaseCoverityStep {
                     }
                     final List<String> arguments = getCorrectedParameters(resolvedCommand);
                     final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityUsername().orElse(null),
-                            coverityInstance.getCoverityPassword().orElse(null),
-                            coverityToolInstallation.getHome(), arguments, getWorkspace().getRemote(), getEnvVars());
+                        coverityInstance.getCoverityPassword().orElse(null),
+                        coverityToolInstallation.getHome(), arguments, getWorkspace().getRemote(), getEnvVars());
                     final CoverityRemoteResponse response = getNode().getChannel().call(coverityRemoteRunner);
                     boolean shouldStop = false;
                     if (response.getExitCode() != 0) {
@@ -225,7 +223,7 @@ public class CoverityToolStep extends BaseCoverityStep {
     }
 
     private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(final String coverityToolName, final CoverityToolInstallation[] coverityToolInstallations, final Node node, final JenkinsCoverityLogger logger)
-            throws InterruptedException {
+        throws InterruptedException {
         if (StringUtils.isBlank(coverityToolName)) {
             logger.error("[ERROR] No Coverity Static Analysis tool configured for this Job.");
             return Optional.empty();
