@@ -21,6 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.common;
 
 import java.io.IOException;
@@ -29,6 +30,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
@@ -58,8 +61,8 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean runCommonCoverityFailureStep(final Optional<String> optionalBuildStateOnFailure, final Optional<String> optionalProjectName,
-            final Optional<String> optionalViewName) {
+    public boolean runCommonCoverityFailureStep(final String optionalBuildStateOnFailure, final String optionalProjectName,
+        final String optionalViewName) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             if (Result.SUCCESS != getResult()) {
@@ -79,10 +82,10 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
                 return false;
             }
 
-            final String buildStateOnFailureString = optionalBuildStateOnFailure.orElse("");
+            final String buildStateOnFailureString = optionalBuildStateOnFailure;
             final BuildState buildStateForIssues = BuildState.valueOf(buildStateOnFailureString);
-            final String projectName = handleVariableReplacement(getEnvVars(), optionalProjectName.orElse(""));
-            final String viewName = handleVariableReplacement(getEnvVars(), optionalViewName.orElse(""));
+            final String projectName = handleVariableReplacement(getEnvVars(), optionalProjectName);
+            final String viewName = handleVariableReplacement(getEnvVars(), optionalViewName);
 
             logGlobalConfiguration(coverityInstance, logger);
             logFailureConditionConfiguration(buildStateForIssues, projectName, viewName, logger);
@@ -92,8 +95,7 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
             } else {
                 logger.alwaysLog("Checking Synopsys Coverity Failure conditions.");
                 final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-                final URL coverityURL = coverityInstance.getCoverityURL().get();
-                builder.url(coverityURL.toString());
+                builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
                 builder.username(coverityInstance.getCoverityUsername().orElse(null));
                 builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
@@ -137,18 +139,17 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         return true;
     }
 
-    private boolean shouldRunFailureStep(final JenkinsCoverityLogger logger, final Optional<String> optionalBuildStateOnFailure,
-            final Optional<String> optionalProjectName, final Optional<String> optionalViewName) {
+    private boolean shouldRunFailureStep(final JenkinsCoverityLogger logger, final String optionalBuildStateOnFailure, final String optionalProjectName, final String optionalViewName) {
         Boolean shouldContinue = true;
-        if (!optionalBuildStateOnFailure.isPresent()) {
+        if (StringUtils.isBlank(optionalBuildStateOnFailure)) {
             logger.debug("Missing build state to set on failure.");
             shouldContinue = false;
         }
-        if (!optionalProjectName.isPresent()) {
+        if (StringUtils.isBlank(optionalProjectName)) {
             logger.warn("There was no Coverity project name provided.");
             shouldContinue = false;
         }
-        if (!optionalViewName.isPresent()) {
+        if (StringUtils.isBlank(optionalViewName)) {
             logger.warn("There was no Coverity view name provided.");
             shouldContinue = false;
         }

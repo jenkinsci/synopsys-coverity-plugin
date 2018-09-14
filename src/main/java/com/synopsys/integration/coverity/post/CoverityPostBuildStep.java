@@ -25,7 +25,6 @@
 package com.synopsys.integration.coverity.post;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -136,11 +135,10 @@ public class CoverityPostBuildStep extends Recorder {
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
-        final Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(Optional.ofNullable(coverityToolName), Optional.ofNullable(streamName), Optional.ofNullable(continueOnCommandFailure), Optional.ofNullable(commands),
-            Optional.ofNullable(changeSetNameIncludePatterns), Optional.ofNullable(changeSetNameExcludePatterns));
+        final Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, continueOnCommandFailure, commands, changeSetNameIncludePatterns, changeSetNameExcludePatterns);
         if (shouldContinueOurSteps) {
             final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
-            coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(buildStateForIssues), Optional.ofNullable(projectName), Optional.ofNullable(viewName));
+            coverityFailureConditionStep.runCommonCoverityFailureStep(buildStateForIssues, projectName, viewName);
         }
 
         return true;

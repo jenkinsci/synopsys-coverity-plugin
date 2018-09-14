@@ -21,9 +21,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.coverity.pipeline;
 
-import java.util.Optional;
+package com.synopsys.integration.coverity.pipeline;
 
 import javax.inject.Inject;
 
@@ -66,7 +65,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
     @DataBoundConstructor
     public CoverityPipelineStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
-            final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
+        final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
@@ -194,12 +193,11 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             final RunWrapper runWrapper = new RunWrapper(run, true);
             final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
             final Boolean shouldContinueOurSteps = coverityToolStep
-                    .runCoverityToolStep(Optional.ofNullable(coverityPipelineStep.getCoverityToolName()), Optional.ofNullable(coverityPipelineStep.getStreamName()), Optional.ofNullable(coverityPipelineStep.getContinueOnCommandFailure()),
-                            Optional.ofNullable(coverityPipelineStep.getCommands()), Optional.ofNullable(coverityPipelineStep.getChangeSetNameIncludePatterns()), Optional.ofNullable(coverityPipelineStep.getChangeSetNameExcludePatterns()));
+                                                       .runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getContinueOnCommandFailure(),
+                                                           coverityPipelineStep.getCommands(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
             if (shouldContinueOurSteps) {
                 final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
-                coverityFailureConditionStep.runCommonCoverityFailureStep(Optional.ofNullable(coverityPipelineStep.getBuildStateForIssues()),
-                        Optional.ofNullable(coverityPipelineStep.getProjectName()), Optional.ofNullable(coverityPipelineStep.getViewName()));
+                coverityFailureConditionStep.runCommonCoverityFailureStep(coverityPipelineStep.getBuildStateForIssues(), coverityPipelineStep.getProjectName(), coverityPipelineStep.getViewName());
             }
             return null;
         }

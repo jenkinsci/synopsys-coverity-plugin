@@ -199,7 +199,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             if (!results.isEmpty() && (results.hasErrors() || results.hasWarnings())) {
                 // Create a nicer more readable string to show the User instead of what the builder exception will provide
                 final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("Could not connect to Coverity server");
+                stringBuilder.append(String.format("Could not connect to Coverity server%s", System.lineSeparator()));
                 for (final Map.Entry<FieldEnum, Set<ValidationResult>> entry : results.getResultMap().entrySet()) {
                     String fieldName = entry.getKey().name();
                     String validationMessages = entry.getValue().stream().map(ValidationResult::getMessage).collect(Collectors.joining(", "));

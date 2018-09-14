@@ -21,6 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.common;
 
 import java.io.IOException;
@@ -77,8 +78,8 @@ public class CoverityToolStep extends BaseCoverityStep {
         return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
     }
 
-    public boolean runCoverityToolStep(final Optional<String> optionalCoverityToolName, final Optional<String> optionalStreamName, final Optional<Boolean> optionalContinueOnCommandFailure,
-        final Optional<RepeatableCommand[]> optionalCommands, final Optional<String> optionalChangeSetNamesIncludePatterns, final Optional<String> optionalChangeSetNamesExcludePatterns) {
+    public boolean runCoverityToolStep(final String optionalCoverityToolName, final String optionalStreamName, final Boolean optionalContinueOnCommandFailure,
+        final RepeatableCommand[] optionalCommands, final String optionalChangeSetNamesIncludePatterns, final String optionalChangeSetNamesExcludePatterns) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
@@ -88,15 +89,15 @@ public class CoverityToolStep extends BaseCoverityStep {
                 logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
                 return false;
             }
-            if (optionalStreamName.isPresent()) {
-                getEnvVars().put("COV_STREAM", optionalStreamName.get());
+            if (StringUtils.isNotBlank(optionalStreamName)) {
+                getEnvVars().put("COV_STREAM", optionalStreamName);
             }
 
             final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
             logGlobalConfiguration(coverityInstance, logger);
 
             boolean configurationErrors = false;
-            final String coverityToolName = optionalCoverityToolName.orElse("");
+            final String coverityToolName = StringUtils.trimToEmpty(optionalCoverityToolName);
             final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(coverityToolName, getCoverityToolInstallations(), getNode(), logger);
             if (!optionalCoverityToolInstallation.isPresent()) {
                 setResult(Result.FAILURE);
@@ -110,12 +111,12 @@ public class CoverityToolStep extends BaseCoverityStep {
                 return false;
             }
 
-            final RepeatableCommand[] commands = optionalCommands.get();
-            final Boolean continueOnCommandFailure = optionalContinueOnCommandFailure.orElse(false);
+            final RepeatableCommand[] commands = optionalCommands;
+            final Boolean continueOnCommandFailure = optionalContinueOnCommandFailure;
             final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
 
-            final String changeSetNamesIncludePatterns = optionalChangeSetNamesIncludePatterns.orElse("");
-            final String changeSetNamesExcludePatterns = optionalChangeSetNamesExcludePatterns.orElse("");
+            final String changeSetNamesIncludePatterns = optionalChangeSetNamesIncludePatterns;
+            final String changeSetNamesExcludePatterns = optionalChangeSetNamesExcludePatterns;
 
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
             logger.alwaysLog("-- Synopsys stream : " + continueOnCommandFailure);
@@ -247,18 +248,13 @@ public class CoverityToolStep extends BaseCoverityStep {
         return Optional.empty();
     }
 
-    private boolean verifyCoverityCommands(final Optional<RepeatableCommand[]> optionalCommands, final IntLogger logger) {
-        if (!optionalCommands.isPresent()) {
-            logger.error("[ERROR] There are no Coverity commands configured to run.");
-            return false;
-        }
-        final RepeatableCommand[] commands = optionalCommands.get();
-        if (commands.length == 0) {
+    private boolean verifyCoverityCommands(final RepeatableCommand[] optionalCommands, final IntLogger logger) {
+        if (optionalCommands.length == 0) {
             logger.error("[ERROR] There are no Coverity commands configured to run.");
             return false;
         }
         boolean allCommandsEmpty = true;
-        for (final RepeatableCommand repeatableCommand : commands) {
+        for (final RepeatableCommand repeatableCommand : optionalCommands) {
             if (StringUtils.isNotBlank(repeatableCommand.getCommand())) {
                 allCommandsEmpty = false;
                 break;

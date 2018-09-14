@@ -21,6 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.tools;
 
 import java.io.BufferedReader;
@@ -132,7 +133,7 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
                         CoverityVersion version = optionalVersion.get();
                         if (version.compareTo(CoverityPostBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION) < 0) {
                             return FormValidation.error("Analysis version " + version.toString() + " detected. " +
-                                    "The minimum supported version is " + CoverityPostBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION.toString());
+                                                            "The minimum supported version is " + CoverityPostBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION.toString());
                         }
 
                         return FormValidation.ok("Analysis installation directory has been verified.");
