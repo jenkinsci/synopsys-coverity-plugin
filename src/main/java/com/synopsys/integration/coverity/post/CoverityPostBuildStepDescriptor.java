@@ -21,13 +21,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.post;
 
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -162,7 +162,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             final CredentialsMatcher credentialsMatcher = CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
             // Dont want to limit the search to a particular project for the drop down menu
             boxModel = new StandardListBoxModel().withEmptySelection()
-                    .withMatching(credentialsMatcher, CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()));
+                           .withMatching(credentialsMatcher, CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()));
         } finally {
             if (changed) {
                 Thread.currentThread().setContextClassLoader(originalClassLoader);
@@ -181,50 +181,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
             return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetCoverityCredentials());
         }
         final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);
-        final String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
-        final String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
-        try {
-            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            builder.url(url).username(username).password(password);
-            final CoverityServerConfigValidator validator = builder.createValidator();
-            final ValidationResults results = validator.assertValid();
-            if (!results.isEmpty() && (results.hasErrors() || results.hasWarnings())) {
-                // Create a nicer more readable string to show the User instead of what the builder exception will provide
-                final StringBuilder stringBuilder = new StringBuilder();
-                for (final Map.Entry<FieldEnum, Set<ValidationResult>> entry : results.getResultMap().entrySet()) {
-                    stringBuilder.append(entry.getKey().name());
-                    stringBuilder.append(": ");
-                    final Set<ValidationResult> resultSet = entry.getValue();
-                    final List<String> messages = resultSet.stream().map(thing -> thing.getMessage()).collect(Collectors.toList());
-                    final String value = String.join(", ", messages);
-                    stringBuilder.append(value);
-                    stringBuilder.append(System.lineSeparator());
-                }
-                return FormValidation.error(stringBuilder.toString());
-            }
-
-            final CoverityServerConfig coverityServerConfig = builder.buildObject();
-            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, new PrintStreamIntLogger(System.out, LogLevel.DEBUG));
-
-            try {
-                webServiceFactory.connect();
-            } catch (final CoverityIntegrationException e) {
-                e.printStackTrace();
-                return FormValidation.error(e.getMessage());
-            } catch (final MalformedURLException e) {
-                return FormValidation.error(e.getClass().getSimpleName() + ": " + e.getMessage());
-            }
-
-            return FormValidation.ok("Successfully connected to the instance.");
-        } catch (final WebServiceException e) {
-            if (org.apache.commons.lang.StringUtils.containsIgnoreCase(e.getMessage(), "Unauthorized")) {
-                return FormValidation.error("User authentication failed." + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
-            }
-            return FormValidation.error(e, "Web service error occurred. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
-        } catch (final Exception e) {
-            e.printStackTrace();
-            return FormValidation.error(e, "An unexpected error occurred. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
-        }
+        return testConnection(jenkinsCoverityInstance);
     }
 
     ///////// End of global configuration methods /////////
@@ -245,12 +202,66 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
     }
 
+    public FormValidation doCheckProjectName() {
+        return testConnection(coverityInstance);
+    }
+
     public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
         return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName, updateNow);
     }
 
+    public FormValidation doCheckStreamName() {
+        return testConnection(coverityInstance);
+    }
+
     public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
         return coverityCommonDescriptor.doFillViewNameItems(viewName, updateNow);
+    }
+
+    public FormValidation doCheckViewName() {
+        return testConnection(coverityInstance);
+    }
+
+    private FormValidation testConnection(JenkinsCoverityInstance jenkinsCoverityInstance) {
+        final String url = jenkinsCoverityInstance.getCoverityURL().map(URL::toString).orElse(null);
+        final String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
+        final String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
+
+        try {
+            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+            builder.url(url).username(username).password(password);
+            final CoverityServerConfigValidator validator = builder.createValidator();
+            final ValidationResults results = validator.assertValid();
+            if (!results.isEmpty() && (results.hasErrors() || results.hasWarnings())) {
+                // Create a nicer more readable string to show the User instead of what the builder exception will provide
+                final StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(String.format("Could not connect to Coverity server%s", System.lineSeparator()));
+                for (final Map.Entry<FieldEnum, Set<ValidationResult>> entry : results.getResultMap().entrySet()) {
+                    String fieldName = entry.getKey().name();
+                    String validationMessages = entry.getValue().stream().map(ValidationResult::getMessage).collect(Collectors.joining(", "));
+                    stringBuilder.append(String.format("%s: %s%s", fieldName, validationMessages, System.lineSeparator()));
+                }
+                return FormValidation.error(stringBuilder.toString());
+            }
+
+            final CoverityServerConfig coverityServerConfig = builder.buildObject();
+            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, new PrintStreamIntLogger(System.out, LogLevel.DEBUG));
+
+            webServiceFactory.connect();
+
+            return FormValidation.ok("Successfully connected to " + url);
+        } catch (final MalformedURLException e) {
+            return FormValidation.error(e.getClass().getSimpleName() + ": " + e.getMessage());
+        } catch (final WebServiceException e) {
+            if (org.apache.commons.lang.StringUtils.containsIgnoreCase(e.getMessage(), "Unauthorized")) {
+                return FormValidation.error(e, String.format("Web service error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
+            }
+            return FormValidation.error(e, String.format("User authentication failed when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
+        } catch (final CoverityIntegrationException e) {
+            return FormValidation.error(e, e.getMessage());
+        } catch (final Exception e) {
+            return FormValidation.error(e, String.format("An unexpected error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
+        }
     }
 
 }
