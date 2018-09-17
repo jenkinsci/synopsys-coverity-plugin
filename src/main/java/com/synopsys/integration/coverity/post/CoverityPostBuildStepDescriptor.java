@@ -184,9 +184,48 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);
         return testConnection(jenkinsCoverityInstance);
     }
-    ///////// End of global configuration methods /////////
 
-    public FormValidation testConnection(JenkinsCoverityInstance jenkinsCoverityInstance) {
+    public ListBoxModel doFillCoverityToolNameItems() {
+        return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolInstallations);
+    }
+
+    public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") final String coverityToolName) {
+        return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
+    }
+
+    public ListBoxModel doFillBuildStateForIssuesItems() {
+        return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
+    }
+
+    public ListBoxModel doFillAnalysisCommandToRunItems() {
+        return coverityCommonDescriptor.doFillAnalysisCommandToRunItems();
+    }
+
+    public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
+    }
+
+    public FormValidation doCheckProjectName() {
+        return testConnection(coverityInstance);
+    }
+
+    public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName, updateNow);
+    }
+
+    public FormValidation doCheckStreamName() {
+        return testConnection(coverityInstance);
+    }
+
+    public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillViewNameItems(viewName, updateNow);
+    }
+
+    public FormValidation doCheckViewName() {
+        return testConnection(coverityInstance);
+    }
+
+    private FormValidation testConnection(JenkinsCoverityInstance jenkinsCoverityInstance) {
         final String url = jenkinsCoverityInstance.getCoverityURL().map(URL::toString).orElse(null);
         final String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
         final String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
@@ -213,61 +252,19 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
 
             webServiceFactory.connect();
 
-            return FormValidation.ok("Successfully connected to the instance.");
+            return FormValidation.ok("Successfully connected to " + url);
         } catch (final MalformedURLException e) {
             return FormValidation.error(e.getClass().getSimpleName() + ": " + e.getMessage());
         } catch (final WebServiceException e) {
             if (org.apache.commons.lang.StringUtils.containsIgnoreCase(e.getMessage(), "Unauthorized")) {
-                return FormValidation.error("User authentication failed when attempting to connect to Coverity server." + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+                return FormValidation.error(e, String.format("Web service error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
             }
-            return FormValidation.error(e, "Web service error occurred when attempting to connect to Coverity server. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return FormValidation.error(e, String.format("User authentication failed when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
         } catch (final CoverityIntegrationException e) {
-            e.printStackTrace();
-            return FormValidation.error(e.getMessage());
+            return FormValidation.error(e, e.getMessage());
         } catch (final Exception e) {
-            e.printStackTrace();
-            return FormValidation.error(e, "An unexpected error occurred when attempting to connect to Coverity server. " + System.lineSeparator() + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return FormValidation.error(e, String.format("An unexpected error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
         }
-    }
-
-    public ListBoxModel doFillCoverityToolNameItems() {
-        return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolInstallations);
-    }
-
-    public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") final String coverityToolName) {
-        return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
-    }
-
-    public ListBoxModel doFillBuildStateForIssuesItems() {
-        return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
-    }
-
-    public ListBoxModel doFillAnalysisCommandToRunItems() {
-        return coverityCommonDescriptor.doFillAnalysisCommandToRunItems();
-    }
-
-    public FormValidation doCheckProjectName() {
-        return testConnection(coverityInstance);
-    }
-
-    public FormValidation doCheckStreamName() {
-        return testConnection(coverityInstance);
-    }
-
-    public FormValidation doCheckViewName() {
-        return testConnection(coverityInstance);
-    }
-
-    public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
-        return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
-    }
-
-    public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
-        return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName, updateNow);
-    }
-
-    public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
-        return coverityCommonDescriptor.doFillViewNameItems(viewName, updateNow);
     }
 
 }

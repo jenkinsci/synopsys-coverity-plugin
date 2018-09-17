@@ -153,7 +153,7 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
          * then reading the version number
          */
         public Optional<CoverityVersion> getVersion(File home) throws IOException {
-            File versionFile = new File(home, "VERSION");
+            File versionFile = new File(home, "VERSION.xml");
             try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8))) {
                 final String prefix = "externalVersion=";
                 String line, version = "";
