@@ -22,12 +22,13 @@
  * under the License.
  */
 
-package com.synopsys.integration.coverity.post;
+package com.synopsys.integration.coverity.freestyle;
 
 import java.io.IOException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
@@ -40,6 +41,8 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Recorder;
 
 public class CoverityPostBuildStep extends Recorder {
+    public static final String SIMPLE_RUN_CONFIGURATION = "simple";
+    public static final String ADVANCED_RUN_CONFIGURATION = "advanced";
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
@@ -50,12 +53,12 @@ public class CoverityPostBuildStep extends Recorder {
     private final String changeSetNameExcludePatterns;
     private final String changeSetNameIncludePatterns;
     private final String coverityRunConfiguration;
-    private final String analysisType;
+    private final CoverityAnalysisType coverityAnalysisType;
     private final String buildCommand;
 
     @DataBoundConstructor
     public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
-        final String projectName, final String streamName, final String coverityRunConfiguration, final String analysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
+        final String projectName, final String streamName, final String coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
         final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
@@ -64,7 +67,7 @@ public class CoverityPostBuildStep extends Recorder {
         this.projectName = projectName;
         this.streamName = streamName;
         this.coverityRunConfiguration = coverityRunConfiguration;
-        this.analysisType = analysisType;
+        this.coverityAnalysisType = coverityAnalysisType;
         this.buildCommand = buildCommand;
         this.viewName = viewName;
         this.changeSetNameExcludePatterns = changeSetNameExcludePatterns;
@@ -102,8 +105,8 @@ public class CoverityPostBuildStep extends Recorder {
         return coverityRunConfiguration;
     }
 
-    public String getAnalysisType() {
-        return analysisType;
+    public CoverityAnalysisType getCoverityAnalysisType() {
+        return coverityAnalysisType;
     }
 
     public String getBuildCommand() {
@@ -135,7 +138,15 @@ public class CoverityPostBuildStep extends Recorder {
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
-        final Boolean shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, continueOnCommandFailure, commands, changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+
+        final boolean shouldContinueOurSteps;
+        if (coverityRunConfiguration.equals(ADVANCED_RUN_CONFIGURATION)) {
+            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, commands, continueOnCommandFailure, changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+        } else {
+            RepeatableCommand[] simpleModeCommands = getSimpleModeCommands(buildCommand, coverityAnalysisType);
+            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, continueOnCommandFailure, changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+        }
+
         if (shouldContinueOurSteps) {
             final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
             coverityFailureConditionStep.runCommonCoverityFailureStep(buildStateForIssues, projectName, viewName);
@@ -153,5 +164,23 @@ public class CoverityPostBuildStep extends Recorder {
             workingDirectory = build.getWorkspace();
         }
         return workingDirectory;
+    }
+
+    private RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final CoverityAnalysisType coverityAnalysisType) {
+        final RepeatableCommand covBuild = new RepeatableCommand("cov-build --dir ${WORKSPACE}/idir " + buildCommand);
+        final RepeatableCommand covCommitDefects = new RepeatableCommand("cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}");
+
+        final RepeatableCommand[] commands;
+        if (CoverityAnalysisType.COV_ANALYZE.equals(coverityAnalysisType)) {
+            final RepeatableCommand covAnalyze = new RepeatableCommand("cov-analyze --dir ${WORKSPACE}/idir");
+            commands = new RepeatableCommand[] { covBuild, covAnalyze, covCommitDefects };
+        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType)) {
+            final RepeatableCommand covRunDesktop = new RepeatableCommand("cov-run-desktop --dir ${WORKSPACE}/idir  --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}");
+            commands = new RepeatableCommand[] { covBuild, covRunDesktop, covCommitDefects };
+        } else {
+            commands = new RepeatableCommand[] {};
+        }
+
+        return commands;
     }
 }

@@ -22,17 +22,13 @@
  * under the License.
  */
 
-package com.synopsys.integration.coverity.post;
+package com.synopsys.integration.coverity.freestyle;
 
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.xml.ws.WebServiceException;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
@@ -48,17 +44,7 @@ import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.Messages;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
-import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
-import com.synopsys.integration.coverity.config.CoverityServerConfigValidator;
-import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.log.LogLevel;
-import com.synopsys.integration.log.PrintStreamIntLogger;
-import com.synopsys.integration.validator.FieldEnum;
-import com.synopsys.integration.validator.ValidationResult;
-import com.synopsys.integration.validator.ValidationResults;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
@@ -85,8 +71,8 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         coverityCommonDescriptor = new CoverityCommonDescriptor();
     }
 
-    public JenkinsCoverityInstance getCoverityInstance() {
-        return coverityInstance;
+    public Optional<JenkinsCoverityInstance> getCoverityInstance() {
+        return Optional.ofNullable(coverityInstance);
     }
 
     public String getUrl() {
@@ -182,8 +168,9 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         }
 
         final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);
-        return testConnection(jenkinsCoverityInstance);
+        return coverityCommonDescriptor.testConnection(jenkinsCoverityInstance);
     }
+    //////// End global configuration methods /////////
 
     public ListBoxModel doFillCoverityToolNameItems() {
         return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolInstallations);
@@ -197,8 +184,8 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
     }
 
-    public ListBoxModel doFillAnalysisCommandToRunItems() {
-        return coverityCommonDescriptor.doFillAnalysisCommandToRunItems();
+    public ListBoxModel doFillCoverityAnalysisTypeItems() {
+        return coverityCommonDescriptor.doFillCoverityAnalysisTypeItems();
     }
 
     public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
@@ -206,7 +193,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     public FormValidation doCheckProjectName() {
-        return testConnection(coverityInstance);
+        return coverityCommonDescriptor.testConnectionSilently();
     }
 
     public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
@@ -214,7 +201,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     public FormValidation doCheckStreamName() {
-        return testConnection(coverityInstance);
+        return coverityCommonDescriptor.testConnectionSilently();
     }
 
     public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
@@ -222,49 +209,7 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
     }
 
     public FormValidation doCheckViewName() {
-        return testConnection(coverityInstance);
-    }
-
-    private FormValidation testConnection(JenkinsCoverityInstance jenkinsCoverityInstance) {
-        final String url = jenkinsCoverityInstance.getCoverityURL().map(URL::toString).orElse(null);
-        final String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
-        final String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
-
-        try {
-            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            builder.url(url).username(username).password(password);
-            final CoverityServerConfigValidator validator = builder.createValidator();
-            final ValidationResults results = validator.assertValid();
-            if (!results.isEmpty() && (results.hasErrors() || results.hasWarnings())) {
-                // Create a nicer more readable string to show the User instead of what the builder exception will provide
-                final StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append(String.format("Could not connect to Coverity server%s", System.lineSeparator()));
-                for (final Map.Entry<FieldEnum, Set<ValidationResult>> entry : results.getResultMap().entrySet()) {
-                    String fieldName = entry.getKey().name();
-                    String validationMessages = entry.getValue().stream().map(ValidationResult::getMessage).collect(Collectors.joining(", "));
-                    stringBuilder.append(String.format("%s: %s%s", fieldName, validationMessages, System.lineSeparator()));
-                }
-                return FormValidation.error(stringBuilder.toString());
-            }
-
-            final CoverityServerConfig coverityServerConfig = builder.buildObject();
-            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, new PrintStreamIntLogger(System.out, LogLevel.DEBUG));
-
-            webServiceFactory.connect();
-
-            return FormValidation.ok("Successfully connected to " + url);
-        } catch (final MalformedURLException e) {
-            return FormValidation.error(e.getClass().getSimpleName() + ": " + e.getMessage());
-        } catch (final WebServiceException e) {
-            if (org.apache.commons.lang.StringUtils.containsIgnoreCase(e.getMessage(), "Unauthorized")) {
-                return FormValidation.error(e, String.format("Web service error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
-            }
-            return FormValidation.error(e, String.format("User authentication failed when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
-        } catch (final CoverityIntegrationException e) {
-            return FormValidation.error(e, e.getMessage());
-        } catch (final Exception e) {
-            return FormValidation.error(e, String.format("An unexpected error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
-        }
+        return coverityCommonDescriptor.testConnectionSilently();
     }
 
 }

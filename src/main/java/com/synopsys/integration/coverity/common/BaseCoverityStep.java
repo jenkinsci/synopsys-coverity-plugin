@@ -21,6 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.common;
 
 import java.net.URL;
@@ -31,7 +32,7 @@ import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.JenkinsProxyHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
+import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStepDescriptor;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
@@ -92,7 +93,7 @@ public abstract class BaseCoverityStep {
         return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
     }
 
-    public JenkinsCoverityInstance getCoverityInstance() {
+    public Optional<JenkinsCoverityInstance> getCoverityInstance() {
         return getCoverityPostBuildStepDescriptor().getCoverityInstance();
     }
 
@@ -126,7 +127,7 @@ public abstract class BaseCoverityStep {
 
     public void logGlobalConfiguration(final JenkinsCoverityInstance coverityInstance, final IntLogger logger) {
         if (null == coverityInstance) {
-            logger.warn("No global Synopsys Coverity configuration found.");
+            logger.warn("No configured Coverity server was detected in the Jenkins System Configuration.");
         } else {
             final Optional<URL> optionalCoverityURL = coverityInstance.getCoverityURL();
             if (!optionalCoverityURL.isPresent()) {

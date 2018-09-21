@@ -50,6 +50,7 @@ import com.synopsys.integration.coverity.remote.CoverityRemoteResponse;
 import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeCallable;
 import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
@@ -78,8 +79,8 @@ public class CoverityToolStep extends BaseCoverityStep {
         return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
     }
 
-    public boolean runCoverityToolStep(final String optionalCoverityToolName, final String optionalStreamName, final Boolean optionalContinueOnCommandFailure,
-        final RepeatableCommand[] optionalCommands, final String optionalChangeSetNamesIncludePatterns, final String optionalChangeSetNamesExcludePatterns) {
+    public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final Boolean continueOnCommandFailure, final String changeSetNamesIncludePatterns,
+        final String changeSetNamesExcludePatterns) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
@@ -89,34 +90,36 @@ public class CoverityToolStep extends BaseCoverityStep {
                 logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
                 return false;
             }
-            if (StringUtils.isNotBlank(optionalStreamName)) {
-                getEnvVars().put("COV_STREAM", optionalStreamName);
+            if (StringUtils.isNotBlank(streamName)) {
+                getEnvVars().put("COV_STREAM", streamName);
             }
 
-            final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
-            logGlobalConfiguration(coverityInstance, logger);
+            final JenkinsCoverityInstance coverityInstance = getCoverityInstance().orElse(null);
+            if (coverityInstance == null) {
+                logger.error("Skipping the Synopsys Coverity step because no configured Coverity server was detected in the Jenkins System Configuration.");
+                return false;
+            }
+
+            logGlobalConfiguration(getCoverityInstance().orElse(null), logger);
 
             boolean configurationErrors = false;
-            final String coverityToolName = StringUtils.trimToEmpty(optionalCoverityToolName);
-            final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(coverityToolName, getCoverityToolInstallations(), getNode(), logger);
+            final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), getCoverityToolInstallations(), getNode(), logger);
             if (!optionalCoverityToolInstallation.isPresent()) {
                 setResult(Result.FAILURE);
                 configurationErrors = true;
             }
-            if (!verifyCoverityCommands(optionalCommands, logger)) {
+
+            //Advanced Specific
+            if (!verifyCoverityCommands(commands, logger)) {
                 setResult(Result.FAILURE);
                 configurationErrors = true;
             }
+
             if (configurationErrors) {
                 return false;
             }
 
-            final RepeatableCommand[] commands = optionalCommands;
-            final Boolean continueOnCommandFailure = optionalContinueOnCommandFailure;
             final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
-
-            final String changeSetNamesIncludePatterns = optionalChangeSetNamesIncludePatterns;
-            final String changeSetNamesExcludePatterns = optionalChangeSetNamesExcludePatterns;
 
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
             logger.alwaysLog("-- Synopsys stream : " + continueOnCommandFailure);
@@ -133,79 +136,10 @@ public class CoverityToolStep extends BaseCoverityStep {
                     }
                 }
 
-                try {
-                    final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-                    builder.url(coverityUrl.toString());
-                    builder.username(coverityInstance.getCoverityUsername().orElse(null));
-                    builder.password(coverityInstance.getCoverityPassword().orElse(null));
+                phoneHomeResponse = phoneHome(logger, coverityInstance, pluginVersion);
 
-                    final CoverityServerConfig coverityServerConfig = builder.build();
-                    final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
-                    webServiceFactory.connect();
+                runAdvancedMode(logger, commands, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, continueOnCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
 
-                    final ExecutorService executor = Executors.newSingleThreadExecutor();
-                    try {
-                        final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService(executor);
-                        //FIXME change to match the final artifact name
-                        final PhoneHomeRequestBody.Builder phoneHomeRequestBuilder = new PhoneHomeRequestBody.Builder();
-                        phoneHomeRequestBuilder.addToMetaData("jenkins.version", Jenkins.getVersion().toString());
-                        final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl, "synopsys-coverity", pluginVersion, phoneHomeRequestBuilder);
-                        phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
-                    } finally {
-                        executor.shutdownNow();
-                    }
-                } catch (final Exception e) {
-                    logger.debug(e.getMessage(), e);
-                }
-
-                for (final RepeatableCommand repeatableCommand : commands) {
-                    final String command = repeatableCommand.getCommand();
-                    if (StringUtils.isBlank(command)) {
-                        continue;
-                    }
-                    final String resolvedCommand;
-                    try {
-                        resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
-                    } catch (final EmptyChangeSetException e) {
-                        if (continueOnCommandFailure) {
-                            logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
-                            continue;
-                        } else {
-                            logger.error(String.format("[WARNING] Skipping command %s and following commands because the CHANGE_SET is empty", command));
-                            break;
-                        }
-                    }
-                    final List<String> arguments = getCorrectedParameters(resolvedCommand);
-                    final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityUsername().orElse(null),
-                        coverityInstance.getCoverityPassword().orElse(null),
-                        coverityToolInstallation.getHome(), arguments, getWorkspace().getRemote(), getEnvVars());
-                    final CoverityRemoteResponse response = getNode().getChannel().call(coverityRemoteRunner);
-                    boolean shouldStop = false;
-                    if (response.getExitCode() != 0) {
-                        logger.error("[ERROR] Coverity failed with exit code: " + response.getExitCode());
-                        setResult(Result.FAILURE);
-                        shouldStop = true;
-                    }
-                    if (null != response.getException()) {
-                        final Exception exception = response.getException();
-                        if (exception instanceof InterruptedException) {
-                            if (null != phoneHomeResponse) {
-                                phoneHomeResponse.endPhoneHome();
-                            }
-                            setResult(Result.ABORTED);
-                            Thread.currentThread().interrupt();
-                            break;
-                        } else {
-                            setResult(Result.UNSTABLE);
-                            shouldStop = true;
-                            logger.error("[ERROR] " + exception.getMessage());
-                            logger.debug(null, exception);
-                        }
-                    }
-                    if (!continueOnCommandFailure && shouldStop) {
-                        break;
-                    }
-                }
             } catch (final InterruptedException e) {
                 if (null != phoneHomeResponse) {
                     phoneHomeResponse.endPhoneHome();
@@ -223,25 +157,79 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
+    private void runAdvancedMode(final JenkinsCoverityLogger logger, final RepeatableCommand[] commands, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns, final boolean continueOnCommandFailure,
+        final JenkinsCoverityInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse)
+        throws IntegrationException, InterruptedException, IOException {
+        for (final RepeatableCommand repeatableCommand : commands) {
+            final String command = repeatableCommand.getCommand();
+            if (StringUtils.isBlank(command)) {
+                continue;
+            }
+            final String resolvedCommand;
+            try {
+                resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+            } catch (final EmptyChangeSetException e) {
+                if (continueOnCommandFailure) {
+                    logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
+                    continue;
+                } else {
+                    logger.error(String.format("[WARNING] Skipping command %s and following commands because the CHANGE_SET is empty", command));
+                    break;
+                }
+            }
+            final List<String> arguments = getCorrectedParameters(resolvedCommand);
+            final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger,
+                coverityInstance.getCoverityUsername().orElse(null),
+                coverityInstance.getCoverityPassword().orElse(null),
+                coverityToolInstallation.getHome(), arguments, getWorkspace().getRemote(), getEnvVars());
+            final CoverityRemoteResponse response = getNode().getChannel().call(coverityRemoteRunner);
+            boolean shouldStop = false;
+            if (response.getExitCode() != 0) {
+                logger.error("[ERROR] Coverity failed with exit code: " + response.getExitCode());
+                setResult(Result.FAILURE);
+                shouldStop = true;
+            }
+            if (null != response.getException()) {
+                final Exception exception = response.getException();
+                if (exception instanceof InterruptedException) {
+                    if (null != phoneHomeResponse) {
+                        phoneHomeResponse.endPhoneHome();
+                    }
+                    setResult(Result.ABORTED);
+                    Thread.currentThread().interrupt();
+                    break;
+                } else {
+                    setResult(Result.UNSTABLE);
+                    shouldStop = true;
+                    logger.error("[ERROR] " + exception.getMessage());
+                    logger.debug(null, exception);
+                }
+            }
+            if (!continueOnCommandFailure && shouldStop) {
+                break;
+            }
+        }
+    }
+
     private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(final String coverityToolName, final CoverityToolInstallation[] coverityToolInstallations, final Node node, final JenkinsCoverityLogger logger)
         throws InterruptedException {
         if (StringUtils.isBlank(coverityToolName)) {
             logger.error("[ERROR] No Coverity Static Analysis tool configured for this Job.");
             return Optional.empty();
         }
+
         if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
             logger.error("[ERROR] No Coverity Static Analysis tools configured in Jenkins.");
             return Optional.empty();
         }
-        if (StringUtils.isNotBlank(coverityToolName) && null != coverityToolInstallations && coverityToolInstallations.length > 0) {
-            for (final CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
-                if (coverityToolInstallation.getName().equals(coverityToolName)) {
-                    try {
-                        return Optional.ofNullable(coverityToolInstallation.forNode(node, logger.getJenkinsListener()));
-                    } catch (final IOException e) {
-                        logger.error("Problem getting the Synopsys Coverity Static Analysis tool on node " + node.getDisplayName() + ": " + e.getMessage());
-                        logger.debug(null, e);
-                    }
+
+        for (final CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
+            if (coverityToolInstallation.getName().equals(coverityToolName)) {
+                try {
+                    return Optional.ofNullable(coverityToolInstallation.forNode(node, logger.getJenkinsListener()));
+                } catch (final IOException e) {
+                    logger.error("Problem getting the Synopsys Coverity Static Analysis tool on node " + node.getDisplayName() + ": " + e.getMessage());
+                    logger.debug(null, e);
                 }
             }
         }
@@ -328,6 +316,39 @@ public class CoverityToolStep extends BaseCoverityStep {
             correctedParameters.add(handleVariableReplacement(getEnvVars(), parameter));
         }
         return correctedParameters;
+    }
+
+    private PhoneHomeResponse phoneHome(final IntLogger logger, final JenkinsCoverityInstance coverityInstance, final String pluginVersion) {
+        PhoneHomeResponse phoneHomeResponse = null;
+
+        try {
+            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+            final Optional<URL> coverityUrl = coverityInstance.getCoverityURL();
+
+            builder.url(coverityUrl.map(URL::toString).orElse(null));
+            builder.username(coverityInstance.getCoverityUsername().orElse(null));
+            builder.password(coverityInstance.getCoverityPassword().orElse(null));
+
+            final CoverityServerConfig coverityServerConfig = builder.build();
+            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
+            webServiceFactory.connect();
+
+            final ExecutorService executor = Executors.newSingleThreadExecutor();
+            try {
+                final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService(executor);
+                //FIXME change to match the final artifact name
+                final PhoneHomeRequestBody.Builder phoneHomeRequestBuilder = new PhoneHomeRequestBody.Builder();
+                phoneHomeRequestBuilder.addToMetaData("jenkins.version", Jenkins.getVersion().toString());
+                final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl.orElse(null), "synopsys-coverity", pluginVersion, phoneHomeRequestBuilder);
+                phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
+            } finally {
+                executor.shutdownNow();
+            }
+        } catch (final Exception e) {
+            logger.debug(e.getMessage(), e);
+        }
+
+        return phoneHomeResponse;
     }
 
 }

@@ -26,8 +26,9 @@ package com.synopsys.integration.coverity.dsl;
 
 import java.util.List;
 
+import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
-import com.synopsys.integration.coverity.post.CoverityPostBuildStep;
+import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStep;
 
 import hudson.Extension;
 import javaposse.jobdsl.dsl.helpers.step.StepContext;
@@ -38,10 +39,10 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
     public Object coverity(final String coverityToolName, final Boolean continueOnCommandFailure, final List<String> commands, final String buildStateForIssues,
-        final String projectName, final String streamName, final String viewName, final String coverityRunConfiguration, final String analysisType, final String buildCommand, final String changeSetNameExcludePatterns,
+        final String projectName, final String streamName, final String viewName, final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetNameExcludePatterns,
         final String changeSetNameIncludePatterns) {
-        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, coverityRunConfiguration, analysisType, buildCommand, viewName,
-            changeSetNameExcludePatterns, changeSetNameIncludePatterns);
+        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, coverityRunConfiguration, stringToCoverityAnalysisType(coverityAnalysisType),
+            buildCommand, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns);
     }
 
     private RepeatableCommand[] stringsToCommands(final List<String> commands) {
@@ -56,6 +57,10 @@ public class CoverityDslExtension extends ContextExtensionPoint {
             repeatableCommands[i] = new RepeatableCommand(commands.get(i));
         }
         return repeatableCommands;
+    }
+
+    private CoverityAnalysisType stringToCoverityAnalysisType(String coverityAnalysisType) {
+        return CoverityAnalysisType.valueOf(coverityAnalysisType);
     }
 
 }

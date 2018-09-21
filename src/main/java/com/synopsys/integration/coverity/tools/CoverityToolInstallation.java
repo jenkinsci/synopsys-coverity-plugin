@@ -39,7 +39,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.coverity.Messages;
-import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
+import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStepDescriptor;
 
 import hudson.EnvVars;
 import hudson.Extension;

@@ -39,7 +39,7 @@ import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
-import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
+import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStepDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 
 import hudson.EnvVars;
@@ -117,16 +117,16 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     }
 
     @Override
-    public DetectPipelineStepDescriptor getDescriptor() {
-        return (DetectPipelineStepDescriptor) super.getDescriptor();
+    public CoverityPipelineStepDescriptor getDescriptor() {
+        return (CoverityPipelineStepDescriptor) super.getDescriptor();
     }
 
     @Extension(optional = true)
-    public static final class DetectPipelineStepDescriptor extends AbstractStepDescriptorImpl {
+    public static final class CoverityPipelineStepDescriptor extends AbstractStepDescriptorImpl {
         private final transient CoverityCommonDescriptor coverityCommonDescriptor;
 
-        public DetectPipelineStepDescriptor() {
-            super(DetectPipelineExecution.class);
+        public CoverityPipelineStepDescriptor() {
+            super(CoverityPipelineExecution.class);
             coverityCommonDescriptor = new CoverityCommonDescriptor();
         }
 
@@ -173,7 +173,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         }
     }
 
-    public static final class DetectPipelineExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
+    public static final class CoverityPipelineExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
         private static final long serialVersionUID = 4838600483787700636L;
         @StepContextParameter
         private transient TaskListener listener;
@@ -193,8 +193,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             final RunWrapper runWrapper = new RunWrapper(run, true);
             final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
             final Boolean shouldContinueOurSteps = coverityToolStep
-                                                       .runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getContinueOnCommandFailure(),
-                                                           coverityPipelineStep.getCommands(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
+                                                       .runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getCommands(),
+                                                           coverityPipelineStep.getContinueOnCommandFailure(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
             if (shouldContinueOurSteps) {
                 final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
                 coverityFailureConditionStep.runCommonCoverityFailureStep(coverityPipelineStep.getBuildStateForIssues(), coverityPipelineStep.getProjectName(), coverityPipelineStep.getViewName());

@@ -56,13 +56,11 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 
 public class CoverityFailureConditionStep extends BaseCoverityStep {
-
     public CoverityFailureConditionStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean runCommonCoverityFailureStep(final String optionalBuildStateOnFailure, final String optionalProjectName,
-        final String optionalViewName) {
+    public boolean runCommonCoverityFailureStep(final String optionalBuildStateOnFailure, final String optionalProjectName, final String optionalViewName) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             if (Result.SUCCESS != getResult()) {
@@ -75,7 +73,12 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
                 setResult(Result.UNSTABLE);
                 return false;
             }
-            final JenkinsCoverityInstance coverityInstance = getCoverityInstance();
+            final JenkinsCoverityInstance coverityInstance = getCoverityInstance().orElse(null);
+            if (coverityInstance == null) {
+                logger.error("Skipping the Synopsys Coverity Failure Condition step because no configured Coverity server was detected in the Jenkins System Configuration.");
+                return false;
+            }
+
             if (!validateFailureStepConfiguration(logger, coverityInstance)) {
                 logger.error("Synopsys Coverity failure condition configuration is invalid.");
                 setResult(Result.FAILURE);

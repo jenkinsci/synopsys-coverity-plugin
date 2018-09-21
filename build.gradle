@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    id 'org.jenkins-ci.jpi' version '0.25.0'
+    id 'org.jenkins-ci.jpi' version '0.27.0'
 }
 
 group = 'org.jenkins-ci.plugins'

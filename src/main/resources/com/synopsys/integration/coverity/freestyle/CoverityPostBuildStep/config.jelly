@@ -15,12 +15,30 @@
     <f:entry field="streamName" title="${%StreamName}">
         <f:select id="streamNameId"/>
     </f:entry>
-    <f:block>
-        <button type="button" onClick="loadProjects();loadStreams();loadViews();">${%UpdateNow}</button>
-    </f:block>
+    <f:advanced title="${%FailureConditionTitle}">
+        <f:entry title="${%ViewName}" field="viewName">
+            <f:select id="viewNameId"/>
+        </f:entry>
+        <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues">
+            <f:select/>
+        </f:entry>
+    </f:advanced>
+    <f:advanced title="${%AdditionalCommandConfigTitle}">
+        <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="${%ChangeSetNameExcludePatterns}" field="changeSetNameExcludePatterns">
+            <f:textbox/>
+        </f:entry>
+    </f:advanced>
+    <f:entry>
+        <div style="float:right">
+            <input type="button" value="${%UpdateNow}" class="yui-button ${attrs.clazz}" onclick="loadProjects();loadStreams();loadViews();"/>
+        </div>
+    </f:entry>
 
     <f:radioBlock name="coverityRunConfiguration" value="simple" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'advanced'}" inline="true">
-        <f:entry field="analysisCommandToRun" title="${%AnalysisCommandToRunTitle}">
+        <f:entry field="coverityAnalysisType" title="${%CoverityAnalysisTypeTitle}">
             <f:select/>
         </f:entry>
         <f:entry title="${%BuildCommand}" field="buildCommand">
@@ -39,24 +57,9 @@
                 <f:repeatableDeleteButton value="${%DeleteCommand}"/>
             </f:repeatable>
         </f:block>
-        <f:entry field="continueOnCommandFailure" title="${%ContinueOnCommandFailure}">
-            <f:checkbox default="false"/>
-        </f:entry>
-        <f:advanced title="${%AdditionalCommandConfigTitle}">
-            <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns" description="${%ChangeSetNamePatternsIncludeDescription}">
-                <f:textbox/>
-            </f:entry>
-            <f:entry title="${%ChangeSetNameExcludePatterns}" field="changeSetNameExcludePatterns" description="${%ChangeSetNamePatternsExcludeDescription}">
-                <f:textbox/>
-            </f:entry>
-        </f:advanced>
-        <f:advanced title="${%FailureConditionTitle}">
-            <f:entry title="${%ViewName}" field="viewName">
-                <f:select id="viewNameId"/>
-            </f:entry>
-            <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues">
-                <f:select/>
-            </f:entry>
-        </f:advanced>
     </f:radioBlock>
+
+    <f:entry field="continueOnCommandFailure" title="${%ContinueOnCommandFailure}">
+        <f:checkbox default="false"/>
+    </f:entry>
 </j:jelly>
