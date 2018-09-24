@@ -30,6 +30,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
+import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
 
@@ -41,8 +42,6 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Recorder;
 
 public class CoverityPostBuildStep extends Recorder {
-    public static final String SIMPLE_RUN_CONFIGURATION = "simple";
-    public static final String ADVANCED_RUN_CONFIGURATION = "advanced";
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
@@ -52,13 +51,13 @@ public class CoverityPostBuildStep extends Recorder {
     private final String viewName;
     private final String changeSetNameExcludePatterns;
     private final String changeSetNameIncludePatterns;
-    private final String coverityRunConfiguration;
+    private final CoverityRunConfiguration coverityRunConfiguration;
     private final CoverityAnalysisType coverityAnalysisType;
     private final String buildCommand;
 
     @DataBoundConstructor
-    public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
-        final String projectName, final String streamName, final String coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
+    public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
+        final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
         final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
@@ -101,7 +100,7 @@ public class CoverityPostBuildStep extends Recorder {
         return streamName;
     }
 
-    public String getCoverityRunConfiguration() {
+    public CoverityRunConfiguration getCoverityRunConfiguration() {
         return coverityRunConfiguration;
     }
 
@@ -140,7 +139,7 @@ public class CoverityPostBuildStep extends Recorder {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
 
         final boolean shouldContinueOurSteps;
-        if (coverityRunConfiguration.equals(ADVANCED_RUN_CONFIGURATION)) {
+        if (CoverityRunConfiguration.ADVANCED.equals(coverityRunConfiguration)) {
             shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, commands, continueOnCommandFailure, changeSetNameIncludePatterns, changeSetNameExcludePatterns);
         } else {
             final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(buildCommand, coverityAnalysisType);

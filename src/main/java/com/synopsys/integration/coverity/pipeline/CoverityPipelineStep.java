@@ -38,6 +38,7 @@ import com.synopsys.integration.coverity.Messages;
 import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
+import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
 import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStepDescriptor;
@@ -54,8 +55,6 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 public class CoverityPipelineStep extends AbstractStepImpl {
-    public static final String SIMPLE_RUN_CONFIGURATION = "simple";
-    public static final String ADVANCED_RUN_CONFIGURATION = "advanced";
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
@@ -65,13 +64,14 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final String viewName;
     private final String changeSetNameExcludePatterns;
     private final String changeSetNameIncludePatterns;
-    private final String coverityRunConfiguration;
+    private final CoverityRunConfiguration coverityRunConfiguration;
     private final CoverityAnalysisType coverityAnalysisType;
     private final String buildCommand;
 
     @DataBoundConstructor
     public CoverityPipelineStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
-        final String coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
+        final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
+        final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
@@ -121,7 +121,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         return buildCommand;
     }
 
-    public String getCoverityRunConfiguration() {
+    public CoverityRunConfiguration getCoverityRunConfiguration() {
         return coverityRunConfiguration;
     }
 
@@ -231,7 +231,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
 
             final boolean shouldContinueOurSteps;
-            if (coverityPipelineStep.getCoverityRunConfiguration().equals(ADVANCED_RUN_CONFIGURATION)) {
+            if (CoverityRunConfiguration.ADVANCED.equals(coverityPipelineStep.getCoverityRunConfiguration())) {
                 shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getCommands(),
                     coverityPipelineStep.getContinueOnCommandFailure(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
             } else {

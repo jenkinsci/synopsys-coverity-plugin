@@ -37,7 +37,7 @@
         </div>
     </f:entry>
 
-    <f:radioBlock name="coverityRunConfiguration" value="simple" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'advanced'}" inline="true">
+    <f:radioBlock name="coverityRunConfiguration" value="SIMPLE" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'ADVANCED'}" inline="true">
         <f:entry field="coverityAnalysisType" title="${%CoverityAnalysisTypeTitle}">
             <f:select/>
         </f:entry>
@@ -46,7 +46,7 @@
         </f:entry>
     </f:radioBlock>
 
-    <f:radioBlock name="coverityRunConfiguration" value="advanced" title="${%AdvancedRunTitle}" checked="${instance.coverityRunConfiguration == 'advanced'}" inline="true">
+    <f:radioBlock name="coverityRunConfiguration" value="ADVANCED" title="${%AdvancedRunTitle}" checked="${instance.coverityRunConfiguration == 'ADVANCED'}" inline="true">
         <f:block>
             <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
                 <table style="width:100%" id="coverityCommandTable">

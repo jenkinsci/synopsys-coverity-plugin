@@ -15,29 +15,29 @@
     <f:entry field="streamName" title="${%StreamName}">
         <f:select id="streamNameId"/>
     </f:entry>
-    <f:advanced title="${%FailureConditionTitle}">
+    <f:optionalBlock title="${%FailureConditionTitle}" field="buildStatusForIssuesConfigured">
         <f:entry title="${%ViewName}" field="viewName">
             <f:select id="viewNameId"/>
         </f:entry>
         <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues">
             <f:select/>
         </f:entry>
-    </f:advanced>
-    <f:advanced title="${%AdditionalCommandConfigTitle}">
+    </f:optionalBlock>
+    <f:optionalBlock title="${%AdditionalCommandConfigTitle}" field="changeSetPatternsConfigured">
         <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns">
             <f:textbox/>
         </f:entry>
         <f:entry title="${%ChangeSetNameExcludePatterns}" field="changeSetNameExcludePatterns">
             <f:textbox/>
         </f:entry>
-    </f:advanced>
+    </f:optionalBlock>
     <f:entry>
         <div style="float:right">
             <input type="button" value="${%UpdateNow}" class="yui-button ${attrs.clazz}" onclick="loadProjects();loadStreams();loadViews();"/>
         </div>
     </f:entry>
 
-    <f:radioBlock name="coverityRunConfiguration" value="simple" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'advanced'}" inline="true">
+    <f:radioBlock name="coverityRunConfiguration" value="SIMPLE" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'ADVANCED'}" inline="true">
         <f:entry field="coverityAnalysisType" title="${%CoverityAnalysisTypeTitle}">
             <f:select/>
         </f:entry>
@@ -46,7 +46,7 @@
         </f:entry>
     </f:radioBlock>
 
-    <f:radioBlock name="coverityRunConfiguration" value="advanced" title="${%AdvancedRunTitle}" checked="${instance.coverityRunConfiguration == 'advanced'}" inline="true">
+    <f:radioBlock name="coverityRunConfiguration" value="ADVANCED" title="${%AdvancedRunTitle}" checked="${instance.coverityRunConfiguration == 'ADVANCED'}" inline="true">
         <f:block>
             <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
                 <table style="width:100%" id="coverityCommandTable">
