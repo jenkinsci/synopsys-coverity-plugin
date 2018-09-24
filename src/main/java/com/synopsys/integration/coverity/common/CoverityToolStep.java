@@ -259,6 +259,24 @@ public class CoverityToolStep extends BaseCoverityStep {
         return changeLogSets;
     }
 
+    public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final CoverityAnalysisType coverityAnalysisType) {
+        final RepeatableCommand covBuild = new RepeatableCommand("cov-build --dir ${WORKSPACE}/idir " + buildCommand);
+        final RepeatableCommand covCommitDefects = new RepeatableCommand("cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}");
+
+        final RepeatableCommand[] commands;
+        if (CoverityAnalysisType.COV_ANALYZE.equals(coverityAnalysisType)) {
+            final RepeatableCommand covAnalyze = new RepeatableCommand("cov-analyze --dir ${WORKSPACE}/idir");
+            commands = new RepeatableCommand[] { covBuild, covAnalyze, covCommitDefects };
+        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType)) {
+            final RepeatableCommand covRunDesktop = new RepeatableCommand("cov-run-desktop --dir ${WORKSPACE}/idir  --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}");
+            commands = new RepeatableCommand[] { covBuild, covRunDesktop, covCommitDefects };
+        } else {
+            commands = new RepeatableCommand[] {};
+        }
+
+        return commands;
+    }
+
     private String getChangeSetFilePaths(final IntLogger logger, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) {
         final ChangeSetFilter changeSetFilter = new ChangeSetFilter(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
         final List<String> filePaths = new ArrayList<>();

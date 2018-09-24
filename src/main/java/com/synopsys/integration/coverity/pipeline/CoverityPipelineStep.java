@@ -35,6 +35,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.Messages;
+import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
@@ -53,6 +54,8 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 public class CoverityPipelineStep extends AbstractStepImpl {
+    public static final String SIMPLE_RUN_CONFIGURATION = "simple";
+    public static final String ADVANCED_RUN_CONFIGURATION = "advanced";
     private final String coverityToolName;
     private final Boolean continueOnCommandFailure;
     private final RepeatableCommand[] commands;
@@ -62,16 +65,22 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final String viewName;
     private final String changeSetNameExcludePatterns;
     private final String changeSetNameIncludePatterns;
+    private final String coverityRunConfiguration;
+    private final CoverityAnalysisType coverityAnalysisType;
+    private final String buildCommand;
 
     @DataBoundConstructor
-    public CoverityPipelineStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues,
-        final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
+    public CoverityPipelineStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
+        final String coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
         this.buildStateForIssues = buildStateForIssues;
         this.projectName = projectName;
         this.streamName = streamName;
+        this.coverityRunConfiguration = coverityRunConfiguration;
+        this.coverityAnalysisType = coverityAnalysisType;
+        this.buildCommand = buildCommand;
         this.viewName = viewName;
         this.changeSetNameExcludePatterns = changeSetNameExcludePatterns;
         this.changeSetNameIncludePatterns = changeSetNameIncludePatterns;
@@ -106,6 +115,18 @@ public class CoverityPipelineStep extends AbstractStepImpl {
 
     public String getViewName() {
         return viewName;
+    }
+
+    public String getBuildCommand() {
+        return buildCommand;
+    }
+
+    public String getCoverityRunConfiguration() {
+        return coverityRunConfiguration;
+    }
+
+    public CoverityAnalysisType getCoverityAnalysisType() {
+        return coverityAnalysisType;
     }
 
     public String getChangeSetNameExcludePatterns() {
@@ -160,16 +181,32 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
         }
 
+        public ListBoxModel doFillCoverityAnalysisTypeItems() {
+            return coverityCommonDescriptor.doFillCoverityAnalysisTypeItems();
+        }
+
         public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") Boolean updateNow) {
             return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
+        }
+
+        public FormValidation doCheckProjectName() {
+            return coverityCommonDescriptor.testConnectionSilently();
         }
 
         public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") Boolean updateNow) {
             return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName, updateNow);
         }
 
+        public FormValidation doCheckStreamName() {
+            return coverityCommonDescriptor.testConnectionSilently();
+        }
+
         public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") Boolean updateNow) {
             return coverityCommonDescriptor.doFillViewNameItems(viewName, updateNow);
+        }
+
+        public FormValidation doCheckViewName() {
+            return coverityCommonDescriptor.testConnectionSilently();
         }
     }
 
@@ -192,9 +229,17 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         protected Void run() throws Exception {
             final RunWrapper runWrapper = new RunWrapper(run, true);
             final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
-            final Boolean shouldContinueOurSteps = coverityToolStep
-                                                       .runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getCommands(),
-                                                           coverityPipelineStep.getContinueOnCommandFailure(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
+
+            final boolean shouldContinueOurSteps;
+            if (coverityPipelineStep.getCoverityRunConfiguration().equals(ADVANCED_RUN_CONFIGURATION)) {
+                shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getCommands(),
+                    coverityPipelineStep.getContinueOnCommandFailure(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
+            } else {
+                final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(coverityPipelineStep.getBuildCommand(), coverityPipelineStep.getCoverityAnalysisType());
+                shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), simpleModeCommands,
+                    coverityPipelineStep.getContinueOnCommandFailure(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
+            }
+
             if (shouldContinueOurSteps) {
                 final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(computer.getNode(), listener, envVars, workspace, run);
                 coverityFailureConditionStep.runCommonCoverityFailureStep(coverityPipelineStep.getBuildStateForIssues(), coverityPipelineStep.getProjectName(), coverityPipelineStep.getViewName());
