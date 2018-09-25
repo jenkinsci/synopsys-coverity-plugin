@@ -105,6 +105,10 @@ public class CoverityCommonDescriptor {
         return Arrays.stream(CoverityAnalysisType.values()).collect(ListBoxModel::new, (listBoxModel, coverityAnalysisType) -> listBoxModel.add(coverityAnalysisType.getDisplayName(), coverityAnalysisType.name()), ListBoxModel::addAll);
     }
 
+    public ListBoxModel doFillOnCommandFailureItems() {
+        return Arrays.stream(OnCommandFailure.values()).collect(ListBoxModel::new, (listBoxModel, onCommandFailure) -> listBoxModel.add(onCommandFailure.getDisplayName(), onCommandFailure.name()), ListBoxModel::addAll);
+    }
+
     public ListBoxModel doFillProjectNameItems(final String projectName, final Boolean updateNow) {
         final ListBoxModel boxModel = new ListBoxModel();
         try {

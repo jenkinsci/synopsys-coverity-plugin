@@ -32,6 +32,7 @@ import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
 import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
+import com.synopsys.integration.coverity.common.OnCommandFailure;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
 
 import hudson.FilePath;
@@ -43,7 +44,7 @@ import hudson.tasks.Recorder;
 
 public class CoverityPostBuildStep extends Recorder {
     private final String coverityToolName;
-    private final Boolean continueOnCommandFailure;
+    private final OnCommandFailure onCommandFailure;
     private final RepeatableCommand[] commands;
     private final String buildStateForIssues;
     private final String projectName;
@@ -58,11 +59,11 @@ public class CoverityPostBuildStep extends Recorder {
     private final Boolean changeSetPatternsConfigured;
 
     @DataBoundConstructor
-    public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
+    public CoverityPostBuildStep(final String coverityToolName, final OnCommandFailure onCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
         final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
         final String changeSetNameIncludePatterns, final Boolean buildStatusForIssuesConfigured, final Boolean changeSetPatternsConfigured) {
         this.coverityToolName = coverityToolName;
-        this.continueOnCommandFailure = continueOnCommandFailure;
+        this.onCommandFailure = onCommandFailure;
         this.commands = commands;
         this.buildStateForIssues = buildStateForIssues;
         this.projectName = projectName;
@@ -81,8 +82,8 @@ public class CoverityPostBuildStep extends Recorder {
         return coverityToolName;
     }
 
-    public boolean getContinueOnCommandFailure() {
-        return null != continueOnCommandFailure && continueOnCommandFailure;
+    public OnCommandFailure commandFailureAction() {
+        return onCommandFailure;
     }
 
     public boolean getChangeSetPatternsConfigured() {
@@ -150,11 +151,11 @@ public class CoverityPostBuildStep extends Recorder {
         final boolean shouldContinueOurSteps;
         if (CoverityRunConfiguration.ADVANCED.equals(coverityRunConfiguration)) {
             shouldContinueOurSteps = coverityToolStep
-                                         .runCoverityToolStep(coverityToolName, streamName, commands, this.getContinueOnCommandFailure(), this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+                                         .runCoverityToolStep(coverityToolName, streamName, commands, onCommandFailure, this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns, changeSetNameExcludePatterns);
         } else {
             final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(buildCommand, coverityAnalysisType);
             shouldContinueOurSteps = coverityToolStep
-                                         .runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, this.getContinueOnCommandFailure(), this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns,
+                                         .runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, onCommandFailure, this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns,
                                              changeSetNameExcludePatterns);
         }
 

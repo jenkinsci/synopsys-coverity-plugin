@@ -40,6 +40,7 @@ import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.common.CoverityFailureConditionStep;
 import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
+import com.synopsys.integration.coverity.common.OnCommandFailure;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
 import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStepDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
@@ -56,7 +57,7 @@ import jenkins.model.Jenkins;
 
 public class CoverityPipelineStep extends AbstractStepImpl {
     private final String coverityToolName;
-    private final Boolean continueOnCommandFailure;
+    private final OnCommandFailure onCommandFailure;
     private final RepeatableCommand[] commands;
     private final String buildStateForIssues;
     private final String projectName;
@@ -71,11 +72,11 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     private final Boolean changeSetPatternsConfigured;
 
     @DataBoundConstructor
-    public CoverityPipelineStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
+    public CoverityPipelineStep(final String coverityToolName, final OnCommandFailure onCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
         final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
         final String changeSetNameIncludePatterns, final Boolean buildStatusForIssuesConfigured, final Boolean changeSetPatternsConfigured) {
         this.coverityToolName = coverityToolName;
-        this.continueOnCommandFailure = continueOnCommandFailure;
+        this.onCommandFailure = onCommandFailure;
         this.commands = commands;
         this.buildStateForIssues = buildStateForIssues;
         this.projectName = projectName;
@@ -94,8 +95,8 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         return coverityToolName;
     }
 
-    public boolean getContinueOnCommandFailure() {
-        return null != continueOnCommandFailure && continueOnCommandFailure;
+    public OnCommandFailure getOnCommandFailure() {
+        return onCommandFailure;
     }
 
     public boolean getChangeSetPatternsConfigured() {
@@ -178,6 +179,10 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
         }
 
+        public ListBoxModel doFillOnCommandFailureItems() {
+            return coverityCommonDescriptor.doFillOnCommandFailureItems();
+        }
+
         public ListBoxModel doFillCoverityToolNameItems() {
             return coverityCommonDescriptor.doFillCoverityToolNameItems(getCoverityToolInstallations());
         }
@@ -242,11 +247,11 @@ public class CoverityPipelineStep extends AbstractStepImpl {
             final boolean shouldContinueOurSteps;
             if (CoverityRunConfiguration.ADVANCED.equals(coverityPipelineStep.getCoverityRunConfiguration())) {
                 shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getCommands(),
-                    coverityPipelineStep.getContinueOnCommandFailure(), coverityPipelineStep.getChangeSetPatternsConfigured(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
+                    coverityPipelineStep.getOnCommandFailure(), coverityPipelineStep.getChangeSetPatternsConfigured(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
             } else {
                 final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(coverityPipelineStep.getBuildCommand(), coverityPipelineStep.getCoverityAnalysisType());
                 shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), simpleModeCommands,
-                    coverityPipelineStep.getContinueOnCommandFailure(), coverityPipelineStep.getChangeSetPatternsConfigured(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
+                    coverityPipelineStep.getOnCommandFailure(), coverityPipelineStep.getChangeSetPatternsConfigured(), coverityPipelineStep.getChangeSetNameIncludePatterns(), coverityPipelineStep.getChangeSetNameExcludePatterns());
             }
 
             if (shouldContinueOurSteps && coverityPipelineStep.getBuildStatusForIssuesConfigured()) {

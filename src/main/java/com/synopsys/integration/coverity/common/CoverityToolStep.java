@@ -79,7 +79,7 @@ public class CoverityToolStep extends BaseCoverityStep {
         return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
     }
 
-    public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final boolean continueOnCommandFailure, final boolean changeSetPatternsConfigured,
+    public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final OnCommandFailure onCommandFailure, final boolean changeSetPatternsConfigured,
         final String changeSetNamesIncludePatterns, final String changeSetNamesExcludePatterns) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
@@ -123,7 +123,7 @@ public class CoverityToolStep extends BaseCoverityStep {
 
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
             logger.alwaysLog("-- Synopsys stream: " + streamName);
-            logger.alwaysLog("-- Continue on command failure: " + continueOnCommandFailure);
+            logger.alwaysLog("-- On command failure: " + onCommandFailure);
             if (changeSetPatternsConfigured) {
                 logger.alwaysLog("-- Change Set Inclusion Patterns: " + changeSetNamesIncludePatterns);
                 logger.alwaysLog("-- Change Set Exclusion Patterns: " + changeSetNamesExcludePatterns);
@@ -142,7 +142,7 @@ public class CoverityToolStep extends BaseCoverityStep {
 
                 phoneHomeResponse = phoneHome(logger, coverityInstance, pluginVersion);
 
-                executeCoverityCommands(logger, commands, changeSetPatternsConfigured, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, continueOnCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
+                executeCoverityCommands(logger, commands, changeSetPatternsConfigured, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, onCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
 
             } catch (final InterruptedException e) {
                 if (null != phoneHomeResponse) {
@@ -162,7 +162,8 @@ public class CoverityToolStep extends BaseCoverityStep {
     }
 
     private void executeCoverityCommands(final JenkinsCoverityLogger logger, final RepeatableCommand[] commands, final boolean changeSetPatternsConfigured, final String changeSetNamesExcludePatterns,
-        final String changeSetNamesIncludePatterns, final boolean continueOnCommandFailure, final JenkinsCoverityInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse)
+        final String changeSetNamesIncludePatterns, final OnCommandFailure onCommandFailure, final JenkinsCoverityInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation,
+        final PhoneHomeResponse phoneHomeResponse)
         throws IntegrationException, InterruptedException, IOException {
         for (final RepeatableCommand repeatableCommand : commands) {
             final String command = repeatableCommand.getCommand();
@@ -174,7 +175,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                 try {
                     resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
                 } catch (final EmptyChangeSetException e) {
-                    if (continueOnCommandFailure) {
+                    if (OnCommandFailure.EXECUTE_REMAINING_COMMANDS.equals(onCommandFailure)) {
                         logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
                         continue;
                     } else {
@@ -213,7 +214,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                     logger.debug(null, exception);
                 }
             }
-            if (!continueOnCommandFailure && shouldStop) {
+            if (OnCommandFailure.SKIP_REMAINING_COMMANDS.equals(onCommandFailure) && shouldStop) {
                 break;
             }
         }

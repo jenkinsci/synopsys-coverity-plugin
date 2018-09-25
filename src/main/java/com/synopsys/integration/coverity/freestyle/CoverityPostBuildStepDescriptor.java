@@ -188,6 +188,10 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityCommonDescriptor.doFillCoverityAnalysisTypeItems();
     }
 
+    public ListBoxModel doFillOnCommandFailureItems() {
+        return coverityCommonDescriptor.doFillOnCommandFailureItems();
+    }
+
     public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
         return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
     }

@@ -12,7 +12,7 @@ plugins {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '1.1.0-SNAPSHOT'
+version = '1.0.0-SNAPSHOT'
 description = 'Allows Users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
@@ -55,7 +55,7 @@ jenkinsPlugin {
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:1.9.4'
 
-    compile 'com.synopsys.integration:coverity-common:0.1.4-SNAPSHOT'
+    compile 'com.synopsys.integration:coverity-common:0.1.4'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'

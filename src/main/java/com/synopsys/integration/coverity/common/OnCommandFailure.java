@@ -21,16 +21,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.synopsys.integration.coverity.common;
 
-public enum CoverityAnalysisType {
-    COV_ANALYZE("Initial Analysis"),
-    COV_RUN_DESKTOP("Delta Analysis");
+public enum OnCommandFailure {
+    SKIP_REMAINING_COMMANDS("Skip any remaining commands"),
+    EXECUTE_REMAINING_COMMANDS("Continue executing any remaining commands");
 
     private String displayName;
 
-    CoverityAnalysisType(final String displayName) {
+    OnCommandFailure(final String displayName) {
         this.displayName = displayName;
     }
 
