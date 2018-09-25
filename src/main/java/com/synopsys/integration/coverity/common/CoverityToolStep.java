@@ -79,8 +79,8 @@ public class CoverityToolStep extends BaseCoverityStep {
         return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
     }
 
-    public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final Boolean continueOnCommandFailure, final String changeSetNamesIncludePatterns,
-        final String changeSetNamesExcludePatterns) {
+    public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final boolean continueOnCommandFailure, final boolean changeSetPatternsConfigured,
+        final String changeSetNamesIncludePatterns, final String changeSetNamesExcludePatterns) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
@@ -122,10 +122,14 @@ public class CoverityToolStep extends BaseCoverityStep {
             final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
 
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
-            logger.alwaysLog("-- Synopsys stream : " + continueOnCommandFailure);
-            logger.alwaysLog("-- Continue on command failure : " + continueOnCommandFailure);
-            logger.alwaysLog("-- Change Set Inclusion Patterns: " + changeSetNamesIncludePatterns);
-            logger.alwaysLog("-- Change Set Exclusion Patterns: " + changeSetNamesExcludePatterns);
+            logger.alwaysLog("-- Synopsys stream: " + streamName);
+            logger.alwaysLog("-- Continue on command failure: " + continueOnCommandFailure);
+            if (changeSetPatternsConfigured) {
+                logger.alwaysLog("-- Change Set Inclusion Patterns: " + changeSetNamesIncludePatterns);
+                logger.alwaysLog("-- Change Set Exclusion Patterns: " + changeSetNamesExcludePatterns);
+            } else {
+                logger.alwaysLog("-- No Change Set inclusion or exclusion patterns set");
+            }
             PhoneHomeResponse phoneHomeResponse = null;
             try {
                 final URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
@@ -138,7 +142,7 @@ public class CoverityToolStep extends BaseCoverityStep {
 
                 phoneHomeResponse = phoneHome(logger, coverityInstance, pluginVersion);
 
-                runAdvancedMode(logger, commands, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, continueOnCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
+                executeCoverityCommands(logger, commands, changeSetPatternsConfigured, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, continueOnCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
 
             } catch (final InterruptedException e) {
                 if (null != phoneHomeResponse) {
@@ -157,8 +161,8 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
-    private void runAdvancedMode(final JenkinsCoverityLogger logger, final RepeatableCommand[] commands, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns, final boolean continueOnCommandFailure,
-        final JenkinsCoverityInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse)
+    private void executeCoverityCommands(final JenkinsCoverityLogger logger, final RepeatableCommand[] commands, final boolean changeSetPatternsConfigured, final String changeSetNamesExcludePatterns,
+        final String changeSetNamesIncludePatterns, final boolean continueOnCommandFailure, final JenkinsCoverityInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse)
         throws IntegrationException, InterruptedException, IOException {
         for (final RepeatableCommand repeatableCommand : commands) {
             final String command = repeatableCommand.getCommand();
@@ -166,16 +170,20 @@ public class CoverityToolStep extends BaseCoverityStep {
                 continue;
             }
             final String resolvedCommand;
-            try {
-                resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
-            } catch (final EmptyChangeSetException e) {
-                if (continueOnCommandFailure) {
-                    logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
-                    continue;
-                } else {
-                    logger.error(String.format("[WARNING] Skipping command %s and following commands because the CHANGE_SET is empty", command));
-                    break;
+            if (changeSetPatternsConfigured) {
+                try {
+                    resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+                } catch (final EmptyChangeSetException e) {
+                    if (continueOnCommandFailure) {
+                        logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
+                        continue;
+                    } else {
+                        logger.error(String.format("[WARNING] Skipping command %s and following commands because the CHANGE_SET is empty", command));
+                        break;
+                    }
                 }
+            } else {
+                resolvedCommand = command;
             }
             final List<String> arguments = getCorrectedParameters(resolvedCommand);
             final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger,

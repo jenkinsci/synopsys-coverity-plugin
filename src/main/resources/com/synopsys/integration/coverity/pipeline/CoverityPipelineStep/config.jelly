@@ -15,22 +15,22 @@
     <f:entry field="streamName" title="${%StreamName}">
         <f:select id="streamNameId"/>
     </f:entry>
-    <f:advanced title="${%FailureConditionTitle}">
+    <f:optionalBlock title="${%FailureConditionTitle}" field="buildStatusForIssuesConfigured" inline="true">
         <f:entry title="${%ViewName}" field="viewName">
             <f:select id="viewNameId"/>
         </f:entry>
         <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues">
             <f:select/>
         </f:entry>
-    </f:advanced>
-    <f:advanced title="${%AdditionalCommandConfigTitle}">
+    </f:optionalBlock>
+    <f:optionalBlock title="${%AdditionalCommandConfigTitle}" field="changeSetPatternsConfigured" inline="true">
         <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns">
             <f:textbox/>
         </f:entry>
         <f:entry title="${%ChangeSetNameExcludePatterns}" field="changeSetNameExcludePatterns">
             <f:textbox/>
         </f:entry>
-    </f:advanced>
+    </f:optionalBlock>
     <f:entry>
         <div style="float:right">
             <input type="button" value="${%UpdateNow}" class="yui-button ${attrs.clazz}" onclick="loadProjects();loadStreams();loadViews();"/>

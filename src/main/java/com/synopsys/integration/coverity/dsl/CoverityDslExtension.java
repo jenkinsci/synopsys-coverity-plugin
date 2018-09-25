@@ -40,30 +40,24 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
     public Object coverity(final String coverityToolName, final Boolean continueOnCommandFailure, final List<String> commands, final String buildStateForIssues, final String projectName, final String streamName, final String viewName,
-        final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
+        final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns, final Boolean buildStatusForIssuesConfigured,
+        final Boolean changeSetPatternsConfigured) {
         return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, stringToCoverityRunConfiguration(coverityRunConfiguration),
-            stringToCoverityAnalysisType(coverityAnalysisType), buildCommand, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns);
+            stringToCoverityAnalysisType(coverityAnalysisType), buildCommand, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns, buildStatusForIssuesConfigured, changeSetPatternsConfigured);
     }
 
     private RepeatableCommand[] stringsToCommands(final List<String> commands) {
         if (null == commands) {
             return null;
         }
-        if (commands.isEmpty()) {
-            return new RepeatableCommand[0];
-        }
-        final RepeatableCommand[] repeatableCommands = new RepeatableCommand[commands.size()];
-        for (int i = 0; i < repeatableCommands.length; i++) {
-            repeatableCommands[i] = new RepeatableCommand(commands.get(i));
-        }
-        return repeatableCommands;
+        return (RepeatableCommand[]) commands.stream().map(RepeatableCommand::new).toArray();
     }
 
-    private CoverityAnalysisType stringToCoverityAnalysisType(String coverityAnalysisType) {
+    private CoverityAnalysisType stringToCoverityAnalysisType(final String coverityAnalysisType) {
         return CoverityAnalysisType.valueOf(coverityAnalysisType);
     }
 
-    private CoverityRunConfiguration stringToCoverityRunConfiguration(String coverityRunConfiguration) {
+    private CoverityRunConfiguration stringToCoverityRunConfiguration(final String coverityRunConfiguration) {
         return CoverityRunConfiguration.valueOf(coverityRunConfiguration);
     }
 

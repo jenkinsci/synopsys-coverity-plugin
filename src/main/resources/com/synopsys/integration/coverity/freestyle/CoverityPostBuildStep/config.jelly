@@ -15,7 +15,7 @@
     <f:entry field="streamName" title="${%StreamName}">
         <f:select id="streamNameId"/>
     </f:entry>
-    <f:optionalBlock title="${%FailureConditionTitle}" field="buildStatusForIssuesConfigured">
+    <f:optionalBlock title="${%FailureConditionTitle}" field="buildStatusForIssuesConfigured" inline="true">
         <f:entry title="${%ViewName}" field="viewName">
             <f:select id="viewNameId"/>
         </f:entry>
@@ -23,7 +23,7 @@
             <f:select/>
         </f:entry>
     </f:optionalBlock>
-    <f:optionalBlock title="${%AdditionalCommandConfigTitle}" field="changeSetPatternsConfigured">
+    <f:optionalBlock title="${%AdditionalCommandConfigTitle}" field="changeSetPatternsConfigured" inline="true">
         <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns">
             <f:textbox/>
         </f:entry>

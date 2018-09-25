@@ -54,11 +54,13 @@ public class CoverityPostBuildStep extends Recorder {
     private final CoverityRunConfiguration coverityRunConfiguration;
     private final CoverityAnalysisType coverityAnalysisType;
     private final String buildCommand;
+    private final Boolean buildStatusForIssuesConfigured;
+    private final Boolean changeSetPatternsConfigured;
 
     @DataBoundConstructor
     public CoverityPostBuildStep(final String coverityToolName, final Boolean continueOnCommandFailure, final RepeatableCommand[] commands, final String buildStateForIssues, final String projectName, final String streamName,
         final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
-        final String changeSetNameIncludePatterns) {
+        final String changeSetNameIncludePatterns, final Boolean buildStatusForIssuesConfigured, final Boolean changeSetPatternsConfigured) {
         this.coverityToolName = coverityToolName;
         this.continueOnCommandFailure = continueOnCommandFailure;
         this.commands = commands;
@@ -71,6 +73,8 @@ public class CoverityPostBuildStep extends Recorder {
         this.viewName = viewName;
         this.changeSetNameExcludePatterns = changeSetNameExcludePatterns;
         this.changeSetNameIncludePatterns = changeSetNameIncludePatterns;
+        this.buildStatusForIssuesConfigured = buildStatusForIssuesConfigured;
+        this.changeSetPatternsConfigured = changeSetPatternsConfigured;
     }
 
     public String getCoverityToolName() {
@@ -78,10 +82,15 @@ public class CoverityPostBuildStep extends Recorder {
     }
 
     public boolean getContinueOnCommandFailure() {
-        if (null != continueOnCommandFailure) {
-            return continueOnCommandFailure;
-        }
-        return false;
+        return null != continueOnCommandFailure && continueOnCommandFailure;
+    }
+
+    public boolean getChangeSetPatternsConfigured() {
+        return null != changeSetPatternsConfigured && changeSetPatternsConfigured;
+    }
+
+    public boolean getBuildStatusForIssuesConfigured() {
+        return null != buildStatusForIssuesConfigured && buildStatusForIssuesConfigured;
     }
 
     public RepeatableCommand[] getCommands() {
@@ -140,13 +149,16 @@ public class CoverityPostBuildStep extends Recorder {
 
         final boolean shouldContinueOurSteps;
         if (CoverityRunConfiguration.ADVANCED.equals(coverityRunConfiguration)) {
-            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, commands, continueOnCommandFailure, changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+            shouldContinueOurSteps = coverityToolStep
+                                         .runCoverityToolStep(coverityToolName, streamName, commands, this.getContinueOnCommandFailure(), this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns, changeSetNameExcludePatterns);
         } else {
             final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(buildCommand, coverityAnalysisType);
-            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, continueOnCommandFailure, changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+            shouldContinueOurSteps = coverityToolStep
+                                         .runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, this.getContinueOnCommandFailure(), this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns,
+                                             changeSetNameExcludePatterns);
         }
 
-        if (shouldContinueOurSteps) {
+        if (shouldContinueOurSteps && getBuildStatusForIssuesConfigured()) {
             final CoverityFailureConditionStep coverityFailureConditionStep = new CoverityFailureConditionStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
             coverityFailureConditionStep.runCommonCoverityFailureStep(buildStateForIssues, projectName, viewName);
         }
