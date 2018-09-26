@@ -26,11 +26,12 @@ package com.synopsys.integration.coverity.dsl;
 
 import java.util.List;
 
+import com.synopsys.integration.coverity.common.BuildStatus;
 import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.OnCommandFailure;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
-import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStep;
+import com.synopsys.integration.coverity.freestyle.CoverityBuildStep;
 
 import hudson.Extension;
 import javaposse.jobdsl.dsl.helpers.step.StepContext;
@@ -40,12 +41,12 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 @Extension(optional = true)
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(final String coverityToolName, final String onCommandFailure, final List<String> commands, final String buildStateForIssues, final String projectName, final String streamName,
+    public Object coverity(final String coverityToolName, final String onCommandFailure, final List<String> commands, final String buildStatusForIssues, final String projectName, final String streamName,
         final String viewName, final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns,
-        final Boolean buildStatusForIssuesConfigured, final Boolean changeSetPatternsConfigured) {
-        return new CoverityPostBuildStep(coverityToolName, stringToOnCommandFailure(onCommandFailure), stringsToCommands(commands), buildStateForIssues, projectName, streamName,
-            stringToCoverityRunConfiguration(coverityRunConfiguration),
-            stringToCoverityAnalysisType(coverityAnalysisType), buildCommand, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns, buildStatusForIssuesConfigured, changeSetPatternsConfigured);
+        final Boolean checkForIssuesInView, final Boolean changeSetPatternsConfigured) {
+        return new CoverityBuildStep(coverityToolName, OnCommandFailure.valueOf(onCommandFailure), stringsToCommands(commands), BuildStatus.valueOf(buildStatusForIssues), projectName, streamName,
+            CoverityRunConfiguration.valueOf(coverityRunConfiguration), CoverityAnalysisType.valueOf(coverityAnalysisType), buildCommand, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns, checkForIssuesInView,
+            changeSetPatternsConfigured);
     }
 
     private RepeatableCommand[] stringsToCommands(final List<String> commands) {
@@ -53,18 +54,6 @@ public class CoverityDslExtension extends ContextExtensionPoint {
             return null;
         }
         return (RepeatableCommand[]) commands.stream().map(RepeatableCommand::new).toArray();
-    }
-
-    private OnCommandFailure stringToOnCommandFailure(final String commandFailureAction) {
-        return OnCommandFailure.valueOf(commandFailureAction);
-    }
-
-    private CoverityAnalysisType stringToCoverityAnalysisType(final String coverityAnalysisType) {
-        return CoverityAnalysisType.valueOf(coverityAnalysisType);
-    }
-
-    private CoverityRunConfiguration stringToCoverityRunConfiguration(final String coverityRunConfiguration) {
-        return CoverityRunConfiguration.valueOf(coverityRunConfiguration);
     }
 
 }

@@ -32,7 +32,7 @@ import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.JenkinsProxyHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStepDescriptor;
+import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
@@ -89,8 +89,8 @@ public abstract class BaseCoverityStep {
         getRun().setResult(result);
     }
 
-    public CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
+    public CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
     }
 
     public Optional<JenkinsCoverityInstance> getCoverityInstance() {

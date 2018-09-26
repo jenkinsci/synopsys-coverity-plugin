@@ -44,7 +44,7 @@ import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.config.CoverityServerConfigValidator;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
-import com.synopsys.integration.coverity.freestyle.CoverityPostBuildStepDescriptor;
+import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
@@ -90,15 +90,9 @@ public class CoverityCommonDescriptor {
         return FormValidation.error(Messages.CoverityToolInstallation_getNoToolWithName_0(coverityToolName));
     }
 
-    public ListBoxModel doFillBuildStateForIssuesItems() {
-        final ListBoxModel boxModel = new ListBoxModel();
-        boxModel.add(BuildState.NONE.getDisplayValue(), BuildState.NONE.name());
-        for (final BuildState buildState : BuildState.values()) {
-            if (BuildState.NONE != buildState) {
-                boxModel.add(buildState.getDisplayValue(), buildState.name());
-            }
-        }
-        return boxModel;
+    public ListBoxModel doFillBuildStatusForIssuesItems() {
+        return Arrays.stream(BuildStatus.values()).collect(ListBoxModel::new, (listBoxModel, buildStatus) -> listBoxModel.add(buildStatus.getDisplayName(), buildStatus.name()), ListBoxModel::addAll);
+
     }
 
     public ListBoxModel doFillCoverityAnalysisTypeItems() {
@@ -171,7 +165,7 @@ public class CoverityCommonDescriptor {
                     }
                 }
             }
-        } catch (IllegalStateException handledByFormValidation) {
+        } catch (final IllegalStateException handledByFormValidation) {
         }
         return boxModel;
     }
@@ -261,8 +255,8 @@ public class CoverityCommonDescriptor {
         }
     }
 
-    private CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
+    private CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
     }
 
     private Optional<JenkinsCoverityInstance> getCoverityInstance() {

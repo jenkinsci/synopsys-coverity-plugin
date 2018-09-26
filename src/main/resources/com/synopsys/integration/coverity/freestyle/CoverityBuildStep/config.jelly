@@ -15,15 +15,15 @@
     <f:entry field="streamName" title="${%StreamName}">
         <f:select id="streamNameId"/>
     </f:entry>
-    <f:optionalBlock title="${%FailureConditionTitle}" field="buildStatusForIssuesConfigured" inline="true">
+    <f:optionalBlock title="${%CheckForIssuesInViewTitle}" field="checkForIssuesInView" inline="true">
         <f:entry title="${%ViewName}" field="viewName">
             <f:select id="viewNameId"/>
         </f:entry>
-        <f:entry title="${%BuildStateForIssuesTitle}" field="buildStateForIssues">
+        <f:entry title="${%BuildStatusForIssuesTitle}" field="buildStatusForIssues">
             <f:select/>
         </f:entry>
     </f:optionalBlock>
-    <f:optionalBlock title="${%AdditionalCommandConfigTitle}" field="changeSetPatternsConfigured" inline="true">
+    <f:optionalBlock title="${%ConfigureChangeSetPatternsTitle}" field="changeSetPatternsConfigured" inline="true">
         <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns">
             <f:textbox/>
         </f:entry>
@@ -33,7 +33,7 @@
     </f:optionalBlock>
     <f:entry>
         <div style="float:right">
-            <input type="button" value="${%UpdateNow}" class="yui-button ${attrs.clazz}" onclick="loadProjects();loadStreams();loadViews();"/>
+            <input type="button" value="${%RefreshConnection}" class="yui-button ${attrs.clazz}" onclick="loadProjects();loadStreams();loadViews();"/>
         </div>
     </f:entry>
 
@@ -50,7 +50,7 @@
         <f:block>
             <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
                 <table style="width:100%" id="coverityCommandTable">
-                    <f:entry title="${%Command}" field="command" help="/plugin/synopsys-coverity/help/CoverityPostBuildStep/help-command.html">
+                    <f:entry title="${%Command}" field="command" help="/plugin/synopsys-coverity/help/CoverityBuildStep/help-command.html">
                         <f:textbox/>
                     </f:entry>
                 </table>

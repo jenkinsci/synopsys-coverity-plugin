@@ -51,22 +51,22 @@ import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Publisher;
+import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 @Extension()
-public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publisher> implements Serializable {
+public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> implements Serializable {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
     private static final long serialVersionUID = -7146909743946288527L;
     private final transient CoverityCommonDescriptor coverityCommonDescriptor;
     private JenkinsCoverityInstance coverityInstance;
     private CoverityToolInstallation[] coverityToolInstallations;
 
-    public CoverityPostBuildStepDescriptor() {
-        super(CoverityPostBuildStep.class);
+    public CoverityBuildStepDescriptor() {
+        super(CoverityBuildStep.class);
         load();
         coverityCommonDescriptor = new CoverityCommonDescriptor();
     }
@@ -180,8 +180,8 @@ public class CoverityPostBuildStepDescriptor extends BuildStepDescriptor<Publish
         return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolInstallations, coverityToolName);
     }
 
-    public ListBoxModel doFillBuildStateForIssuesItems() {
-        return coverityCommonDescriptor.doFillBuildStateForIssuesItems();
+    public ListBoxModel doFillBuildStatusForIssuesItems() {
+        return coverityCommonDescriptor.doFillBuildStatusForIssuesItems();
     }
 
     public ListBoxModel doFillCoverityAnalysisTypeItems() {

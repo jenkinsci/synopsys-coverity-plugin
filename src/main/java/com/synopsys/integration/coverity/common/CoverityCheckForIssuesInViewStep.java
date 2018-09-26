@@ -55,83 +55,80 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
-public class CoverityFailureConditionStep extends BaseCoverityStep {
-    public CoverityFailureConditionStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
+    public CoverityCheckForIssuesInViewStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean runCommonCoverityFailureStep(final String buildStateOnFailure, final String projectName, final String viewName) {
+    public boolean runCoverityCheckForIssuesInViewStep(final BuildStatus buildStatus, final String projectName, final String viewName) {
         final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
         try {
-            if (Result.SUCCESS != getResult()) {
-                logger.alwaysLog("Skipping the Synopsys Coverity Failure Condition step because the build was not successful.");
+            // getResult() returns null if the build is still in progress
+            if (getResult() != null && getResult().isWorseThan(Result.SUCCESS)) {
+                logger.alwaysLog("Skipping the Synopsys Coverity Check for Issues in View step because the build was not successful.");
                 return false;
             }
 
-            if (!shouldRunFailureStep(logger, buildStateOnFailure, projectName, viewName)) {
-                logger.warn("Skipping Synopsys Coverity failure condition check.");
+            if (!validateCheckForIssuesInViewStepConfiguration(logger, buildStatus, projectName, viewName)) {
+                logger.warn("Skipping the Synopsys Coverity Check for Issues in View step.");
                 setResult(Result.UNSTABLE);
                 return false;
             }
+
             final JenkinsCoverityInstance coverityInstance = getCoverityInstance().orElse(null);
             if (coverityInstance == null) {
-                logger.error("Skipping the Synopsys Coverity Failure Condition step because no configured Coverity server was detected in the Jenkins System Configuration.");
+                logger.error("Skipping the Synopsys Coverity Check for Issues in View step because no configured Coverity server was detected in the Jenkins System Configuration.");
                 return false;
             }
 
-            if (!validateFailureStepConfiguration(logger, coverityInstance)) {
-                logger.error("Synopsys Coverity failure condition configuration is invalid.");
+            if (!validateGlobalConfiguration(logger, coverityInstance)) {
+                logger.error("Skipping the Synopsys Coverity Check for Issues in View step because the Synopsys Coverity Jenkins System Configuration is invalid.");
                 setResult(Result.FAILURE);
                 return false;
             }
 
-            final BuildState buildStateForIssues = BuildState.valueOf(buildStateOnFailure);
             final String resolvedProjectName = handleVariableReplacement(getEnvVars(), projectName);
             final String resolvedViewName = handleVariableReplacement(getEnvVars(), viewName);
 
             logGlobalConfiguration(coverityInstance, logger);
-            logFailureConditionConfiguration(buildStateForIssues, resolvedProjectName, resolvedViewName, logger);
+            logFailureConditionConfiguration(buildStatus, resolvedProjectName, resolvedViewName, logger);
 
-            if (BuildState.NONE == buildStateForIssues) {
-                logger.error(String.format("Skipping the Failure Condition check because the Build state configured is '%s'.", buildStateForIssues.getDisplayValue()));
-            } else {
-                logger.alwaysLog("Checking Synopsys Coverity Failure conditions.");
-                final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-                builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
-                builder.username(coverityInstance.getCoverityUsername().orElse(null));
-                builder.password(coverityInstance.getCoverityPassword().orElse(null));
+            logger.alwaysLog("Checking for issues in project and view.");
+            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
+            builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
+            builder.username(coverityInstance.getCoverityUsername().orElse(null));
+            builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
-                final CoverityServerConfig coverityServerConfig = builder.build();
-                final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
-                webServiceFactory.connect();
+            final CoverityServerConfig coverityServerConfig = builder.build();
+            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
+            webServiceFactory.connect();
 
-                boolean errorWithProjectOrView = false;
-                final Optional<String> optionalProjectId = getProjectIdFromName(resolvedProjectName, webServiceFactory.createConfigurationService());
-                if (!optionalProjectId.isPresent()) {
-                    logger.error(String.format("Could not find the Id for project \"%s\". It no longer exists or the current user does not have access to it.", resolvedProjectName));
-                    errorWithProjectOrView = true;
-                }
-                final ViewService viewService = webServiceFactory.createViewService();
-                final Optional<String> optionalViewId = getViewIdFromName(resolvedViewName, viewService);
-                if (!optionalViewId.isPresent()) {
-                    logger.error(String.format("Could not find the Id for view \"%s\". It no longer exists or the current user does not have access to it.", resolvedViewName));
-                    errorWithProjectOrView = true;
-                }
-                if (errorWithProjectOrView) {
-                    logger.error("Skipping the Failure Condition check because of problems with the Project or View.");
-                    setResult(Result.FAILURE);
-                    return false;
-                }
+            boolean errorWithProjectOrView = false;
+            final Optional<String> optionalProjectId = getProjectIdFromName(resolvedProjectName, webServiceFactory.createConfigurationService());
+            if (!optionalProjectId.isPresent()) {
+                logger.error(String.format("Could not find the Id for project \"%s\". It no longer exists or the current user does not have access to it.", resolvedProjectName));
+                errorWithProjectOrView = true;
+            }
+            final ViewService viewService = webServiceFactory.createViewService();
+            final Optional<String> optionalViewId = getViewIdFromName(resolvedViewName, viewService);
+            if (!optionalViewId.isPresent()) {
+                logger.error(String.format("Could not find the Id for view \"%s\". It no longer exists or the current user does not have access to it.", resolvedViewName));
+                errorWithProjectOrView = true;
+            }
+            if (errorWithProjectOrView) {
+                logger.error("Synopsys Coverity Check for Issues in View step failed due to problems accessing the Coverity Project or View.");
+                setResult(Result.FAILURE);
+                return false;
+            }
 
-                final String projectId = optionalProjectId.orElse("");
-                final String viewId = optionalViewId.orElse("");
+            final String projectId = optionalProjectId.orElse("");
+            final String viewId = optionalViewId.orElse("");
 
-                final int defectSize = getIssueCountVorView(projectId, viewId, viewService, logger);
-                logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, resolvedProjectName, resolvedViewName));
+            final int defectSize = getIssueCountVorView(projectId, viewId, viewService, logger);
+            logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, resolvedProjectName, resolvedViewName));
 
-                if (defectSize > 0) {
-                    setResult(buildStateForIssues.getResult());
-                }
+            if (defectSize > 0) {
+                setResult(buildStatus.getResult());
             }
         } catch (final Exception e) {
             logger.error("[ERROR] " + e.getMessage(), e);
@@ -141,10 +138,10 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         return true;
     }
 
-    private boolean shouldRunFailureStep(final JenkinsCoverityLogger logger, final String buildStateOnFailure, final String projectName, final String viewName) {
+    private boolean validateCheckForIssuesInViewStepConfiguration(final JenkinsCoverityLogger logger, final BuildStatus buildStatus, final String projectName, final String viewName) {
         boolean shouldContinue = true;
-        if (StringUtils.isBlank(buildStateOnFailure)) {
-            logger.debug("Missing build state to set on failure.");
+        if (buildStatus == null) {
+            logger.debug("There was no build status configured to set.");
             shouldContinue = false;
         }
         if (StringUtils.isBlank(projectName)) {
@@ -158,7 +155,7 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         return shouldContinue;
     }
 
-    private Boolean validateFailureStepConfiguration(final JenkinsCoverityLogger logger, final JenkinsCoverityInstance coverityInstance) {
+    private Boolean validateGlobalConfiguration(final JenkinsCoverityLogger logger, final JenkinsCoverityInstance coverityInstance) {
         boolean shouldContinue = true;
         if (null == coverityInstance) {
             logger.error("No global Synopsys Coverity configuration found.");
@@ -183,8 +180,8 @@ public class CoverityFailureConditionStep extends BaseCoverityStep {
         return shouldContinue;
     }
 
-    private void logFailureConditionConfiguration(final BuildState buildState, final String projectName, final String viewName, final IntLogger logger) {
-        logger.alwaysLog("-- Build state for issues in the view : " + buildState.getDisplayValue());
+    private void logFailureConditionConfiguration(final BuildStatus buildStatus, final String projectName, final String viewName, final IntLogger logger) {
+        logger.alwaysLog("-- Build state for issues in the view : " + buildStatus.getDisplayName());
         logger.alwaysLog("-- Coverity project name : " + projectName);
         logger.alwaysLog("-- Coverity view name : " + viewName);
     }

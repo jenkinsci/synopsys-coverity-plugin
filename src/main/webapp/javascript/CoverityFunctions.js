@@ -7,7 +7,7 @@ function setRootURL(rootUrl) {
 function loadProjects() {
     var projectSelect = document.getElementById('projectNameId');
     var oldProjectSelected = projectSelect.value;
-    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.post.CoverityPostBuildStep/fillProjectNameItems";
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.freestyle.CoverityBuildStep/fillProjectNameItems";
     var requestParameters = {projectName: oldProjectSelected, updateNow: true};
     loadList('projectNameId', 'projectsLoading', 'Loading projects...', fillURL, requestParameters);
 }
@@ -19,7 +19,7 @@ function loadStreams() {
     var streamSelect = document.getElementById('streamNameId');
     var oldStreamSelected = streamSelect.value;
 
-    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.post.CoverityPostBuildStep/fillStreamNameItems";
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.freestyle.CoverityBuildStep/fillStreamNameItems";
     var requestParameters = {projectName: oldProjectSelected, streamName: oldStreamSelected, updateNow: true};
     loadList('streamNameId', 'streamsLoading', 'Loading streams...', fillURL, requestParameters);
 }
@@ -28,7 +28,7 @@ function loadViews() {
     var viewSelect = document.getElementById('viewNameId');
     var oldViewSelected = viewSelect.value;
 
-    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.post.CoverityPostBuildStep/fillViewNameItems";
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.coverity.freestyle.CoverityBuildStep/fillViewNameItems";
     var requestParameters = {viewName: oldViewSelected, updateNow: true};
     loadList('viewNameId', 'viewsLoading', 'Loading views...', fillURL, requestParameters);
 }

@@ -21,23 +21,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.common;
 
 import hudson.model.Result;
 
-public enum BuildState {
-    SUCCESS("Success", Result.SUCCESS), FAILURE("Failure", Result.FAILURE), UNSTABLE("Unstable", Result.UNSTABLE), NONE("None (Will not look for issues in the view)", null);
+public enum BuildStatus {
+    SUCCESS("Success (Log issues only)", Result.SUCCESS),
+    FAILURE("Failure", Result.FAILURE),
+    UNSTABLE("Unstable", Result.UNSTABLE);
 
-    private final String displayValue;
+    private final String displayName;
     private final Result result;
 
-    BuildState(String displayValue, Result result) {
-        this.displayValue = displayValue;
+    BuildStatus(final String displayName, final Result result) {
+        this.displayName = displayName;
         this.result = result;
     }
 
-    public String getDisplayValue() {
-        return displayValue;
+    public String getDisplayName() {
+        return displayName;
     }
 
     public Result getResult() {
