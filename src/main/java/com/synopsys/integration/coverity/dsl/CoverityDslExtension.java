@@ -21,12 +21,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.dsl;
 
 import java.util.List;
 
+import com.synopsys.integration.coverity.common.BuildStatus;
+import com.synopsys.integration.coverity.common.CoverityAnalysisType;
+import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
+import com.synopsys.integration.coverity.common.OnCommandFailure;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
-import com.synopsys.integration.coverity.post.CoverityPostBuildStep;
+import com.synopsys.integration.coverity.freestyle.CoverityBuildStep;
 
 import hudson.Extension;
 import javaposse.jobdsl.dsl.helpers.step.StepContext;
@@ -36,23 +41,19 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 @Extension(optional = true)
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(final String coverityToolName, final Boolean continueOnCommandFailure, final List<String> commands, final String buildStateForIssues,
-            final String projectName, final String streamName, final String viewName, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns) {
-        return new CoverityPostBuildStep(coverityToolName, continueOnCommandFailure, stringsToCommands(commands), buildStateForIssues, projectName, streamName, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns);
+    public Object coverity(final String coverityToolName, final String onCommandFailure, final List<String> commands, final String buildStatusForIssues, final String projectName, final String streamName,
+        final String viewName, final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetExclusionPatterns, final String changeSetInclusionPatterns,
+        final Boolean checkForIssuesInView, final Boolean configureChangeSetPatterns) {
+        return new CoverityBuildStep(coverityToolName, OnCommandFailure.valueOf(onCommandFailure), stringsToCommands(commands), BuildStatus.valueOf(buildStatusForIssues), projectName, streamName,
+            CoverityRunConfiguration.valueOf(coverityRunConfiguration), CoverityAnalysisType.valueOf(coverityAnalysisType), buildCommand, viewName, changeSetExclusionPatterns, changeSetInclusionPatterns, checkForIssuesInView,
+            configureChangeSetPatterns);
     }
 
     private RepeatableCommand[] stringsToCommands(final List<String> commands) {
         if (null == commands) {
             return null;
         }
-        if (commands.isEmpty()) {
-            return new RepeatableCommand[0];
-        }
-        final RepeatableCommand[] repeatableCommands = new RepeatableCommand[commands.size()];
-        for (int i = 0; i < repeatableCommands.length; i++) {
-            repeatableCommands[i] = new RepeatableCommand(commands.get(i));
-        }
-        return repeatableCommands;
+        return (RepeatableCommand[]) commands.stream().map(RepeatableCommand::new).toArray();
     }
 
 }

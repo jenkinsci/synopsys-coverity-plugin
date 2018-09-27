@@ -1,6 +1,7 @@
 <div>
     <p>
-        Please provide a comma separated list of File name patterns that you would like to include in the change set. This will only effect the CHANGE_SET variable.<br/>
+        Specify a comma separated list of filename patterns that you would like to exclude from the Jenkins change set.
+        The pattern is applied to the $CHANGE_SET environment variable, and will affect which files are analyzed in a delta analysis (cov-run-desktop).
         Examples:<br/>
     <table>
         <tr>

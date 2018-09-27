@@ -23,25 +23,7 @@
  */
 package com.synopsys.integration.coverity.common;
 
-import hudson.model.Result;
-
-public enum BuildState {
-    SUCCESS("Success", Result.SUCCESS), FAILURE("Failure", Result.FAILURE), UNSTABLE("Unstable", Result.UNSTABLE), NONE("None (Will not look for issues in the view)", null);
-
-    private final String displayValue;
-    private final Result result;
-
-    BuildState(String displayValue, Result result) {
-        this.displayValue = displayValue;
-        this.result = result;
-    }
-
-    public String getDisplayValue() {
-        return displayValue;
-    }
-
-    public Result getResult() {
-        return result;
-    }
-
+public enum CoverityRunConfiguration {
+    SIMPLE,
+    ADVANCED;
 }

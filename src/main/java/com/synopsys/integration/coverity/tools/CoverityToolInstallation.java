@@ -39,7 +39,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.coverity.Messages;
-import com.synopsys.integration.coverity.post.CoverityPostBuildStepDescriptor;
+import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -112,28 +112,28 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
             getCoverityPostBuildStepDescriptor().setCoverityToolInstallations(installations);
         }
 
-        private CoverityPostBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
-            return Jenkins.getInstance().getDescriptorByType(CoverityPostBuildStepDescriptor.class);
+        private CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
+            return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
         }
 
         @Override
         protected FormValidation checkHomeDirectory(File home) {
             // This validation is only ever run when on master. Jenkins does not use this to validate node overrides
             try {
-                File analysisVersionXml = new File(home, "VERSION.xml");
+                final File analysisVersionXml = new File(home, "VERSION.xml");
                 if (home != null && home.exists()) {
                     if (analysisVersionXml.isFile()) {
 
                         // check the version file value and validate it is greater than minimum version
-                        Optional<CoverityVersion> optionalVersion = getVersion(home);
+                        final Optional<CoverityVersion> optionalVersion = getVersion(home);
 
                         if (!optionalVersion.isPresent()) {
                             return FormValidation.error("Could not determine the version of the Coverity analysis tool.");
                         }
-                        CoverityVersion version = optionalVersion.get();
-                        if (version.compareTo(CoverityPostBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION) < 0) {
+                        final CoverityVersion version = optionalVersion.get();
+                        if (version.compareTo(CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION) < 0) {
                             return FormValidation.error("Analysis version " + version.toString() + " detected. " +
-                                                            "The minimum supported version is " + CoverityPostBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION.toString());
+                                                            "The minimum supported version is " + CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION.toString());
                         }
 
                         return FormValidation.ok("Analysis installation directory has been verified.");
