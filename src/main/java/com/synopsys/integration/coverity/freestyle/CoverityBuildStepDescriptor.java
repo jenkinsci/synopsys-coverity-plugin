@@ -102,7 +102,7 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
 
     @Override
     public String getDisplayName() {
-        return Messages.CoverityPostBuildStep_getDisplayName();
+        return Messages.CoverityBuildStep_getDisplayName();
     }
 
     @Override
@@ -124,13 +124,13 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
     public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         if (StringUtils.isBlank(url)) {
-            return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetServerUrl());
+            return FormValidation.error(Messages.CoverityBuildStep_getPleaseSetServerUrl());
         }
         try {
             new URL(url);
         } catch (final MalformedURLException e) {
             e.printStackTrace();
-            return FormValidation.error(Messages.CoverityPostBuildStep_getUrlError_0(e.getMessage()));
+            return FormValidation.error(Messages.CoverityBuildStep_getUrlError_0(e.getMessage()));
         }
         return FormValidation.ok();
     }
@@ -161,10 +161,10 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
     public FormValidation doTestConnection(@QueryParameter("url") final String url, @QueryParameter("credentialId") final String credentialId) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         if (StringUtils.isBlank(url)) {
-            return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetServerUrl());
+            return FormValidation.error(Messages.CoverityBuildStep_getPleaseSetServerUrl());
         }
         if (StringUtils.isBlank(credentialId)) {
-            return FormValidation.error(Messages.CoverityPostBuildStep_getPleaseSetCoverityCredentials());
+            return FormValidation.error(Messages.CoverityBuildStep_getPleaseSetCoverityCredentials());
         }
 
         final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);

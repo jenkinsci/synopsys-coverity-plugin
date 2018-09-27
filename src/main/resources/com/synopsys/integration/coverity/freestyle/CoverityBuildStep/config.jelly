@@ -23,11 +23,11 @@
             <f:select/>
         </f:entry>
     </f:optionalBlock>
-    <f:optionalBlock title="${%ConfigureChangeSetPatternsTitle}" field="changeSetPatternsConfigured" inline="true">
-        <f:entry title="${%ChangeSetNameIncludePatterns}" field="changeSetNameIncludePatterns">
+    <f:optionalBlock title="${%ConfigureChangeSetPatternsTitle}" field="configureChangeSetPatterns" inline="true">
+        <f:entry title="${%ChangeSetInclusionPatternsTitle}" field="changeSetInclusionPatterns">
             <f:textbox/>
         </f:entry>
-        <f:entry title="${%ChangeSetNameExcludePatterns}" field="changeSetNameExcludePatterns">
+        <f:entry title="${%ChangeSetExclusionPatternsTitle}" field="changeSetExclusionPatterns">
             <f:textbox/>
         </f:entry>
     </f:optionalBlock>

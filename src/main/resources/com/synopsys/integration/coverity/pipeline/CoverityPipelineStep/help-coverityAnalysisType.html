@@ -1,0 +1,24 @@
+<div>
+    <p>
+        Specify the type of analysis you would like to run.</br>
+        <strong>Initial Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects tools (in that order)</br>
+        <strong>Delta Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects tools (in that order)
+    </p>
+    <p>
+        Specifically, the tools will be invoked with the following parameters:
+    </p>
+    <table>
+        <tr>
+            <td>cov-build --dir ${WORKSPACE}/idir <em>build command</em></td>
+        </tr>
+        <tr>
+            <td>cov-analyze --dir ${WORKSPACE}/idir</td>
+        </tr>
+        <tr>
+            <td>cov-run-desktop --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}</td>
+        </tr>
+        <tr>
+            <td>cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}</td>
+        </tr>
+    </table>
+</div>

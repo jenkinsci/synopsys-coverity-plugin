@@ -51,18 +51,18 @@ public class CoverityBuildStep extends Builder {
     private final String projectName;
     private final String streamName;
     private final String viewName;
-    private final String changeSetNameExcludePatterns;
-    private final String changeSetNameIncludePatterns;
+    private final String changeSetExclusionPatterns;
+    private final String changeSetInclusionPatterns;
     private final CoverityRunConfiguration coverityRunConfiguration;
     private final CoverityAnalysisType coverityAnalysisType;
     private final String buildCommand;
     private final Boolean checkForIssuesInView;
-    private final Boolean changeSetPatternsConfigured;
+    private final Boolean configureChangeSetPatterns;
 
     @DataBoundConstructor
     public CoverityBuildStep(final String coverityToolName, final OnCommandFailure onCommandFailure, final RepeatableCommand[] commands, final BuildStatus buildStatusForIssues, final String projectName, final String streamName,
-        final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetNameExcludePatterns,
-        final String changeSetNameIncludePatterns, final Boolean checkForIssuesInView, final Boolean changeSetPatternsConfigured) {
+        final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetExclusionPatterns,
+        final String changeSetInclusionPatterns, final Boolean checkForIssuesInView, final Boolean configureChangeSetPatterns) {
         this.coverityToolName = coverityToolName;
         this.onCommandFailure = onCommandFailure;
         this.commands = commands;
@@ -73,10 +73,10 @@ public class CoverityBuildStep extends Builder {
         this.coverityAnalysisType = coverityAnalysisType;
         this.buildCommand = buildCommand;
         this.viewName = viewName;
-        this.changeSetNameExcludePatterns = changeSetNameExcludePatterns;
-        this.changeSetNameIncludePatterns = changeSetNameIncludePatterns;
+        this.changeSetExclusionPatterns = changeSetExclusionPatterns;
+        this.changeSetInclusionPatterns = changeSetInclusionPatterns;
         this.checkForIssuesInView = checkForIssuesInView;
-        this.changeSetPatternsConfigured = changeSetPatternsConfigured;
+        this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
     public String getCoverityToolName() {
@@ -87,8 +87,8 @@ public class CoverityBuildStep extends Builder {
         return onCommandFailure;
     }
 
-    public boolean getChangeSetPatternsConfigured() {
-        return null != changeSetPatternsConfigured && changeSetPatternsConfigured;
+    public boolean getConfigureChangeSetPatterns() {
+        return null != configureChangeSetPatterns && configureChangeSetPatterns;
     }
 
     public boolean getCheckForIssuesInView() {
@@ -127,12 +127,12 @@ public class CoverityBuildStep extends Builder {
         return viewName;
     }
 
-    public String getChangeSetNameExcludePatterns() {
-        return changeSetNameExcludePatterns;
+    public String getChangeSetExclusionPatterns() {
+        return changeSetExclusionPatterns;
     }
 
-    public String getChangeSetNameIncludePatterns() {
-        return changeSetNameIncludePatterns;
+    public String getChangeSetInclusionPatterns() {
+        return changeSetInclusionPatterns;
     }
 
     @Override
@@ -151,11 +151,11 @@ public class CoverityBuildStep extends Builder {
 
         final boolean shouldContinueOurSteps;
         if (CoverityRunConfiguration.ADVANCED.equals(coverityRunConfiguration)) {
-            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, commands, onCommandFailure, this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, commands, onCommandFailure, this.getConfigureChangeSetPatterns(), changeSetInclusionPatterns, changeSetExclusionPatterns);
         } else {
             final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(buildCommand, coverityAnalysisType);
             shouldContinueOurSteps = coverityToolStep
-                                         .runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, onCommandFailure, this.getChangeSetPatternsConfigured(), changeSetNameIncludePatterns, changeSetNameExcludePatterns);
+                                         .runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, onCommandFailure, this.getConfigureChangeSetPatterns(), changeSetInclusionPatterns, changeSetExclusionPatterns);
         }
 
         if (shouldContinueOurSteps && getCheckForIssuesInView()) {

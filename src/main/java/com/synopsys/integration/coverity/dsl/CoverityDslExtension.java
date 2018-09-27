@@ -42,11 +42,11 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
     public Object coverity(final String coverityToolName, final String onCommandFailure, final List<String> commands, final String buildStatusForIssues, final String projectName, final String streamName,
-        final String viewName, final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetNameExcludePatterns, final String changeSetNameIncludePatterns,
-        final Boolean checkForIssuesInView, final Boolean changeSetPatternsConfigured) {
+        final String viewName, final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetExclusionPatterns, final String changeSetInclusionPatterns,
+        final Boolean checkForIssuesInView, final Boolean configureChangeSetPatterns) {
         return new CoverityBuildStep(coverityToolName, OnCommandFailure.valueOf(onCommandFailure), stringsToCommands(commands), BuildStatus.valueOf(buildStatusForIssues), projectName, streamName,
-            CoverityRunConfiguration.valueOf(coverityRunConfiguration), CoverityAnalysisType.valueOf(coverityAnalysisType), buildCommand, viewName, changeSetNameExcludePatterns, changeSetNameIncludePatterns, checkForIssuesInView,
-            changeSetPatternsConfigured);
+            CoverityRunConfiguration.valueOf(coverityRunConfiguration), CoverityAnalysisType.valueOf(coverityAnalysisType), buildCommand, viewName, changeSetExclusionPatterns, changeSetInclusionPatterns, checkForIssuesInView,
+            configureChangeSetPatterns);
     }
 
     private RepeatableCommand[] stringsToCommands(final List<String> commands) {
