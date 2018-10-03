@@ -1,5 +1,5 @@
 ## Overview ##
-The synopsys-coverity plugin for Jenkins, allows Users to run Coverity commands in their builds. 
+Allows users to run Coverity commands in their Jenkins builds. 
 
 ## Build ##
 
