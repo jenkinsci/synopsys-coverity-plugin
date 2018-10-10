@@ -33,7 +33,6 @@ import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.JenkinsProxyHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
-import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
@@ -46,12 +45,12 @@ import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 
 public abstract class BaseCoverityStep {
-
     private final Node node;
     private final TaskListener listener;
     private final EnvVars envVars;
     private final FilePath workspace;
     private final Run run;
+    protected JenkinsCoverityLogger logger;
 
     public BaseCoverityStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
         this.node = node;
@@ -97,11 +96,11 @@ public abstract class BaseCoverityStep {
         return getCoverityPostBuildStepDescriptor().getCoverityInstance();
     }
 
-    public JenkinsCoverityLogger createJenkinsCoverityLogger() {
+    public void initializeJenkinsCoverityLogger() {
         final JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
         final IntEnvironmentVariables variables = createIntEnvironmentVariables();
         logger.setLogLevel(variables);
-        return logger;
+        this.logger = logger;
     }
 
     public IntEnvironmentVariables createIntEnvironmentVariables() {
@@ -125,7 +124,7 @@ public abstract class BaseCoverityStep {
         return new JenkinsProxyHelper();
     }
 
-    public void logGlobalConfiguration(final JenkinsCoverityInstance coverityInstance, final IntLogger logger) {
+    public void logGlobalConfiguration(final JenkinsCoverityInstance coverityInstance) {
         if (null == coverityInstance) {
             logger.warn("No configured Coverity server was detected in the Jenkins System Configuration.");
         } else {
@@ -143,4 +142,5 @@ public abstract class BaseCoverityStep {
             }
         }
     }
+
 }

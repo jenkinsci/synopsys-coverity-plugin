@@ -24,7 +24,7 @@
 
 package com.synopsys.integration.coverity.common;
 
-public enum CoverityAnalysisType {
+public enum CoverityAnalysisType implements CoveritySelectBoxEnum {
     COV_ANALYZE("Initial Analysis"),
     COV_RUN_DESKTOP("Delta Analysis");
 
@@ -34,7 +34,9 @@ public enum CoverityAnalysisType {
         this.displayName = displayName;
     }
 
+    @Override
     public String getDisplayName() {
         return displayName;
     }
+
 }

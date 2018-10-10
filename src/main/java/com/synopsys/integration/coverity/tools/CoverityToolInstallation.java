@@ -62,17 +62,17 @@ import jenkins.model.Jenkins;
  */
 public class CoverityToolInstallation extends ToolInstallation implements NodeSpecific<CoverityToolInstallation>, EnvironmentSpecific<CoverityToolInstallation> {
     @DataBoundConstructor
-    public CoverityToolInstallation(String name, String home) {
+    public CoverityToolInstallation(final String name, final String home) {
         super(name, home, new DescribableList<ToolProperty<?>, ToolPropertyDescriptor>(Saveable.NOOP));
     }
 
     @Override
-    public CoverityToolInstallation forNode(Node node, TaskListener log) throws IOException, InterruptedException {
+    public CoverityToolInstallation forNode(final Node node, final TaskListener log) throws IOException, InterruptedException {
         return new CoverityToolInstallation(getName(), translateFor(node, log));
     }
 
     @Override
-    public CoverityToolInstallation forEnvironment(EnvVars environment) {
+    public CoverityToolInstallation forEnvironment(final EnvVars environment) {
         return new CoverityToolInstallation(getName(), environment.expand(getHome()));
     }
 
@@ -108,7 +108,7 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
         }
 
         @Override
-        public void setInstallations(CoverityToolInstallation... installations) {
+        public void setInstallations(final CoverityToolInstallation... installations) {
             getCoverityPostBuildStepDescriptor().setCoverityToolInstallations(installations);
         }
 
@@ -117,15 +117,16 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
         }
 
         @Override
-        protected FormValidation checkHomeDirectory(File home) {
+        protected FormValidation checkHomeDirectory(final File home) {
             // This validation is only ever run when on master. Jenkins does not use this to validate node overrides
             try {
+                final File analysisVersionFile = new File(home, "VERSION");
                 final File analysisVersionXml = new File(home, "VERSION.xml");
                 if (home != null && home.exists()) {
-                    if (analysisVersionXml.isFile()) {
+                    if (analysisVersionXml.isFile() && analysisVersionFile.isFile()) {
 
                         // check the version file value and validate it is greater than minimum version
-                        final Optional<CoverityVersion> optionalVersion = getVersion(home);
+                        final Optional<CoverityVersion> optionalVersion = getVersion(analysisVersionFile);
 
                         if (!optionalVersion.isPresent()) {
                             return FormValidation.error("Could not determine the version of the Coverity analysis tool.");
@@ -138,13 +139,13 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
 
                         return FormValidation.ok("Analysis installation directory has been verified.");
                     } else {
-                        return FormValidation.error("The specified Analysis installation directory doesn't contain a VERSION.xml file.");
+                        return FormValidation.error("The specified Analysis installation directory doesn't contain a VERSION and VERSION.xml file.");
                     }
                 } else {
                     return FormValidation.error("The specified Analysis installation directory doesn't exists.");
                 }
-            } catch (IOException e) {
-                return FormValidation.error("Unable to verify the Analysis installation directory.");
+            } catch (final IOException e) {
+                return FormValidation.error("Unable to verify the Analysis installation directory.", e);
             }
         }
 
@@ -152,9 +153,8 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
          * Gets the {@link CoverityVersion} given a static analysis tools home directory by finding the VERSION file,
          * then reading the version number
          */
-        public Optional<CoverityVersion> getVersion(File home) throws IOException {
-            File versionFile = new File(home, "VERSION.xml");
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8))) {
+        private Optional<CoverityVersion> getVersion(final File versionFile) throws IOException {
+            try (final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8))) {
                 final String prefix = "externalVersion=";
                 String line, version = "";
                 while ((line = br.readLine()) != null) {

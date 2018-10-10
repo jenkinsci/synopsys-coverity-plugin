@@ -65,13 +65,17 @@ public class CoverityCommonDescriptor {
     private final ViewCacheData viewCacheData = new ViewCacheData();
 
     public ListBoxModel doFillCoverityToolNameItems(final CoverityToolInstallation[] coverityToolInstallations) {
-        final ListBoxModel boxModel = new ListBoxModel();
-        boxModel.add(Messages.CoverityToolInstallation_getNone(), "");
-        if (null != coverityToolInstallations && coverityToolInstallations.length > 0) {
-            for (final CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
-                boxModel.add(coverityToolInstallation.getName());
-            }
+        final ListBoxModel boxModel;
+
+        if (null == coverityToolInstallations) {
+            boxModel = new ListBoxModel();
+        } else {
+            boxModel = Arrays.stream(coverityToolInstallations)
+                           .map(CoverityToolInstallation::getName)
+                           .collect(ListBoxModel::new, ListBoxModel::add, ListBoxModel::addAll);
         }
+
+        boxModel.add(Messages.CoverityToolInstallation_getNone(), "");
         return boxModel;
     }
 
@@ -82,25 +86,27 @@ public class CoverityCommonDescriptor {
         if (StringUtils.isBlank(coverityToolName)) {
             return FormValidation.error(Messages.CoverityToolInstallation_getPleaseChooseATool());
         }
-        for (final CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
-            if (coverityToolInstallation.getName().equals(coverityToolName)) {
-                return FormValidation.ok();
-            }
+
+        final boolean hasMatchingToolName = Arrays.stream(coverityToolInstallations)
+                                                .map(CoverityToolInstallation::getName)
+                                                .anyMatch(coverityToolName::equals);
+
+        if (hasMatchingToolName) {
+            return FormValidation.ok();
         }
         return FormValidation.error(Messages.CoverityToolInstallation_getNoToolWithName_0(coverityToolName));
     }
 
     public ListBoxModel doFillBuildStatusForIssuesItems() {
-        return Arrays.stream(BuildStatus.values()).collect(ListBoxModel::new, (listBoxModel, buildStatus) -> listBoxModel.add(buildStatus.getDisplayName(), buildStatus.name()), ListBoxModel::addAll);
-
+        return this.getListBoxModelOf(BuildStatus.values());
     }
 
     public ListBoxModel doFillCoverityAnalysisTypeItems() {
-        return Arrays.stream(CoverityAnalysisType.values()).collect(ListBoxModel::new, (listBoxModel, coverityAnalysisType) -> listBoxModel.add(coverityAnalysisType.getDisplayName(), coverityAnalysisType.name()), ListBoxModel::addAll);
+        return this.getListBoxModelOf(CoverityAnalysisType.values());
     }
 
     public ListBoxModel doFillOnCommandFailureItems() {
-        return Arrays.stream(OnCommandFailure.values()).collect(ListBoxModel::new, (listBoxModel, onCommandFailure) -> listBoxModel.add(onCommandFailure.getDisplayName(), onCommandFailure.name()), ListBoxModel::addAll);
+        return this.getListBoxModelOf(OnCommandFailure.values());
     }
 
     public ListBoxModel doFillProjectNameItems(final String projectName, final Boolean updateNow) {
@@ -128,7 +134,8 @@ public class CoverityCommonDescriptor {
                     }
                 }
             }
-        } catch (IllegalStateException handledByFormValidation) {
+        } catch (final IllegalStateException ignored) {
+            // Handled by form validation
         }
         return boxModel;
     }
@@ -165,7 +172,8 @@ public class CoverityCommonDescriptor {
                     }
                 }
             }
-        } catch (final IllegalStateException handledByFormValidation) {
+        } catch (final IllegalStateException ignored) {
+            // Handled by form validation
         }
         return boxModel;
     }
@@ -199,13 +207,8 @@ public class CoverityCommonDescriptor {
         return boxModel;
     }
 
-    public FormValidation testConnection() {
-        return getCoverityInstance().map(this::testConnection)
-                   .orElse(FormValidation.error("Could not connect to Coverity server, no configured Coverity server was detected in the Jenkins System Configuration."));
-    }
-
     public FormValidation testConnectionSilently() {
-        FormValidation connectionTest = this.testConnection();
+        final FormValidation connectionTest = this.testConnectionToDefaultCoverityInstance();
         if (FormValidation.Kind.OK.equals(connectionTest.kind)) {
             return FormValidation.ok();
         } else {
@@ -213,7 +216,7 @@ public class CoverityCommonDescriptor {
         }
     }
 
-    public FormValidation testConnection(JenkinsCoverityInstance jenkinsCoverityInstance) {
+    public FormValidation testConnectionToCoverityInstance(final JenkinsCoverityInstance jenkinsCoverityInstance) {
         final String url = jenkinsCoverityInstance.getCoverityURL().map(URL::toString).orElse(null);
         final String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
         final String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
@@ -255,6 +258,16 @@ public class CoverityCommonDescriptor {
         }
     }
 
+    private ListBoxModel getListBoxModelOf(final CoveritySelectBoxEnum[] coveritySelectBoxEnumValues) {
+        return Arrays.stream(coveritySelectBoxEnumValues)
+                   .collect(ListBoxModel::new, (model, value) -> model.add(value.getDisplayName(), value.name()), ListBoxModel::addAll);
+    }
+
+    private FormValidation testConnectionToDefaultCoverityInstance() {
+        return getCoverityInstance().map(this::testConnectionToCoverityInstance)
+                   .orElse(FormValidation.error("Could not connect to Coverity server, no configured Coverity server was detected in the Jenkins System Configuration."));
+    }
+
     private CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
         return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
     }
@@ -262,4 +275,5 @@ public class CoverityCommonDescriptor {
     private Optional<JenkinsCoverityInstance> getCoverityInstance() {
         return getCoverityPostBuildStepDescriptor().getCoverityInstance();
     }
+    
 }

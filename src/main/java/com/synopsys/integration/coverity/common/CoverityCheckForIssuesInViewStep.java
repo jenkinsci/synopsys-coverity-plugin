@@ -34,7 +34,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
-import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -46,7 +45,6 @@ import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.log.IntLogger;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -61,7 +59,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
     }
 
     public boolean runCoverityCheckForIssuesInViewStep(final BuildStatus buildStatus, final String projectName, final String viewName) {
-        final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
+        super.initializeJenkinsCoverityLogger();
         try {
             // getResult() returns null if the build is still in progress
             if (getResult() != null && getResult().isWorseThan(Result.SUCCESS)) {
@@ -69,7 +67,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
                 return false;
             }
 
-            if (!validateCheckForIssuesInViewStepConfiguration(logger, buildStatus, projectName, viewName)) {
+            if (!validateCheckForIssuesInViewStepConfiguration(buildStatus, projectName, viewName)) {
                 logger.warn("Skipping the Synopsys Coverity Check for Issues in View step.");
                 setResult(Result.UNSTABLE);
                 return false;
@@ -81,7 +79,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
                 return false;
             }
 
-            if (!validateGlobalConfiguration(logger, coverityInstance)) {
+            if (!validateGlobalConfiguration(coverityInstance)) {
                 logger.error("Skipping the Synopsys Coverity Check for Issues in View step because the Synopsys Coverity Jenkins System Configuration is invalid.");
                 setResult(Result.FAILURE);
                 return false;
@@ -90,8 +88,8 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
             final String resolvedProjectName = handleVariableReplacement(getEnvVars(), projectName);
             final String resolvedViewName = handleVariableReplacement(getEnvVars(), viewName);
 
-            logGlobalConfiguration(coverityInstance, logger);
-            logFailureConditionConfiguration(buildStatus, resolvedProjectName, resolvedViewName, logger);
+            super.logGlobalConfiguration(coverityInstance);
+            logFailureConditionConfiguration(buildStatus, resolvedProjectName, resolvedViewName);
 
             logger.alwaysLog("Checking for issues in project and view.");
             final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
@@ -124,7 +122,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
             final String projectId = optionalProjectId.orElse("");
             final String viewId = optionalViewId.orElse("");
 
-            final int defectSize = getIssueCountVorView(projectId, viewId, viewService, logger);
+            final int defectSize = getIssueCountForView(projectId, viewId, viewService);
             logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, resolvedProjectName, resolvedViewName));
 
             if (defectSize > 0) {
@@ -138,7 +136,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
         return true;
     }
 
-    private boolean validateCheckForIssuesInViewStepConfiguration(final JenkinsCoverityLogger logger, final BuildStatus buildStatus, final String projectName, final String viewName) {
+    private boolean validateCheckForIssuesInViewStepConfiguration(final BuildStatus buildStatus, final String projectName, final String viewName) {
         boolean shouldContinue = true;
         if (buildStatus == null) {
             logger.debug("There was no build status configured to set.");
@@ -155,7 +153,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
         return shouldContinue;
     }
 
-    private Boolean validateGlobalConfiguration(final JenkinsCoverityLogger logger, final JenkinsCoverityInstance coverityInstance) {
+    private Boolean validateGlobalConfiguration(final JenkinsCoverityInstance coverityInstance) {
         boolean shouldContinue = true;
         if (null == coverityInstance) {
             logger.error("No global Synopsys Coverity configuration found.");
@@ -180,10 +178,10 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
         return shouldContinue;
     }
 
-    private void logFailureConditionConfiguration(final BuildStatus buildStatus, final String projectName, final String viewName, final IntLogger logger) {
-        logger.alwaysLog("-- Build state for issues in the view : " + buildStatus.getDisplayName());
-        logger.alwaysLog("-- Coverity project name : " + projectName);
-        logger.alwaysLog("-- Coverity view name : " + viewName);
+    private void logFailureConditionConfiguration(final BuildStatus buildStatus, final String projectName, final String viewName) {
+        logger.alwaysLog("-- Build state for issues in the view: " + buildStatus.getDisplayName());
+        logger.alwaysLog("-- Coverity project name: " + projectName);
+        logger.alwaysLog("-- Coverity view name: " + viewName);
     }
 
     private Optional<String> getProjectIdFromName(final String projectName, final ConfigurationService configurationService) throws CovRemoteServiceException_Exception {
@@ -209,7 +207,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
         return Optional.empty();
     }
 
-    private int getIssueCountVorView(final String projectId, final String viewId, final ViewService viewService, final IntLogger logger) throws IntegrationException {
+    private int getIssueCountForView(final String projectId, final String viewId, final ViewService viewService) throws IntegrationException {
         try {
             final int pageSize = 1;
             int defectSize = 0;

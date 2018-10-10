@@ -26,7 +26,7 @@ package com.synopsys.integration.coverity.common;
 
 import hudson.model.Result;
 
-public enum BuildStatus {
+public enum BuildStatus implements CoveritySelectBoxEnum {
     SUCCESS("Success (Log issues only)", Result.SUCCESS),
     FAILURE("Failure", Result.FAILURE),
     UNSTABLE("Unstable", Result.UNSTABLE);
@@ -39,6 +39,7 @@ public enum BuildStatus {
         this.result = result;
     }
 
+    @Override
     public String getDisplayName() {
         return displayName;
     }

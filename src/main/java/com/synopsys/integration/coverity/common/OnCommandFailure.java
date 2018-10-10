@@ -21,9 +21,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.common;
 
-public enum OnCommandFailure {
+public enum OnCommandFailure implements CoveritySelectBoxEnum {
     SKIP_REMAINING_COMMANDS("Skip any remaining commands"),
     EXECUTE_REMAINING_COMMANDS("Continue executing any remaining commands");
 
@@ -33,6 +34,7 @@ public enum OnCommandFailure {
         this.displayName = displayName;
     }
 
+    @Override
     public String getDisplayName() {
         return displayName;
     }

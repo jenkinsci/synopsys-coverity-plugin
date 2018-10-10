@@ -21,7 +21,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.common;
+
+import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -36,7 +39,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     private final String command;
 
     @DataBoundConstructor
-    public RepeatableCommand(String command) {
+    public RepeatableCommand(final String command) {
         this.command = command;
     }
 
@@ -51,18 +54,18 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
 
     @Extension
     public static class RepeatableCommandDescriptor extends Descriptor<RepeatableCommand> {
-
         public RepeatableCommandDescriptor() {
             super(RepeatableCommand.class);
             load();
         }
 
         @Override
+        @Nonnull
         public String getDisplayName() {
             return "";
         }
 
-        public FormValidation doCheckCommand(@QueryParameter("command") String command) {
+        public FormValidation doCheckCommand(@QueryParameter("command") final String command) {
             if (StringUtils.isBlank(command)) {
                 return FormValidation.error("The Coverity command can not be empty");
             }

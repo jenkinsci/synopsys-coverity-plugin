@@ -28,18 +28,21 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
-import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.PluginHelper;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
@@ -51,7 +54,6 @@ import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeCallable;
 import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
@@ -68,6 +70,10 @@ import hudson.scm.ChangeLogSet;
 import jenkins.model.Jenkins;
 
 public class CoverityToolStep extends BaseCoverityStep {
+    public static final RepeatableCommand DEFAULT_COV_ANALYZE = new RepeatableCommand("cov-analyze --dir ${WORKSPACE}/idir");
+    public static final RepeatableCommand DEFAULT_COV_COMMIT_DEFECTS = new RepeatableCommand("cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}");
+    public static final RepeatableCommand DEFAULT_COV_RUN_DESKTOP = new RepeatableCommand("cov-run-desktop --dir ${WORKSPACE}/idir  --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}");
+
     private final List<ChangeLogSet<?>> changeLogSets;
 
     public CoverityToolStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run, final List<ChangeLogSet<?>> changeLogSets) {
@@ -75,13 +81,24 @@ public class CoverityToolStep extends BaseCoverityStep {
         this.changeLogSets = changeLogSets;
     }
 
-    private CoverityToolInstallation[] getCoverityToolInstallations() {
-        return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
+    public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final CoverityAnalysisType coverityAnalysisType) {
+        final RepeatableCommand defaultCovBuild = new RepeatableCommand("cov-build --dir ${WORKSPACE}/idir " + buildCommand);
+
+        final RepeatableCommand[] commands;
+        if (CoverityAnalysisType.COV_ANALYZE.equals(coverityAnalysisType)) {
+            commands = new RepeatableCommand[] { defaultCovBuild, DEFAULT_COV_ANALYZE, DEFAULT_COV_COMMIT_DEFECTS };
+        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType)) {
+            commands = new RepeatableCommand[] { defaultCovBuild, DEFAULT_COV_RUN_DESKTOP, DEFAULT_COV_COMMIT_DEFECTS };
+        } else {
+            commands = new RepeatableCommand[] {};
+        }
+
+        return commands;
     }
 
     public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final OnCommandFailure onCommandFailure, final boolean changeSetPatternsConfigured,
         final String changeSetNamesIncludePatterns, final String changeSetNamesExcludePatterns) {
-        final JenkinsCoverityLogger logger = createJenkinsCoverityLogger();
+        initializeJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
             logger.alwaysLog("Running Synopsys Coverity version : " + pluginVersion);
@@ -100,17 +117,16 @@ public class CoverityToolStep extends BaseCoverityStep {
                 return false;
             }
 
-            logGlobalConfiguration(getCoverityInstance().orElse(null), logger);
+            logGlobalConfiguration(getCoverityInstance().orElse(null));
 
             boolean configurationErrors = false;
-            final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), getCoverityToolInstallations(), getNode(), logger);
+            final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), getCoverityToolInstallations(), getNode());
             if (!optionalCoverityToolInstallation.isPresent()) {
                 setResult(Result.FAILURE);
                 configurationErrors = true;
             }
 
-            //Advanced Specific
-            if (!verifyCoverityCommands(commands, logger)) {
+            if (!verifyCoverityCommands(commands)) {
                 setResult(Result.FAILURE);
                 configurationErrors = true;
             }
@@ -140,9 +156,9 @@ public class CoverityToolStep extends BaseCoverityStep {
                     }
                 }
 
-                phoneHomeResponse = phoneHome(logger, coverityInstance, pluginVersion);
+                phoneHomeResponse = phoneHome(coverityInstance, pluginVersion);
 
-                executeCoverityCommands(logger, commands, changeSetPatternsConfigured, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, onCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
+                executeCoverityCommands(commands, changeSetPatternsConfigured, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, onCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
 
             } catch (final InterruptedException e) {
                 if (null != phoneHomeResponse) {
@@ -161,11 +177,12 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
-    private void executeCoverityCommands(final JenkinsCoverityLogger logger, final RepeatableCommand[] commands, final boolean changeSetPatternsConfigured, final String changeSetNamesExcludePatterns,
+    private void executeCoverityCommands(final RepeatableCommand[] commands, final boolean changeSetPatternsConfigured, final String changeSetNamesExcludePatterns,
         final String changeSetNamesIncludePatterns, final OnCommandFailure onCommandFailure, final JenkinsCoverityInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation,
         final PhoneHomeResponse phoneHomeResponse)
         throws IntegrationException, InterruptedException, IOException {
         for (final RepeatableCommand repeatableCommand : commands) {
+
             final String command = repeatableCommand.getCommand();
             if (StringUtils.isBlank(command)) {
                 continue;
@@ -173,7 +190,7 @@ public class CoverityToolStep extends BaseCoverityStep {
             final String resolvedCommand;
             if (changeSetPatternsConfigured) {
                 try {
-                    resolvedCommand = updateCommandWithChangeSet(logger, command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+                    resolvedCommand = updateCommandWithChangeSet(command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
                 } catch (final EmptyChangeSetException e) {
                     if (OnCommandFailure.EXECUTE_REMAINING_COMMANDS.equals(onCommandFailure)) {
                         logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
@@ -187,9 +204,7 @@ public class CoverityToolStep extends BaseCoverityStep {
                 resolvedCommand = command;
             }
             final List<String> arguments = getCorrectedParameters(resolvedCommand);
-            final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger,
-                coverityInstance.getCoverityUsername().orElse(null),
-                coverityInstance.getCoverityPassword().orElse(null),
+            final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, coverityInstance.getCoverityUsername().orElse(null), coverityInstance.getCoverityPassword().orElse(null),
                 coverityToolInstallation.getHome(), arguments, getWorkspace().getRemote(), getEnvVars());
             final CoverityRemoteResponse response = getNode().getChannel().call(coverityRemoteRunner);
             boolean shouldStop = false;
@@ -218,34 +233,33 @@ public class CoverityToolStep extends BaseCoverityStep {
                 break;
             }
         }
+
     }
 
-    private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(final String coverityToolName, final CoverityToolInstallation[] coverityToolInstallations, final Node node, final JenkinsCoverityLogger logger)
-        throws InterruptedException {
+    private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(final String coverityToolName, final CoverityToolInstallation[] coverityToolInstallations, final Node node) throws InterruptedException {
+        CoverityToolInstallation thisNodeCoverityToolInstallation = null;
+
         if (StringUtils.isBlank(coverityToolName)) {
             logger.error("[ERROR] No Coverity Static Analysis tool configured for this Job.");
-            return Optional.empty();
-        }
-
-        if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
+        } else if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
             logger.error("[ERROR] No Coverity Static Analysis tools configured in Jenkins.");
-            return Optional.empty();
-        }
-
-        for (final CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
-            if (coverityToolInstallation.getName().equals(coverityToolName)) {
-                try {
-                    return Optional.ofNullable(coverityToolInstallation.forNode(node, logger.getJenkinsListener()));
-                } catch (final IOException e) {
-                    logger.error("Problem getting the Synopsys Coverity Static Analysis tool on node " + node.getDisplayName() + ": " + e.getMessage());
-                    logger.debug(null, e);
+        } else {
+            for (final CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
+                if (coverityToolInstallation.getName().equals(coverityToolName)) {
+                    try {
+                        thisNodeCoverityToolInstallation = coverityToolInstallation.forNode(node, logger.getJenkinsListener());
+                    } catch (final IOException e) {
+                        logger.error("Problem getting the Synopsys Coverity Static Analysis tool on node " + node.getDisplayName() + ": " + e.getMessage());
+                        logger.debug(null, e);
+                    }
                 }
             }
         }
-        return Optional.empty();
+
+        return Optional.ofNullable(thisNodeCoverityToolInstallation);
     }
 
-    private boolean verifyCoverityCommands(final RepeatableCommand[] optionalCommands, final IntLogger logger) {
+    private boolean verifyCoverityCommands(final RepeatableCommand[] optionalCommands) {
         if (optionalCommands.length == 0) {
             logger.error("[ERROR] There are no Coverity commands configured to run.");
             return false;
@@ -264,38 +278,19 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
-    public List<ChangeLogSet<?>> getChangeLogSets() {
-        return changeLogSets;
+    private CoverityToolInstallation[] getCoverityToolInstallations() {
+        return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
     }
 
-    public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final CoverityAnalysisType coverityAnalysisType) {
-        final RepeatableCommand covBuild = new RepeatableCommand("cov-build --dir ${WORKSPACE}/idir " + buildCommand);
-        final RepeatableCommand covCommitDefects = new RepeatableCommand("cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}");
-
-        final RepeatableCommand[] commands;
-        if (CoverityAnalysisType.COV_ANALYZE.equals(coverityAnalysisType)) {
-            final RepeatableCommand covAnalyze = new RepeatableCommand("cov-analyze --dir ${WORKSPACE}/idir");
-            commands = new RepeatableCommand[] { covBuild, covAnalyze, covCommitDefects };
-        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType)) {
-            final RepeatableCommand covRunDesktop = new RepeatableCommand("cov-run-desktop --dir ${WORKSPACE}/idir  --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}");
-            commands = new RepeatableCommand[] { covBuild, covRunDesktop, covCommitDefects };
-        } else {
-            commands = new RepeatableCommand[] {};
-        }
-
-        return commands;
-    }
-
-    private String getChangeSetFilePaths(final IntLogger logger, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) {
-        final ChangeSetFilter changeSetFilter = new ChangeSetFilter(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
-        final List<String> filePaths = new ArrayList<>();
-        if (!getChangeLogSets().isEmpty()) {
-            for (final ChangeLogSet<?> changeLogSet : getChangeLogSets()) {
+    /*
+    private String getChangeSetFilePaths(final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) {
+        final ArrayList<String> filePaths = new ArrayList();
+        if (!changeLogSets.isEmpty()) {
+            for (final ChangeLogSet<?> changeLogSet : changeLogSets) {
                 if (!changeLogSet.isEmptySet()) {
                     final Object[] changeEntryObjects = changeLogSet.getItems();
                     for (final Object changeEntryObject : changeEntryObjects) {
                         final ChangeLogSet.Entry changeEntry = (ChangeLogSet.Entry) changeEntryObject;
-
                         final Date date = new Date(changeEntry.getTimestamp());
                         final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
                         sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -314,10 +309,12 @@ public class CoverityToolStep extends BaseCoverityStep {
                 }
             }
         }
+
         return StringUtils.join(filePaths, " ");
     }
+    */
 
-    private String updateCommandWithChangeSet(final IntLogger logger, final String command, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) throws EmptyChangeSetException {
+    private String updateCommandWithChangeSet(final String command, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) throws EmptyChangeSetException {
         String resolvedChangeSetCommand = command;
         String variable = "";
         if (command.contains("$CHANGE_SET") || command.contains("${CHANGE_SET}")) {
@@ -327,7 +324,7 @@ public class CoverityToolStep extends BaseCoverityStep {
             if (command.contains("${CHANGE_SET}")) {
                 variable = "${CHANGE_SET}";
             }
-            final String filePaths = getChangeSetFilePaths(logger, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+            final String filePaths = getChangeSetFilePaths(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
             if (StringUtils.isBlank(filePaths)) {
                 throw new EmptyChangeSetException();
             }
@@ -336,16 +333,58 @@ public class CoverityToolStep extends BaseCoverityStep {
         return resolvedChangeSetCommand;
     }
 
+    private String getChangeSetFilePaths(final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) {
+        final ChangeSetFilter changeSetFilter = new ChangeSetFilter(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+
+        final Stream<ChangeLogSet.Entry> changeSetEntryStream = changeLogSets.stream()
+                                                                    .filter(changeLogSet -> !changeLogSet.isEmptySet())
+                                                                    .map(ChangeLogSet::getItems)
+                                                                    .flatMap(Arrays::stream)
+                                                                    .map(changeEntryObject -> (ChangeLogSet.Entry) changeEntryObject);
+
+        return changeSetEntryStream
+                   .map(this::processChangeSetEntry)
+                   .map(ChangeLogSet.Entry::getAffectedFiles)
+                   .flatMap(Collection::stream)
+                   .filter(affectedFile -> shouldFilePathBeIncluded(affectedFile, changeSetFilter))
+                   .map(ChangeLogSet.AffectedFile::getPath)
+                   .collect(Collectors.joining(" "));
+    }
+
+    private ChangeLogSet.Entry processChangeSetEntry(final ChangeLogSet.Entry changeEntry) {
+        final Date date = new Date(changeEntry.getTimestamp());
+        final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        logger.debug(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
+
+        return changeEntry;
+    }
+
+    private boolean shouldFilePathBeIncluded(final ChangeLogSet.AffectedFile affectedFile, final ChangeSetFilter changeSetFilter) {
+        final String affectedFilePath = affectedFile.getPath();
+        final String affectedEditType = affectedFile.getEditType().getName();
+        final boolean shouldInclude = changeSetFilter.shouldInclude(affectedFilePath);
+
+        if (shouldInclude) {
+            logger.debug(String.format("Type: %s File Path: %s Included in change set", affectedEditType, affectedFilePath));
+        } else {
+            logger.debug(String.format("Type: %s File Path: %s Excluded from change set", affectedEditType, affectedFilePath));
+        }
+
+        return shouldInclude;
+    }
+
     private List<String> getCorrectedParameters(final String command) throws CoverityJenkinsException {
         final String[] separatedParameters = Commandline.translateCommandline(command);
         final List<String> correctedParameters = new ArrayList<>();
         for (final String parameter : separatedParameters) {
             correctedParameters.add(handleVariableReplacement(getEnvVars(), parameter));
         }
+
         return correctedParameters;
     }
 
-    private PhoneHomeResponse phoneHome(final IntLogger logger, final JenkinsCoverityInstance coverityInstance, final String pluginVersion) {
+    private PhoneHomeResponse phoneHome(final JenkinsCoverityInstance coverityInstance, final String pluginVersion) {
         PhoneHomeResponse phoneHomeResponse = null;
 
         try {

@@ -168,7 +168,7 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
         }
 
         final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);
-        return coverityCommonDescriptor.testConnection(jenkinsCoverityInstance);
+        return coverityCommonDescriptor.testConnectionToCoverityInstance(jenkinsCoverityInstance);
     }
     //////// End global configuration methods /////////
 
