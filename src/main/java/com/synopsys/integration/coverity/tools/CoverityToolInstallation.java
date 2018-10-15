@@ -167,4 +167,5 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
             }
         }
     }
+
 }

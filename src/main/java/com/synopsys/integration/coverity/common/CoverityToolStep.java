@@ -54,6 +54,7 @@ import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.phonehome.PhoneHomeCallable;
 import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
@@ -282,38 +283,6 @@ public class CoverityToolStep extends BaseCoverityStep {
         return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
     }
 
-    /*
-    private String getChangeSetFilePaths(final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) {
-        final ArrayList<String> filePaths = new ArrayList();
-        if (!changeLogSets.isEmpty()) {
-            for (final ChangeLogSet<?> changeLogSet : changeLogSets) {
-                if (!changeLogSet.isEmptySet()) {
-                    final Object[] changeEntryObjects = changeLogSet.getItems();
-                    for (final Object changeEntryObject : changeEntryObjects) {
-                        final ChangeLogSet.Entry changeEntry = (ChangeLogSet.Entry) changeEntryObject;
-                        final Date date = new Date(changeEntry.getTimestamp());
-                        final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
-                        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-                        logger.debug(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
-                        final List<ChangeLogSet.AffectedFile> affectedFiles = new ArrayList<>(changeEntry.getAffectedFiles());
-                        for (final ChangeLogSet.AffectedFile affectedFile : affectedFiles) {
-                            final String filePath = affectedFile.getPath();
-                            if (changeSetFilter.shouldInclude(filePath)) {
-                                logger.debug(String.format("Type: %s File Path: %s Included in change set", affectedFile.getEditType().getName(), filePath));
-                                filePaths.add(filePath);
-                            } else {
-                                logger.debug(String.format("Type: %s File Path: %s Excluded from change set", affectedFile.getEditType().getName(), filePath));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return StringUtils.join(filePaths, " ");
-    }
-    */
-
     private String updateCommandWithChangeSet(final String command, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) throws EmptyChangeSetException {
         String resolvedChangeSetCommand = command;
         String variable = "";
@@ -324,7 +293,22 @@ public class CoverityToolStep extends BaseCoverityStep {
             if (command.contains("${CHANGE_SET}")) {
                 variable = "${CHANGE_SET}";
             }
-            final String filePaths = getChangeSetFilePaths(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+            final ChangeSetFilter changeSetFilter = new ChangeSetFilter(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+
+            final Stream<ChangeLogSet.Entry> changeSetEntryStream = changeLogSets.stream()
+                                                                        .filter(changeLogSet -> !changeLogSet.isEmptySet())
+                                                                        .map(ChangeLogSet::getItems)
+                                                                        .flatMap(Arrays::stream)
+                                                                        .map(changeEntryObject -> (ChangeLogSet.Entry) changeEntryObject);
+
+            final String filePaths = changeSetEntryStream
+                                         .peek(this::logChangeSetEntry)
+                                         .map(ChangeLogSet.Entry::getAffectedFiles)
+                                         .flatMap(Collection::stream)
+                                         .filter(affectedFile -> shouldFilePathBeIncluded(affectedFile, changeSetFilter))
+                                         .map(ChangeLogSet.AffectedFile::getPath)
+                                         .collect(Collectors.joining(" "));
+
             if (StringUtils.isBlank(filePaths)) {
                 throw new EmptyChangeSetException();
             }
@@ -333,31 +317,13 @@ public class CoverityToolStep extends BaseCoverityStep {
         return resolvedChangeSetCommand;
     }
 
-    private String getChangeSetFilePaths(final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) {
-        final ChangeSetFilter changeSetFilter = new ChangeSetFilter(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
-
-        final Stream<ChangeLogSet.Entry> changeSetEntryStream = changeLogSets.stream()
-                                                                    .filter(changeLogSet -> !changeLogSet.isEmptySet())
-                                                                    .map(ChangeLogSet::getItems)
-                                                                    .flatMap(Arrays::stream)
-                                                                    .map(changeEntryObject -> (ChangeLogSet.Entry) changeEntryObject);
-
-        return changeSetEntryStream
-                   .map(this::processChangeSetEntry)
-                   .map(ChangeLogSet.Entry::getAffectedFiles)
-                   .flatMap(Collection::stream)
-                   .filter(affectedFile -> shouldFilePathBeIncluded(affectedFile, changeSetFilter))
-                   .map(ChangeLogSet.AffectedFile::getPath)
-                   .collect(Collectors.joining(" "));
-    }
-
-    private ChangeLogSet.Entry processChangeSetEntry(final ChangeLogSet.Entry changeEntry) {
-        final Date date = new Date(changeEntry.getTimestamp());
-        final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-        logger.debug(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
-
-        return changeEntry;
+    private void logChangeSetEntry(final ChangeLogSet.Entry changeEntry) {
+        if (logger.getLogLevel().isLoggable(LogLevel.DEBUG)) {
+            final Date date = new Date(changeEntry.getTimestamp());
+            final SimpleDateFormat sdf = new SimpleDateFormat(RestConstants.JSON_DATE_FORMAT);
+            sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+            logger.debug(String.format("Commit %s by %s on %s: %s", changeEntry.getCommitId(), changeEntry.getAuthor(), sdf.format(date), changeEntry.getMsg()));
+        }
     }
 
     private boolean shouldFilePathBeIncluded(final ChangeLogSet.AffectedFile affectedFile, final ChangeSetFilter changeSetFilter) {

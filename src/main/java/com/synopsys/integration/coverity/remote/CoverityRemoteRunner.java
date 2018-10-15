@@ -21,6 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package com.synopsys.integration.coverity.remote;
 
 import java.io.ByteArrayOutputStream;
@@ -58,7 +59,7 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
     private final EnvVars envVars;
 
     public CoverityRemoteRunner(final JenkinsCoverityLogger logger, final String coverityUsername, final String coverityPassword,
-            final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath, final EnvVars envVars) {
+        final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath, final EnvVars envVars) {
         this.logger = logger;
 
         this.coverityUsername = coverityUsername;
@@ -72,8 +73,7 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
     @Override
     public CoverityRemoteResponse call() throws IntegrationException {
         final File workspace = new File(workspacePath);
-        final Map<String, String> environment = new HashMap<>();
-        environment.putAll(envVars);
+        final Map<String, String> environment = new HashMap<>(envVars);
         if (null != coverityUsername) {
             setEnvironmentVariableString(environment, Executable.COVERITY_USER_ENVIRONMENT_VARIABLE, coverityUsername);
         }
@@ -90,9 +90,7 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
         } catch (final InterruptedException e) {
             logger.error("Coverity remote thread was interrupted.", e);
             return new CoverityRemoteResponse(e);
-        } catch (final IntegrationException e) {
-            return new CoverityRemoteResponse(e);
-        } catch (final UnsupportedEncodingException e) {
+        } catch (final IntegrationException | UnsupportedEncodingException e) {
             return new CoverityRemoteResponse(e);
         } finally {
             logger.error(new String(errorOutputStream.toByteArray(), StandardCharsets.UTF_8));

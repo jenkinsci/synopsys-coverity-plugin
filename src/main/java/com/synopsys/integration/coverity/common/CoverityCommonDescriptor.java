@@ -275,5 +275,5 @@ public class CoverityCommonDescriptor {
     private Optional<JenkinsCoverityInstance> getCoverityInstance() {
         return getCoverityPostBuildStepDescriptor().getCoverityInstance();
     }
-    
+
 }

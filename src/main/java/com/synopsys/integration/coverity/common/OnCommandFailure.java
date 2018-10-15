@@ -38,4 +38,5 @@ public enum OnCommandFailure implements CoveritySelectBoxEnum {
     public String getDisplayName() {
         return displayName;
     }
+
 }
