@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.xml.ws.WebServiceException;
 
@@ -259,7 +260,7 @@ public class CoverityCommonDescriptor {
     }
 
     private ListBoxModel getListBoxModelOf(final CoveritySelectBoxEnum[] coveritySelectBoxEnumValues) {
-        return Arrays.stream(coveritySelectBoxEnumValues)
+        return Stream.of(coveritySelectBoxEnumValues)
                    .collect(ListBoxModel::new, (model, value) -> model.add(value.getDisplayName(), value.name()), ListBoxModel::addAll);
     }
 

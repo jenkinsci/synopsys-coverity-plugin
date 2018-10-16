@@ -33,7 +33,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
@@ -76,7 +75,7 @@ public class JenkinsCoverityInstance implements Serializable {
             final BaseStandardCredentials credential = optionalCredential.get();
             if (credential instanceof UsernamePasswordCredentialsImpl) {
                 final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
-                return Optional.ofNullable(credentials.getUsername());
+                return Optional.of(credentials.getUsername());
             }
         }
         return Optional.empty();
@@ -88,9 +87,7 @@ public class JenkinsCoverityInstance implements Serializable {
             final BaseStandardCredentials credential = optionalCredential.get();
             if (credential instanceof UsernamePasswordCredentialsImpl) {
                 final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
-                if (null != credentials.getPassword()) {
-                    return Optional.ofNullable(credentials.getPassword().getPlainText());
-                }
+                return Optional.of(credentials.getPassword().getPlainText());
             }
         }
         return Optional.empty();
@@ -99,7 +96,7 @@ public class JenkinsCoverityInstance implements Serializable {
     public Optional<BaseStandardCredentials> getCredential() {
         Optional<BaseStandardCredentials> optionalCredential = Optional.empty();
         if (StringUtils.isNotBlank(credentialId)) {
-            final List<BaseStandardCredentials> credentials = CredentialsProvider.lookupCredentials(BaseStandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+            final List<BaseStandardCredentials> credentials = CredentialsProvider.lookupCredentials(BaseStandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList());
             final IdMatcher matcher = new IdMatcher(credentialId);
             for (final BaseStandardCredentials c : credentials) {
                 if (matcher.matches(c)) {
