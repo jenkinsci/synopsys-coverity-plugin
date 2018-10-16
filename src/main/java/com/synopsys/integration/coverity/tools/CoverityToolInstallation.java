@@ -77,13 +77,11 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
     }
 
     /**
-     * \
      * {@link ToolDescriptor} for {@link CoverityToolInstallation}
      */
     @Extension
     @Symbol("coverity")
     public static final class CoverityToolInstallationDescriptor extends ToolDescriptor<CoverityToolInstallation> {
-
         @Override
         public String getDisplayName() {
             return Messages.CoverityToolInstallation_getDisplayName();
@@ -120,30 +118,32 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
         protected FormValidation checkHomeDirectory(final File home) {
             // This validation is only ever run when on master. Jenkins does not use this to validate node overrides
             try {
+                if (home == null || !home.exists()) {
+                    return FormValidation.error("The specified Analysis installation directory doesn't exist.");
+                }
+
                 final File analysisVersionFile = new File(home, "VERSION");
                 final File analysisVersionXml = new File(home, "VERSION.xml");
-                if (home != null && home.exists()) {
-                    if (analysisVersionXml.isFile() && analysisVersionFile.isFile()) {
 
-                        // check the version file value and validate it is greater than minimum version
-                        final Optional<CoverityVersion> optionalVersion = getVersion(analysisVersionFile);
-
-                        if (!optionalVersion.isPresent()) {
-                            return FormValidation.error("Could not determine the version of the Coverity analysis tool.");
-                        }
-                        final CoverityVersion version = optionalVersion.get();
-                        if (version.compareTo(CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION) < 0) {
-                            return FormValidation.error("Analysis version " + version.toString() + " detected. " +
-                                                            "The minimum supported version is " + CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION.toString());
-                        }
-
-                        return FormValidation.ok("Analysis installation directory has been verified.");
-                    } else {
-                        return FormValidation.error("The specified Analysis installation directory doesn't contain a VERSION and VERSION.xml file.");
-                    }
-                } else {
-                    return FormValidation.error("The specified Analysis installation directory doesn't exists.");
+                if (!analysisVersionXml.isFile() || !analysisVersionFile.isFile()) {
+                    return FormValidation.error("The specified Analysis installation directory doesn't contain a VERSION and VERSION.xml file.");
                 }
+
+                // check the version file value and validate it is greater than minimum version
+                final Optional<CoverityVersion> optionalVersion = getVersion(analysisVersionFile);
+
+                if (!optionalVersion.isPresent()) {
+                    return FormValidation.error("Could not determine the version of the Coverity analysis tool.");
+                }
+
+                final CoverityVersion version = optionalVersion.get();
+
+                if (version.compareTo(CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION) < 0) {
+                    return FormValidation.error(String.format("Analysis version %s detected. The minimum supported version is %s", version.toString(), CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION.toString()));
+                }
+
+                return FormValidation.ok("Analysis installation directory has been verified.");
+
             } catch (final IOException e) {
                 return FormValidation.error("Unable to verify the Analysis installation directory.", e);
             }
