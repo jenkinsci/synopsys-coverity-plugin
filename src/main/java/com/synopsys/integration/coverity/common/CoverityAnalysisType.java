@@ -25,8 +25,8 @@
 package com.synopsys.integration.coverity.common;
 
 public enum CoverityAnalysisType implements CoveritySelectBoxEnum {
-    COV_ANALYZE("Initial Analysis"),
-    COV_RUN_DESKTOP("Delta Analysis");
+    COV_ANALYZE("Full Analysis"),
+    COV_RUN_DESKTOP("Incremental Analysis");
 
     private String displayName;
 
