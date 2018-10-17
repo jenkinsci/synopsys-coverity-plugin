@@ -1,11 +1,11 @@
 <div>
     <p>
         Specify the type of analysis you would like to run.</br>
-        <strong>Full Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects tools (in that order)</br>
-        <strong>Incremental Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects tools (in that order)
+        <strong>Full Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects commands (in that order)</br>
+        <strong>Incremental Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects commands (in that order)
     </p>
     <p>
-        Specifically, the tools will be invoked with the following parameters:
+        Specifically, the commands will be invoked with the following parameters:
     </p>
     <table>
         <tr>
@@ -21,4 +21,7 @@
             <td>cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}</td>
         </tr>
     </table>
+    <p>
+        If the configured COVERITY_HOST uses https, --ssl will be automatically applied to the end of the command.
+    </p>
 </div>

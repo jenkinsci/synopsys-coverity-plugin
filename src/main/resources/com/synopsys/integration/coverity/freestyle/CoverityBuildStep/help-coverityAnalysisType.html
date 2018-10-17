@@ -1,11 +1,11 @@
 <div>
     <p>
         Specify the type of analysis you would like to run.</br>
-        <strong>Full Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects tools (in that order)</br>
-        <strong>Incremental Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects tools (in that order)
+        <strong>Full Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects commands (in that order)</br>
+        <strong>Incremental Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects commands (in that order)
     </p>
     <p>
-        Specifically, the tools will be invoked with the following parameters:
+        Specifically, the commands will be invoked with the following parameters:
     </p>
     <table>
         <tr>
@@ -15,13 +15,13 @@
             <td>cov-analyze --dir ${WORKSPACE}/idir</td>
         </tr>
         <tr>
-            <td>cov-run-desktop --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM} ${CHANGE_SET}</td>
+            <td>cov-run-desktop --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}</td>
         </tr>
         <tr>
             <td>cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}</td>
         </tr>
     </table>
     <p>
-        If the specified ${COVERITY_HOST} is an https address, --ssl will be automatically appended.
+        If the configured COVERITY_HOST uses https, --ssl will be automatically applied to the end of the command.
     </p>
 </div>

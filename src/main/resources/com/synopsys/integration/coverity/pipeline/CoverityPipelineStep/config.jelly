@@ -6,7 +6,7 @@
         setRootURL("${app.rootUrl}");
     </script>
 
-    <f:entry field="coverityToolName" title="${%CoverityToolName}">
+    <f:entry field="coverityToolName" title="${%CoverityInstallationTitle}">
         <f:select id="coverityToolNameId"/>
     </f:entry>
     <f:entry field="projectName" title="${%ProjectName}">
