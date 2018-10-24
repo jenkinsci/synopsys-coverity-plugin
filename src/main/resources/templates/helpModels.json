@@ -1,0 +1,184 @@
+{
+  "buildCommand": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify the build command for Coverity to run to build your project."
+      ]
+    }
+  },
+  "buildStatusForIssues": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify the build status to set if issues are found in the configured view."
+      ]
+    }
+  },
+  "coverityToolName": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify which Synopsys Coverity static analysis installation to use."
+      ]
+    }
+  },
+  "onCommandFailure": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify the action to take if a Coverity static analysis command fails."
+      ]
+    }
+  },
+  "projectName": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify the name of the Coverity project.",
+        "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis"
+      ]
+    }
+  },
+  "streamName": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify the name of the Coverity stream that you would like to use for the commands.",
+        "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis."
+      ]
+    }
+  },
+  "url": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify the URL for your Coverity Connect instance.",
+        "Populates the $COV_HOST and $COV_PORT environment variables"
+      ]
+    }
+  },
+  "viewName": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify the name of the Coverity view that you would like to check for issues."
+      ]
+    }
+  },
+  "credentialId": {
+    "template": "helpHtml.tpl",
+    "model": {
+      "overview": [
+        "Specify credentials for authenticating with your Coverity Connect instance."
+      ],
+      "notes": [
+        "\"Username with password\" is the only kind of credentials supported."
+      ]
+    }
+  },
+  "changeSetExclusionPatterns": {
+    "template": "changeSetPattern.tpl",
+    "model": {
+      "overview": [
+        "Specify a comma separated list of filename patterns that you would like to explicitly excluded from the Jenkins change set.",
+        "The pattern is applied to the $CHANGE_SET environment variable, and will affect which files are analyzed in an incremental analysis (cov-run-desktop).",
+        "Examples:"
+      ],
+      "columnNames": [
+        "File Name",
+        "Pattern",
+        "Will be excluded"
+      ],
+      "rowContents": [
+        [
+          "test.java",
+          "*.java",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "*.jpg",
+          "No"
+        ],
+        [
+          "test.java",
+          "test.*",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.????",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.?????",
+          "No"
+        ]
+      ]
+    }
+  },
+  "changeSetInclusionPatterns": {
+    "template": "changeSetPattern.tpl",
+    "model": {
+      "overview": [
+        "Specify a comma separated list of filename patterns that you would like to explicitly included from the Jenkins change set.",
+        "The pattern is applied to the $CHANGE_SET environment variable, and will affect which files are analyzed in an incremental analysis (cov-run-desktop).",
+        "Examples:"
+      ],
+      "columnNames": [
+        "File Name",
+        "Pattern",
+        "Will be included"
+      ],
+      "rowContents": [
+        [
+          "test.java",
+          "*.java",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "*.jpg",
+          "No"
+        ],
+        [
+          "test.java",
+          "test.*",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.????",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.?????",
+          "No"
+        ]
+      ]
+    }
+  },
+  "coverityAnalysisType": {
+    "template": "coverityAnalysisType.tpl",
+    "model": {
+      "overview": [
+        "Specify the type of analysis you would like to run.",
+        "<strong>Full Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects commands (in that order)",
+        "<strong>Incremental Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects commands (in that order)",
+        "Specifically, the commands will be invoked with the following parameters:"
+      ],
+      "commands": [
+        "cov-build --dir ${WORKSPACE}/idir <em>build command</em>",
+        "cov-analyze --dir ${WORKSPACE}/idir",
+        "cov-run-desktop --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}",
+        "cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}"
+      ],
+      "notes": [
+        "If the configured COVERITY_HOST uses https, --ssl will be automatically applied to the end of the command."
+      ]
+    }
+  }
+}

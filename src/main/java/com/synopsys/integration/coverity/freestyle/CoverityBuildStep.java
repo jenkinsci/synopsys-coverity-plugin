@@ -83,7 +83,7 @@ public class CoverityBuildStep extends Builder {
         return coverityToolName;
     }
 
-    public OnCommandFailure commandFailureAction() {
+    public OnCommandFailure getOnCommandFailure() {
         return onCommandFailure;
     }
 

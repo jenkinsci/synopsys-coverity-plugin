@@ -1,0 +1,37 @@
+import groovy.json.JsonSlurper
+import groovy.text.Template
+import groovy.text.markup.MarkupTemplateEngine
+import groovy.text.markup.TemplateConfiguration
+
+task generateHelp {
+    doLast {
+        def config = new TemplateConfiguration()
+        config.setAutoIndent(true)
+        config.setAutoNewLine(true)
+
+        def engine = new MarkupTemplateEngine(config)
+        def jsonSlurper = new JsonSlurper()
+
+        def helpModels = jsonSlurper.parse(file('src/main/resources/templates/helpModels.json'))
+        def destinations = ['src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep',
+                            'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep']
+
+        destinations.each { destination ->
+            helpModels.entrySet().each { entry ->
+                String fieldName = entry.key
+                Template template = engine.createTemplate(file("src/main/resources/templates/${entry.value.template}").text)
+                Map model = entry.value.model
+
+                generateHelpHtml(destination, fieldName, template, model)
+            }
+        }
+    }
+}
+
+static void generateHelpHtml(final String directoryPath, final String fieldName, final Template htmlTemplate, final Map model) {
+    def helpFile = new File("${directoryPath}/help-${fieldName}.html")
+    if (helpFile.exists()) {
+        helpFile.delete()
+    }
+    helpFile.withWriter('UTF-8') { writer -> htmlTemplate.make(model).writeTo(writer) }
+}
