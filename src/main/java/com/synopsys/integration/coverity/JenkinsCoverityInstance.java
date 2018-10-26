@@ -38,6 +38,7 @@ import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 
 import hudson.security.ACL;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 public class JenkinsCoverityInstance implements Serializable {
@@ -59,55 +60,48 @@ public class JenkinsCoverityInstance implements Serializable {
     }
 
     public Optional<URL> getCoverityURL() {
-        if (null != url) {
+        URL coverityUrl = null;
+        if (url != null) {
             try {
-                return Optional.of(new URL(url));
-            } catch (final MalformedURLException e) {
-                // problems with the URL will be shown in the global configuration
+                coverityUrl = new URL(url);
+            } catch (final MalformedURLException ignored) {
+                // Handled by form validation in the global configuration
             }
         }
-        return Optional.empty();
+
+        return Optional.ofNullable(coverityUrl);
     }
 
     public Optional<String> getCoverityUsername() {
-        final Optional<BaseStandardCredentials> optionalCredential = getCredential();
-        if (optionalCredential.isPresent()) {
-            final BaseStandardCredentials credential = optionalCredential.get();
-            if (credential instanceof UsernamePasswordCredentialsImpl) {
-                final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
-                return Optional.of(credentials.getUsername());
-            }
-        }
-        return Optional.empty();
+        return getCredentials()
+                   .filter(UsernamePasswordCredentialsImpl.class::isInstance)
+                   .map(UsernamePasswordCredentialsImpl.class::cast)
+                   .map(UsernamePasswordCredentialsImpl::getUsername);
     }
 
     public Optional<String> getCoverityPassword() {
-        final Optional<BaseStandardCredentials> optionalCredential = getCredential();
-        if (optionalCredential.isPresent()) {
-            final BaseStandardCredentials credential = optionalCredential.get();
-            if (credential instanceof UsernamePasswordCredentialsImpl) {
-                final UsernamePasswordCredentialsImpl credentials = (UsernamePasswordCredentialsImpl) credential;
-                return Optional.of(credentials.getPassword().getPlainText());
-            }
-        }
-        return Optional.empty();
+        return getCredentials()
+                   .filter(UsernamePasswordCredentialsImpl.class::isInstance)
+                   .map(UsernamePasswordCredentialsImpl.class::cast)
+                   .map(UsernamePasswordCredentialsImpl::getPassword)
+                   .map(Secret::getPlainText);
     }
 
-    public Optional<BaseStandardCredentials> getCredential() {
-        Optional<BaseStandardCredentials> optionalCredential = Optional.empty();
+    public Optional<BaseStandardCredentials> getCredentials() {
+        Optional<BaseStandardCredentials> optionalCredentials = Optional.empty();
         if (StringUtils.isNotBlank(credentialId)) {
             final List<BaseStandardCredentials> credentials = CredentialsProvider.lookupCredentials(BaseStandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList());
             final IdMatcher matcher = new IdMatcher(credentialId);
-            for (final BaseStandardCredentials c : credentials) {
-                if (matcher.matches(c)) {
-                    optionalCredential = Optional.of(c);
-                }
-            }
+            optionalCredentials = credentials.stream()
+                                      .filter(matcher::matches)
+                                      .findAny();
         }
-        return optionalCredential;
+
+        return optionalCredentials;
     }
 
     public boolean isEmpty() {
         return null == url && null == credentialId;
     }
+
 }

@@ -24,16 +24,22 @@
 
 package com.synopsys.integration.coverity.pipeline;
 
-import javax.inject.Inject;
+import java.io.IOException;
+import java.util.Set;
 
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import javax.annotation.Nonnull;
+
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
+import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.google.common.collect.ImmutableSet;
 import com.synopsys.integration.coverity.Messages;
 import com.synopsys.integration.coverity.common.BuildStatus;
 import com.synopsys.integration.coverity.common.CoverityAnalysisType;
@@ -56,7 +62,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
-public class CoverityPipelineStep extends AbstractStepImpl {
+public class CoverityPipelineStep extends Step {
     private final String coverityToolName;
     private final String projectName;
     private final String streamName;
@@ -149,22 +155,31 @@ public class CoverityPipelineStep extends AbstractStepImpl {
     }
 
     @Override
-    public CoverityPipelineStepDescriptor getDescriptor() {
-        return (CoverityPipelineStepDescriptor) super.getDescriptor();
+    public StepExecution start(final StepContext context) throws Exception {
+        return new Execution(this, context);
+    }
+
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension(optional = true)
-    public static final class CoverityPipelineStepDescriptor extends AbstractStepDescriptorImpl {
+    public static final class DescriptorImpl extends StepDescriptor {
         private final transient CoverityCommonDescriptor coverityCommonDescriptor;
 
-        public CoverityPipelineStepDescriptor() {
-            super(CoverityPipelineExecution.class);
+        public DescriptorImpl() {
             coverityCommonDescriptor = new CoverityCommonDescriptor();
         }
 
         @Override
+        public Set<Class<?>> getRequiredContext() {
+            return ImmutableSet.of(TaskListener.class, EnvVars.class, Computer.class, FilePath.class, Run.class);
+        }
+
+        @Override
         public String getFunctionName() {
-            return "synopsys_coverity";
+            return Messages.CoverityPipelineStep_getFunctionName();
         }
 
         @Override
@@ -223,29 +238,35 @@ public class CoverityPipelineStep extends AbstractStepImpl {
         public FormValidation doCheckViewName() {
             return coverityCommonDescriptor.testConnectionSilently();
         }
+
     }
 
-    public static final class CoverityPipelineExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
+    private static class Execution extends SynchronousNonBlockingStepExecution<Void> {
         private static final long serialVersionUID = 4838600483787700636L;
-        @StepContextParameter
         private transient TaskListener listener;
-        @StepContextParameter
         private transient EnvVars envVars;
-        @Inject
         private transient CoverityPipelineStep coverityPipelineStep;
-        @StepContextParameter
         private transient Computer computer;
-        @StepContextParameter
         private transient FilePath workspace;
-        @StepContextParameter
         private transient Run run;
+        private transient FlowNode flowNode;
+
+        protected Execution(@Nonnull final CoverityPipelineStep step, @Nonnull final StepContext context) throws IOException, InterruptedException {
+            super(context);
+            listener = context.get(TaskListener.class);
+            envVars = context.get(EnvVars.class);
+            computer = context.get(Computer.class);
+            workspace = context.get(FilePath.class);
+            run = context.get(Run.class);
+            coverityPipelineStep = step;
+        }
 
         @Override
         protected Void run() throws Exception {
             final RunWrapper runWrapper = new RunWrapper(run, true);
             final CoverityToolStep coverityToolStep = new CoverityToolStep(computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
-
             final boolean shouldContinueOurSteps;
+
             if (CoverityRunConfiguration.ADVANCED.equals(coverityPipelineStep.getCoverityRunConfiguration())) {
                 shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getCommands(),
                     coverityPipelineStep.getOnCommandFailure(), coverityPipelineStep.getConfigureChangeSetPatterns(), coverityPipelineStep.getChangeSetInclusionPatterns(), coverityPipelineStep.getChangeSetExclusionPatterns());
@@ -259,6 +280,7 @@ public class CoverityPipelineStep extends AbstractStepImpl {
                 final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(computer.getNode(), listener, envVars, workspace, run);
                 coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(coverityPipelineStep.getBuildStatusForIssues(), coverityPipelineStep.getProjectName(), coverityPipelineStep.getViewName());
             }
+
             return null;
         }
 

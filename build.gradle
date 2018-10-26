@@ -12,7 +12,7 @@ plugins {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '1.0.1-SNAPSHOT'
+version = '1.1.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply from: 'generateHelp.gradle'
@@ -60,7 +60,7 @@ dependencies {
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-cps:2.23'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-step-api:2.5'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-step-api:2.10'
 }
 
 task renameFile << {
