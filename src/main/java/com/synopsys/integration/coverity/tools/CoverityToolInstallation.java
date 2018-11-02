@@ -39,7 +39,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.coverity.Messages;
-import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
+import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -54,7 +54,7 @@ import hudson.tools.ToolProperty;
 import hudson.tools.ToolPropertyDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
-import jenkins.model.Jenkins;
+import jenkins.model.GlobalConfiguration;
 
 /**
  * Coverity Static Analysis Tool {@link ToolInstallation}, this represents a named tool configuration with a path to
@@ -102,16 +102,16 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
 
         @Override
         public CoverityToolInstallation[] getInstallations() {
-            return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
+            return getCoverityGlobalConfig().getCoverityToolInstallations();
         }
 
         @Override
         public void setInstallations(final CoverityToolInstallation... installations) {
-            getCoverityPostBuildStepDescriptor().setCoverityToolInstallations(installations);
+            getCoverityGlobalConfig().setCoverityToolInstallations(installations);
         }
 
-        private CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
-            return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
+        private CoverityGlobalConfig getCoverityGlobalConfig() {
+            return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
         }
 
         @Override
@@ -138,8 +138,8 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
 
                 final CoverityVersion version = optionalVersion.get();
 
-                if (version.compareTo(CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION) < 0) {
-                    return FormValidation.error(String.format("Analysis version %s detected. The minimum supported version is %s", version.toString(), CoverityBuildStepDescriptor.MINIMUM_SUPPORTED_VERSION.toString()));
+                if (version.compareTo(CoverityGlobalConfig.MINIMUM_SUPPORTED_VERSION) < 0) {
+                    return FormValidation.error(String.format("Analysis version %s detected. The minimum supported version is %s", version.toString(), CoverityGlobalConfig.MINIMUM_SUPPORTED_VERSION.toString()));
                 }
 
                 return FormValidation.ok("Analysis installation directory has been verified.");

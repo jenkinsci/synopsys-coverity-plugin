@@ -5,6 +5,12 @@ import groovy.text.markup.TemplateConfiguration
 
 task generateHelp {
     doLast {
+        def templatesPath = 'src/main/resources/templates'
+        def coverityBuildStepPath = 'src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep'
+        def coverityPipelineStepPath = 'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep'
+        def coverityGlobalConfigPath = 'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityGlobalConfig'
+        def embeddedHelpPath = 'src/main/webapp/help'
+
         def config = new TemplateConfiguration()
         config.setAutoIndent(true)
         config.setAutoNewLine(true)
@@ -12,26 +18,28 @@ task generateHelp {
         def engine = new MarkupTemplateEngine(config)
         def jsonSlurper = new JsonSlurper()
 
-        def helpModels = jsonSlurper.parse(file('src/main/resources/templates/helpModels.json'))
-        def destinations = ['src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep',
-                            'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep']
+        def buildStepJson = jsonSlurper.parse(file("${templatesPath}/buildStep.json"))
 
-        destinations.each { destination ->
-            helpModels.entrySet().each { entry ->
-                String fieldName = entry.key
-                Template template = engine.createTemplate(file("src/main/resources/templates/${entry.value.template}").text)
-                Map model = entry.value.model
-
-                generateHelpHtml(destination, fieldName, template, model)
-            }
-        }
+        generateHelpHtml(engine, templatesPath, buildStepJson, coverityBuildStepPath)
+        generateHelpHtml(engine, templatesPath, buildStepJson, coverityPipelineStepPath)
+        generateHelpHtml(engine, templatesPath, jsonSlurper.parse(file("${templatesPath}/globalConfig.json")), coverityGlobalConfigPath)
+        generateHelpHtml(engine, templatesPath, jsonSlurper.parse(file("${templatesPath}/embeddedHelp.json")), embeddedHelpPath)
     }
 }
 
-static void generateHelpHtml(final String directoryPath, final String fieldName, final Template htmlTemplate, final Map model) {
-    def helpFile = new File("${directoryPath}/help-${fieldName}.html")
-    if (helpFile.exists()) {
-        helpFile.delete()
+void generateHelpHtml(final MarkupTemplateEngine engine, final String templatesPath, final Object jsonOutput, final String outputPath) {
+    jsonOutput.entrySet().each { templateEntry ->
+        Template template = engine.createTemplate(file("${templatesPath}/${templateEntry.key}").text)
+        templateEntry.value.entrySet().each { fieldEntry ->
+            String fieldName = fieldEntry.key
+            Map model = fieldEntry.value
+            def helpFile = file("${outputPath}/help-${fieldName}.html")
+            if (helpFile.exists()) {
+                helpFile.delete()
+            }
+            helpFile.withWriter('UTF-8') {
+                template.make(model).writeTo(it)
+            }
+        }
     }
-    helpFile.withWriter('UTF-8') { writer -> htmlTemplate.make(model).writeTo(writer) }
 }

@@ -278,7 +278,7 @@ public class CoverityToolStep extends BaseCoverityStep {
     }
 
     private CoverityToolInstallation[] getCoverityToolInstallations() {
-        return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
+        return getCoverityGlobalConfig().getCoverityToolInstallations();
     }
 
     private String updateCommandWithChangeSet(final String command, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) throws EmptyChangeSetException {

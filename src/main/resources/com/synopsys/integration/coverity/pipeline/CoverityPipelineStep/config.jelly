@@ -1,65 +1,64 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-
     <script src="${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js"/>
     <script type="text/javascript">
         setRootURL("${app.rootUrl}");
     </script>
 
-    <f:entry field="coverityToolName" title="${%CoverityInstallationTitle}">
-        <f:select id="coverityToolNameId"/>
+    <f:entry field="${%coverityToolNameField}" title="${%coverityToolNameTitle}">
+        <f:select id="${%coverityToolNameId}"/>
     </f:entry>
-    <f:entry field="projectName" title="${%ProjectName}">
-        <f:select id="projectNameId"/>
+    <f:entry field="${%projectNameField}" title="${%projectNameTitle}">
+        <f:select id="${%projectNameId}"/>
     </f:entry>
-    <f:entry field="streamName" title="${%StreamName}">
-        <f:select id="streamNameId"/>
+    <f:entry field="${%streamNameField}" title="${%streamNameTitle}">
+        <f:select id="${%streamNameId}"/>
     </f:entry>
-    <f:optionalBlock title="${%CheckForIssuesInViewTitle}" field="checkForIssuesInView" inline="true">
-        <f:entry title="${%ViewName}" field="viewName">
-            <f:select id="viewNameId"/>
+    <f:optionalBlock field="${%checkForIssuesInViewField}" title="${%checkForIssuesInViewTitle}" inline="true">
+        <f:entry field="${%viewNameField}" title="${%viewNameTitle}">
+            <f:select id="${%viewNameId}"/>
         </f:entry>
-        <f:entry title="${%BuildStatusForIssuesTitle}" field="buildStatusForIssues">
+        <f:entry field="${%buildStatusForIssuesField}" title="${%buildStatusForIssuesTitle}">
             <f:select/>
         </f:entry>
     </f:optionalBlock>
-    <f:optionalBlock title="${%ConfigureChangeSetPatternsTitle}" field="configureChangeSetPatterns" inline="true">
-        <f:entry title="${%ChangeSetInclusionPatternsTitle}" field="changeSetInclusionPatterns">
+    <f:optionalBlock field="${%configureChangeSetPatternsField}" title="${%configureChangeSetPatternsTitle}" inline="true">
+        <f:entry field="${%changeSetInclusionPatternsField}" title="${%changeSetInclusionPatternsTitle}">
             <f:textbox/>
         </f:entry>
-        <f:entry title="${%ChangeSetExclusionPatternsTitle}" field="changeSetExclusionPatterns">
+        <f:entry field="${%changeSetExclusionPatternsField}" title="${%changeSetExclusionPatternsTitle}">
             <f:textbox/>
         </f:entry>
     </f:optionalBlock>
     <f:entry>
         <div style="float:right">
-            <input type="button" value="${%RefreshConnection}" class="yui-button ${attrs.clazz}" onclick="loadProjects();loadStreams();loadViews();"/>
+            <input type="button" value="${%refreshConnectionButtonText}" class="yui-button ${attrs.clazz}" onclick="loadProjects();loadStreams();loadViews();"/>
         </div>
     </f:entry>
 
-    <f:radioBlock name="coverityRunConfiguration" value="SIMPLE" title="${%SimpleRunTitle}" checked="${instance.coverityRunConfiguration != 'ADVANCED'}" inline="true">
-        <f:entry field="coverityAnalysisType" title="${%CoverityAnalysisTypeTitle}">
+    <f:radioBlock name="${%coverityRunConfigurationName}" value="SIMPLE" title="${%simpleCoverityRunConfigurationTitle}" checked="${instance.coverityRunConfiguration != ADVANCED}" inline="true">
+        <f:entry field="${%coverityAnalysisTypeField}" title="${%coverityAnalysisTypeTitle}">
             <f:select/>
         </f:entry>
-        <f:entry title="${%BuildCommand}" field="buildCommand">
+        <f:entry field="${%buildCommandField}" title="${%buildCommandTitle}">
             <f:textbox/>
         </f:entry>
     </f:radioBlock>
 
-    <f:radioBlock name="coverityRunConfiguration" value="ADVANCED" title="${%AdvancedRunTitle}" checked="${instance.coverityRunConfiguration == 'ADVANCED'}" inline="true">
+    <f:radioBlock name="${%coverityRunConfigurationName}" value="ADVANCED" title="${%advancedCoverityRunConfigurationTitle}" checked="${instance.coverityRunConfiguration == ADVANCED}" inline="true">
         <f:block>
-            <f:repeatable field="commands" add="${%AddCommand}" minimum="1">
-                <table style="width:100%" id="coverityCommandTable">
-                    <f:entry title="${%Command}" field="command" help="/plugin/synopsys-coverity/help/CoverityBuildStep/help-command.html">
+            <f:repeatable field="${%commandsField}" add="${%commandsAddTitle}" minimum="1">
+                <table style="width:100%" id="${%commandsTableId}">
+                    <f:entry field="${%commandField}" title="${%commandTitle}" help="/plugin/synopsys-coverity/help/help-command.html">
                         <f:textbox/>
                     </f:entry>
                 </table>
-                <f:repeatableDeleteButton value="${%DeleteCommand}"/>
+                <f:repeatableDeleteButton value="${%commandsDeleteTitle}"/>
             </f:repeatable>
         </f:block>
     </f:radioBlock>
 
-    <f:entry field="onCommandFailure" title="${%OnCommandFailure}">
+    <f:entry field="${%onCommandFailureField}" title="${%onCommandFailureTitle}">
         <f:select/>
     </f:entry>
 </j:jelly>

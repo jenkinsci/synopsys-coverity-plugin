@@ -29,7 +29,6 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -49,8 +48,8 @@ import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.OnCommandFailure;
 import com.synopsys.integration.coverity.common.RepeatableCommand;
-import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
+import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -60,7 +59,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
+import jenkins.model.GlobalConfiguration;
 
 public class CoverityPipelineStep extends Step {
     private final String coverityToolName;
@@ -187,12 +186,12 @@ public class CoverityPipelineStep extends Step {
             return Messages.CoverityPipelineStep_getDisplayName();
         }
 
-        private CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
-            return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
+        private CoverityGlobalConfig getCoverityGlobalConfigDescriptor() {
+            return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
         }
 
         private CoverityToolInstallation[] getCoverityToolInstallations() {
-            return getCoverityPostBuildStepDescriptor().getCoverityToolInstallations();
+            return getCoverityGlobalConfigDescriptor().getCoverityToolInstallations();
         }
 
         public ListBoxModel doFillOnCommandFailureItems() {
@@ -249,7 +248,6 @@ public class CoverityPipelineStep extends Step {
         private transient Computer computer;
         private transient FilePath workspace;
         private transient Run run;
-        private transient FlowNode flowNode;
 
         protected Execution(@Nonnull final CoverityPipelineStep step, @Nonnull final StepContext context) throws IOException, InterruptedException {
             super(context);

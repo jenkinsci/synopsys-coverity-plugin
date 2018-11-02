@@ -45,12 +45,12 @@ import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.config.CoverityServerConfigValidator;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
-import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.log.PrintStreamIntLogger;
 import com.synopsys.integration.validator.FieldEnum;
@@ -59,7 +59,7 @@ import com.synopsys.integration.validator.ValidationResults;
 
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
+import jenkins.model.GlobalConfiguration;
 
 public class CoverityCommonDescriptor {
     private final ProjectCacheData projectCacheData = new ProjectCacheData();
@@ -269,12 +269,12 @@ public class CoverityCommonDescriptor {
                    .orElse(FormValidation.error("Could not connect to Coverity server, no configured Coverity server was detected in the Jenkins System Configuration."));
     }
 
-    private CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
+    private CoverityGlobalConfig getCoverityGlobalConfig() {
+        return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
     }
 
     private Optional<JenkinsCoverityInstance> getCoverityInstance() {
-        return getCoverityPostBuildStepDescriptor().getCoverityInstance();
+        return getCoverityGlobalConfig().getCoverityInstance();
     }
 
 }

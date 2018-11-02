@@ -32,7 +32,7 @@ import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.JenkinsProxyHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.coverity.freestyle.CoverityBuildStepDescriptor;
+import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
@@ -42,7 +42,7 @@ import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
+import jenkins.model.GlobalConfiguration;
 
 public abstract class BaseCoverityStep {
     private final Node node;
@@ -88,12 +88,12 @@ public abstract class BaseCoverityStep {
         getRun().setResult(result);
     }
 
-    public CoverityBuildStepDescriptor getCoverityPostBuildStepDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(CoverityBuildStepDescriptor.class);
+    protected CoverityGlobalConfig getCoverityGlobalConfig() {
+        return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
     }
 
     public Optional<JenkinsCoverityInstance> getCoverityInstance() {
-        return getCoverityPostBuildStepDescriptor().getCoverityInstance();
+        return getCoverityGlobalConfig().getCoverityInstance();
     }
 
     public void initializeJenkinsCoverityLogger() {
