@@ -16,15 +16,7 @@ version = '1.1.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply from: 'generateHelp.gradle'
-compileJava.dependsOn generateHelp
 apply plugin: 'com.blackducksoftware.integration.solution'
-
-task listrepos {
-    doLast {
-        println "Repositories:"
-        project.repositories.each { println "Name: " + it.name + "; url: " + it.url }
-    }
-}
 
 def jcenterRepo = project.repositories.findByName('BintrayJCenter')
 project.repositories.remove(jcenterRepo)
@@ -32,7 +24,7 @@ def mavenRepo = project.repositories.findByName('maven')
 project.repositories.remove(mavenRepo)
 
 project.afterEvaluate {
-    // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluate
+    // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluated
     List<String> repoNames = new ArrayList()
     repoNames.addAll(project.repositories.getNames())
     for (String repoName : repoNames) {
@@ -55,7 +47,7 @@ jenkinsPlugin {
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:1.9.4'
 
-    compile 'com.synopsys.integration:coverity-common:0.1.4'
+    implementation 'com.synopsys.integration:coverity-common:0.1.4'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
@@ -63,13 +55,16 @@ dependencies {
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-step-api:2.10'
 }
 
-task renameFile << {
-    if (project.getVersion().toString().contains("SNAPSHOT")) {
-        File libsDirectory = new File(project.getBuildDir(), "libs")
-        File originalFile = new File(libsDirectory, "${project.getName()}.hpi")
-        File newFile = new File(libsDirectory, "${project.getName()}-${project.getVersion()}.hpi")
-        originalFile.renameTo newFile
+task renameFile {
+    doLast {
+        if (project.version.toString().contains("SNAPSHOT")) {
+            File libsDirectory = new File(project.buildDir, "libs")
+            File originalFile = new File(libsDirectory, "${project.getName()}.hpi")
+            File newFile = new File(libsDirectory, "${project.getName()}-${project.version}.hpi")
+            originalFile.renameTo newFile
+        }
     }
 }
 
+jar.dependsOn generateHelp
 jpi.finalizedBy renameFile
