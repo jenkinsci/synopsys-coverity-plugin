@@ -32,7 +32,7 @@ import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.exception.IntegrationException;
 
 public abstract class BaseCacheData<T> {
-    public static final int CACHE_TIME = 5;
+    public static final int CACHE_TIME_IN_MINUTES = 5;
     private boolean retrievingNow = false;
     private Instant lastTimeRetrieved = null;
     private List<T> cachedData = null;
@@ -58,7 +58,7 @@ public abstract class BaseCacheData<T> {
         }
     }
 
-    public void checkAndUpdateCachedData(final JenkinsCoverityInstance coverityInstance, final Boolean updateNow) {
+    private void checkAndUpdateCachedData(final JenkinsCoverityInstance coverityInstance, final Boolean updateNow) {
         boolean forceUpdate = false;
         if (null != updateNow) {
             forceUpdate = updateNow;
@@ -68,16 +68,13 @@ public abstract class BaseCacheData<T> {
             try {
                 final Instant now = Instant.now();
                 if (null == cachedData || null == lastTimeRetrieved) {
-                    final List<T> views = retrieveData(coverityInstance);
-                    cachedData = views;
+                    cachedData = retrieveData(coverityInstance);
                     lastTimeRetrieved = now;
-                } else if (null != lastTimeRetrieved) {
+                } else {
                     final Duration timeLapsed = Duration.between(lastTimeRetrieved, now);
                     // only update the cached views every 5 minutes
-                    if (forceUpdate || timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(CACHE_TIME)) {
-                        cachedData = null;
-                        final List<T> views = retrieveData(coverityInstance);
-                        cachedData = views;
+                    if (forceUpdate || timeLapsed.getSeconds() > TimeUnit.MINUTES.toSeconds(CACHE_TIME_IN_MINUTES)) {
+                        cachedData = retrieveData(coverityInstance);
                         lastTimeRetrieved = now;
                     }
                 }

@@ -68,7 +68,7 @@ function showLoading(nameId, loadingId, loadingText) {
     if (cell) {
         var loadingDiv = cell.select("#" + loadingId).first();
         if (!loadingDiv) {
-            var loadingDiv = document.createElement('div');
+            loadingDiv = document.createElement('div');
             loadingDiv.setAttribute('id', loadingId);
             loadingDiv.innerHTML = loadingText;
             loadingDiv.hide();

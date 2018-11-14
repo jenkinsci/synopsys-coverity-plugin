@@ -28,7 +28,6 @@ import java.io.Serializable;
 
 import org.kohsuke.stapler.QueryParameter;
 
-import com.synopsys.integration.coverity.Messages;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 
@@ -53,7 +52,7 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
 
     @Override
     public String getDisplayName() {
-        return Messages.CoverityBuildStep_getDisplayName();
+        return "Execute Synopsys Coverity static analysis";
     }
 
     @Override
@@ -85,6 +84,10 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
         return coverityCommonDescriptor.doFillOnCommandFailureItems();
     }
 
+    public ListBoxModel doFillCoverityRunConfigurationItems() {
+        return coverityCommonDescriptor.doFillCoverityRunConfigurationItems();
+    }
+
     public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
         return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
     }
@@ -107,6 +110,22 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
 
     public FormValidation doCheckViewName() {
         return coverityCommonDescriptor.testConnectionSilently();
+    }
+
+    public FormValidation doCheckCovBuildArguments(final @QueryParameter("covBuildArguments") String covBuildArguments) {
+        return coverityCommonDescriptor.doCheckCovBuildArguments(covBuildArguments);
+    }
+
+    public FormValidation doCheckCovAnalyzeArguments(final @QueryParameter("covAnalyzeArguments") String covAnalyzeArguments) {
+        return coverityCommonDescriptor.doCheckCovAnalyzeArguments(covAnalyzeArguments);
+    }
+
+    public FormValidation doCheckCovRunDesktopArguments(final @QueryParameter("covRunDesktopArguments") String covRunDesktopArguments) {
+        return coverityCommonDescriptor.doCheckCovRunDesktopArguments(covRunDesktopArguments);
+    }
+
+    public FormValidation doCheckCovCommitDefectsArguments(final @QueryParameter("covCommitDefectsArguments") String covCommitDefectsArguments) {
+        return coverityCommonDescriptor.doCheckCovCommitDefectsArguments(covCommitDefectsArguments);
     }
 
 }

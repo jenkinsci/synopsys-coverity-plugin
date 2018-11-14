@@ -1,0 +1,14 @@
+{
+  "template": "globalConfig.tpl",
+  "model": {
+    "globalConfigSectionTitle": "Synopsys Coverity",
+    "credentialsField": "credentialId",
+    "credentialsTitle": "Credentials",
+    "testConnectionMethod": "testConnection",
+    "testConnectionTitle": "Test Connection",
+    "testConnectionProgress": "Testing...",
+    "urlField": "url",
+    "urlTitle": "Coverity Connect instance URL",
+    "urlDescription": "Provide the URL for your Coverity Connect instance"
+  }
+}

@@ -41,7 +41,6 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
-import com.synopsys.integration.coverity.Messages;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 
@@ -109,13 +108,12 @@ public class CoverityGlobalConfig extends GlobalConfiguration implements Seriali
     public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         if (StringUtils.isBlank(url)) {
-            return FormValidation.error(Messages.CoverityBuildStep_getPleaseSetServerUrl());
+            return FormValidation.error("Please provide a URL for the Coverity Connect instance.");
         }
         try {
             new URL(url);
         } catch (final MalformedURLException e) {
-            e.printStackTrace();
-            return FormValidation.error(Messages.CoverityBuildStep_getUrlError_0(e.getMessage()));
+            return FormValidation.error(e, String.format("The provided URL for the Coverity Connect instance is not a valid URL. Error: %s", e.getMessage()));
         }
         return FormValidation.ok();
     }
@@ -145,11 +143,13 @@ public class CoverityGlobalConfig extends GlobalConfiguration implements Seriali
     @POST
     public FormValidation doTestConnection(@QueryParameter("url") final String url, @QueryParameter("credentialId") final String credentialId) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-        if (StringUtils.isBlank(url)) {
-            return FormValidation.error(Messages.CoverityBuildStep_getPleaseSetServerUrl());
+        final FormValidation urlValidation = doCheckUrl(url);
+        if (!FormValidation.Kind.OK.equals(urlValidation.kind)) {
+            return urlValidation;
         }
+
         if (StringUtils.isBlank(credentialId)) {
-            return FormValidation.error(Messages.CoverityBuildStep_getPleaseSetCoverityCredentials());
+            return FormValidation.error("Please specify the credentials for the Coverity Connect instance.");
         }
 
         final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);

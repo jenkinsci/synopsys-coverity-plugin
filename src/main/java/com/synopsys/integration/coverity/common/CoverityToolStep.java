@@ -82,7 +82,8 @@ public class CoverityToolStep extends BaseCoverityStep {
         this.changeLogSets = changeLogSets;
     }
 
-    public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final CoverityAnalysisType coverityAnalysisType) {
+    public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final String covBuildArguments, final String covAnalyzeArguments, final String covRunDesktopArguments,
+        final String covCommitDefectsArguments, final CoverityAnalysisType coverityAnalysisType) {
         final RepeatableCommand[] commands;
         final boolean isHttps = getCoverityInstance()
                                     .flatMap(JenkinsCoverityInstance::getCoverityURL)
@@ -91,9 +92,17 @@ public class CoverityToolStep extends BaseCoverityStep {
                                     .isPresent();
 
         if (CoverityAnalysisType.COV_ANALYZE.equals(coverityAnalysisType)) {
-            commands = new RepeatableCommand[] { RepeatableCommand.DEFAULT_COV_BUILD(buildCommand), RepeatableCommand.DEFAULT_COV_ANALYZE(), RepeatableCommand.DEFAULT_COV_COMMIT_DEFECTS(isHttps) };
+            commands = new RepeatableCommand[] {
+                RepeatableCommand.COV_BUILD(buildCommand, covBuildArguments),
+                RepeatableCommand.COV_ANALYZE(covAnalyzeArguments),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
+            };
         } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType)) {
-            commands = new RepeatableCommand[] { RepeatableCommand.DEFAULT_COV_BUILD(buildCommand), RepeatableCommand.DEFAULT_COV_RUN_DESKTOP(isHttps, JENKINS_CHANGE_SET), RepeatableCommand.DEFAULT_COV_COMMIT_DEFECTS(isHttps) };
+            commands = new RepeatableCommand[] {
+                RepeatableCommand.COV_BUILD(buildCommand, covBuildArguments),
+                RepeatableCommand.COV_RUN_DESKTOP(isHttps, covRunDesktopArguments, JENKINS_CHANGE_SET),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
+            };
         } else {
             commands = new RepeatableCommand[] {};
         }

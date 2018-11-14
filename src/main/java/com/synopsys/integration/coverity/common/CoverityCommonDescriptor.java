@@ -27,7 +27,9 @@ package com.synopsys.integration.coverity.common;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,7 +40,7 @@ import javax.xml.ws.WebServiceException;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.JenkinsCoverityInstance;
-import com.synopsys.integration.coverity.Messages;
+import com.synopsys.integration.coverity.common.cache.BaseCacheData;
 import com.synopsys.integration.coverity.common.cache.ProjectCacheData;
 import com.synopsys.integration.coverity.common.cache.ViewCacheData;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
@@ -48,7 +50,9 @@ import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
+import com.synopsys.integration.coverity.ws.v9.ProjectIdDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
+import com.synopsys.integration.coverity.ws.v9.StreamIdDataObj;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 import com.synopsys.integration.log.LogLevel;
@@ -76,16 +80,17 @@ public class CoverityCommonDescriptor {
                            .collect(ListBoxModel::new, ListBoxModel::add, ListBoxModel::addAll);
         }
 
-        boxModel.add(Messages.CoverityToolInstallation_getNone(), "");
+        boxModel.add("- none -", "");
         return boxModel;
     }
 
     public FormValidation doCheckCoverityToolName(final CoverityToolInstallation[] coverityToolInstallations, final String coverityToolName) {
         if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
-            return FormValidation.error(Messages.CoverityToolInstallation_getNoToolsConfigured());
+            return FormValidation.error("There are no Coverity static analysis installations configured");
         }
+
         if (StringUtils.isBlank(coverityToolName)) {
-            return FormValidation.error(Messages.CoverityToolInstallation_getPleaseChooseATool());
+            return FormValidation.error("Please choose one of the Coverity static analysis installations");
         }
 
         final boolean hasMatchingToolName = Arrays.stream(coverityToolInstallations)
@@ -95,121 +100,71 @@ public class CoverityCommonDescriptor {
         if (hasMatchingToolName) {
             return FormValidation.ok();
         }
-        return FormValidation.error(Messages.CoverityToolInstallation_getNoToolWithName_0(coverityToolName));
+        return FormValidation.error("There are no Coverity static analysis installations configured with the name %s", coverityToolName);
     }
 
     public ListBoxModel doFillBuildStatusForIssuesItems() {
-        return this.getListBoxModelOf(BuildStatus.values());
+        return getListBoxModelOf(BuildStatus.values());
     }
 
     public ListBoxModel doFillCoverityAnalysisTypeItems() {
-        return this.getListBoxModelOf(CoverityAnalysisType.values());
+        return getListBoxModelOf(CoverityAnalysisType.values());
     }
 
     public ListBoxModel doFillOnCommandFailureItems() {
-        return this.getListBoxModelOf(OnCommandFailure.values());
+        return getListBoxModelOf(OnCommandFailure.values());
     }
 
-    public ListBoxModel doFillProjectNameItems(final String projectName, final Boolean updateNow) {
-        final ListBoxModel boxModel = new ListBoxModel();
-        try {
-            final Optional<JenkinsCoverityInstance> optionalCoverityInstance = getCoverityInstance();
-            if (!optionalCoverityInstance.isPresent()) {
-                return boxModel;
-            }
-
-            try {
-                projectCacheData.checkAndWaitForData(optionalCoverityInstance.get(), updateNow);
-            } catch (IntegrationException | InterruptedException e) {
-                e.printStackTrace();
-                return boxModel;
-            }
-
-            for (final ProjectDataObj project : projectCacheData.getCachedData()) {
-                if (null != project.getId() && null != project.getId().getName()) {
-                    final String currentProjectName = project.getId().getName();
-                    if (StringUtils.isNotBlank(projectName) && isMatchingProject(project, projectName)) {
-                        boxModel.add(new ListBoxModel.Option(currentProjectName, currentProjectName, true));
-                    } else {
-                        boxModel.add(currentProjectName);
-                    }
-                }
-            }
-        } catch (final IllegalStateException ignored) {
-            // Handled by form validation
-        }
-        return boxModel;
+    public ListBoxModel doFillCoverityRunConfigurationItems() {
+        return getListBoxModelOf(CoverityRunConfiguration.values());
     }
 
-    public ListBoxModel doFillStreamNameItems(final String projectName, final String streamName, final Boolean updateNow) {
-        final ListBoxModel boxModel = new ListBoxModel();
-        try {
-            if (StringUtils.isBlank(projectName)) {
-                return boxModel;
-            }
-            final Optional<JenkinsCoverityInstance> optionalCoverityInstance = getCoverityInstance();
-            if (!optionalCoverityInstance.isPresent()) {
-                return boxModel;
-            }
-
-            try {
-                projectCacheData.checkAndWaitForData(optionalCoverityInstance.get(), updateNow);
-            } catch (IntegrationException | InterruptedException e) {
-                e.printStackTrace();
-                return boxModel;
-            }
-
-            for (final ProjectDataObj project : projectCacheData.getCachedData()) {
-                if (isMatchingProject(project, projectName) && null != project.getStreams() && !project.getStreams().isEmpty()) {
-                    for (final StreamDataObj stream : project.getStreams()) {
-                        if (null != stream.getId() && null != stream.getId().getName()) {
-                            final String currentStreamName = stream.getId().getName();
-                            if (StringUtils.isNotBlank(streamName) && currentStreamName.equals(streamName)) {
-                                boxModel.add(new ListBoxModel.Option(currentStreamName, currentStreamName, true));
-                            } else {
-                                boxModel.add(currentStreamName);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (final IllegalStateException ignored) {
-            // Handled by form validation
+    public ListBoxModel doFillProjectNameItems(final String selectedProjectName, final Boolean updateNow) {
+        if (checkAndWaitForProjectCacheData(updateNow)) {
+            return projectCacheData.getCachedData().stream()
+                       .map(ProjectDataObj::getId)
+                       .filter(Objects::nonNull)
+                       .map(ProjectIdDataObj::getName)
+                       .filter(Objects::nonNull)
+                       .map(projectName -> wrapAsListBoxModelOption(projectName, selectedProjectName))
+                       .collect(Collectors.toCollection(ListBoxModel::new));
         }
-        return boxModel;
+
+        return new ListBoxModel();
     }
 
-    private Boolean isMatchingProject(final ProjectDataObj projectDataObj, final String projectName) {
-        return null != projectDataObj && null != projectDataObj.getId() && null != projectDataObj.getId().getName() && projectDataObj.getId().getName().equals(projectName);
+    public ListBoxModel doFillStreamNameItems(final String selectedProjectName, final String selectedStreamName, final Boolean updateNow) {
+        if (checkAndWaitForProjectCacheData(updateNow)) {
+            return projectCacheData.getCachedData().stream()
+                       .filter(projectDataObj -> isMatchingProject(projectDataObj, selectedProjectName))
+                       .map(ProjectDataObj::getStreams)
+                       .filter(Objects::nonNull)
+                       .flatMap(List::stream)
+                       .map(StreamDataObj::getId)
+                       .filter(Objects::nonNull)
+                       .map(StreamIdDataObj::getName)
+                       .filter(Objects::nonNull)
+                       .filter(StringUtils::isNotBlank)
+                       .map(streamName -> wrapAsListBoxModelOption(streamName, selectedStreamName))
+                       .collect(Collectors.toCollection(ListBoxModel::new));
+        }
+
+        return new ListBoxModel();
     }
 
-    public ListBoxModel doFillViewNameItems(final String viewName, final Boolean updateNow) {
-        final ListBoxModel boxModel = new ListBoxModel();
-        final Optional<JenkinsCoverityInstance> optionalCoverityInstance = getCoverityInstance();
-
-        if (!optionalCoverityInstance.isPresent()) {
-            return boxModel;
+    public ListBoxModel doFillViewNameItems(final String selectedViewName, final Boolean updateNow) {
+        if (checkAndWaitForViewCacheData(updateNow)) {
+            return viewCacheData.getCachedData().stream()
+                       .filter(StringUtils::isNotBlank)
+                       .map(viewName -> wrapAsListBoxModelOption(viewName, selectedViewName))
+                       .collect(Collectors.toCollection(ListBoxModel::new));
         }
 
-        try {
-            viewCacheData.checkAndWaitForData(optionalCoverityInstance.get(), updateNow);
-        } catch (IntegrationException | InterruptedException e) {
-            e.printStackTrace();
-            return boxModel;
-        }
-
-        for (final String view : viewCacheData.getCachedData()) {
-            if (StringUtils.isNotBlank(viewName) && view.equals(viewName)) {
-                boxModel.add(new ListBoxModel.Option(view, view, true));
-            } else {
-                boxModel.add(view);
-            }
-        }
-        return boxModel;
+        return new ListBoxModel();
     }
 
     public FormValidation testConnectionSilently() {
-        final FormValidation connectionTest = this.testConnectionToDefaultCoverityInstance();
+        final FormValidation connectionTest = testConnectionToDefaultCoverityInstance();
         if (FormValidation.Kind.OK.equals(connectionTest.kind)) {
             return FormValidation.ok();
         } else {
@@ -259,6 +214,45 @@ public class CoverityCommonDescriptor {
         }
     }
 
+    public FormValidation doCheckCovBuildArguments(final String covBuildArguments) {
+        return checkForAlreadyProvidedArguments(covBuildArguments, RepeatableCommand.Argument.DIR);
+    }
+
+    public FormValidation doCheckCovAnalyzeArguments(final String covAnalyzeArguments) {
+        return checkForAlreadyProvidedArguments(covAnalyzeArguments, RepeatableCommand.Argument.DIR);
+    }
+
+    public FormValidation doCheckCovRunDesktopArguments(final String covRunDesktopArguments) {
+        return checkForAlreadyProvidedArguments(covRunDesktopArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.HOST, RepeatableCommand.Argument.PORT, RepeatableCommand.Argument.STREAM, RepeatableCommand.Argument.SSL);
+    }
+
+    public FormValidation doCheckCovCommitDefectsArguments(final String covCommitDefectsArguments) {
+        return checkForAlreadyProvidedArguments(covCommitDefectsArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.HOST, RepeatableCommand.Argument.PORT, RepeatableCommand.Argument.STREAM, RepeatableCommand.Argument.SSL);
+    }
+
+    private Boolean isMatchingProject(final ProjectDataObj projectDataObj, final String selectedProjectName) {
+        return null != projectDataObj
+                   && null != projectDataObj.getId()
+                   && null != projectDataObj.getId().getName()
+                   && projectDataObj.getId().getName().equals(selectedProjectName);
+    }
+
+    private ListBoxModel.Option wrapAsListBoxModelOption(final String nameValue, final String selectedNameValue) {
+        return new ListBoxModel.Option(nameValue, nameValue, nameValue.equals(selectedNameValue));
+    }
+
+    private FormValidation checkForAlreadyProvidedArguments(final String command, final RepeatableCommand.Argument... providedArguments) {
+        final String alreadyProvidedArguments = Arrays.stream(providedArguments)
+                                                    .map(RepeatableCommand.Argument::toString)
+                                                    .filter(command::contains)
+                                                    .collect(Collectors.joining(", "));
+
+        if (StringUtils.isNotBlank(alreadyProvidedArguments)) {
+            return FormValidation.error(String.format("The argument(s) %s are automatically provided in this mode. If you wish to override, configure the 'Run custom Coverity commands' section instead.", alreadyProvidedArguments));
+        }
+        return FormValidation.ok();
+    }
+
     private ListBoxModel getListBoxModelOf(final CoveritySelectBoxEnum[] coveritySelectBoxEnumValues) {
         return Stream.of(coveritySelectBoxEnumValues)
                    .collect(ListBoxModel::new, (model, value) -> model.add(value.getDisplayName(), value.name()), ListBoxModel::addAll);
@@ -275,6 +269,31 @@ public class CoverityCommonDescriptor {
 
     private Optional<JenkinsCoverityInstance> getCoverityInstance() {
         return getCoverityGlobalConfig().getCoverityInstance();
+    }
+
+    private boolean checkAndWaitForProjectCacheData(final Boolean updateNow) {
+        return checkAndWaitForCacheData(updateNow, projectCacheData);
+    }
+
+    private boolean checkAndWaitForViewCacheData(final Boolean updateNow) {
+        return checkAndWaitForCacheData(updateNow, viewCacheData);
+    }
+
+    private boolean checkAndWaitForCacheData(final Boolean updateNow, final BaseCacheData cacheData) {
+        try {
+            final Optional<JenkinsCoverityInstance> optionalCoverityInstance = getCoverityInstance();
+
+            if (optionalCoverityInstance.isPresent()) {
+                cacheData.checkAndWaitForData(optionalCoverityInstance.get(), updateNow);
+            }
+
+            return true;
+        } catch (final IntegrationException | InterruptedException e) {
+            e.printStackTrace();
+        } catch (final IllegalStateException ignored) {
+            // Handled by form validation
+        }
+        return false;
     }
 
 }

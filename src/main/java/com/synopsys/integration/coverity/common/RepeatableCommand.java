@@ -24,6 +24,10 @@
 
 package com.synopsys.integration.coverity.common;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -36,10 +40,10 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 
 public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand> {
-    private static final String JENKINS_INTERMEDIATE_DIRECTORY = "--dir ${WORKSPACE}/idir";
-    private static final String CIM_CONNECTION_OPTIONS = "--host ${COVERITY_HOST} --port ${COVERITY_PORT}";
-    private static final String COVERITY_STREAM = "--stream ${COV_STREAM}";
-    private static final String SSL_OPTION = "--ssl";
+    private static final String JENKINS_INTERMEDIATE_DIRECTORY = "${WORKSPACE}/idir";
+    private static final String COVERITY_HOST = "${COVERITY_HOST}";
+    private static final String COVERITY_PORT = "${COVERITY_PORT}";
+    private static final String COVERITY_STREAM = "${COV_STREAM}";
     private final String command;
 
     @DataBoundConstructor
@@ -47,29 +51,53 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         this.command = command;
     }
 
-    public static RepeatableCommand DEFAULT_COV_ANALYZE() {
-        return new RepeatableCommand("cov-analyze " + JENKINS_INTERMEDIATE_DIRECTORY);
+    public static RepeatableCommand COV_BUILD(final String buildCommand, final String arguments) {
+        final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-build", Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY));
+        appendArguments(commandPieces, arguments);
+        commandPieces.add(buildCommand);
+
+        return constructCommand(commandPieces);
     }
 
-    public static RepeatableCommand DEFAULT_COV_COMMIT_DEFECTS(final boolean isHttps) {
-        final String covCommitDefects = String.format("cov-commit-defects %s %s %s", JENKINS_INTERMEDIATE_DIRECTORY, CIM_CONNECTION_OPTIONS, COVERITY_STREAM);
-        return new RepeatableCommand(handleSslOption(isHttps, covCommitDefects));
+    public static RepeatableCommand COV_ANALYZE(final String arguments) {
+        final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-analyze", Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY));
+        appendArguments(commandPieces, arguments);
+
+        return constructCommand(commandPieces);
     }
 
-    public static RepeatableCommand DEFAULT_COV_RUN_DESKTOP(final boolean isHttps, final String filePaths) {
-        final String covRunDesktop = String.format("cov-run-desktop %s %s %s %s", JENKINS_INTERMEDIATE_DIRECTORY, CIM_CONNECTION_OPTIONS, COVERITY_STREAM, filePaths);
-        return new RepeatableCommand(handleSslOption(isHttps, covRunDesktop));
+    public static RepeatableCommand COV_RUN_DESKTOP(final boolean isHttps, final String arguments, final String filePaths) {
+        final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-run-desktop", Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY, Argument.HOST.toString(), COVERITY_HOST, Argument.PORT.toString(), COVERITY_PORT,
+            Argument.STREAM.toString(), COVERITY_STREAM));
+        appendArguments(commandPieces, isHttps, arguments);
+        commandPieces.add(filePaths);
+
+        return constructCommand(commandPieces);
     }
 
-    public static RepeatableCommand DEFAULT_COV_BUILD(final String buildCommand) {
-        return new RepeatableCommand(String.format("cov-build %s %s", JENKINS_INTERMEDIATE_DIRECTORY, buildCommand));
+    public static RepeatableCommand COV_COMMIT_DEFECTS(final boolean isHttps, final String arguments) {
+        final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-commit-defects", Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY, Argument.HOST.toString(), COVERITY_HOST, Argument.PORT.toString(), COVERITY_PORT,
+            Argument.STREAM.toString(), COVERITY_STREAM));
+        appendArguments(commandPieces, isHttps, arguments);
+
+        return constructCommand(commandPieces);
     }
 
-    private static String handleSslOption(final boolean isHttps, final String initialCommand) {
-        if (isHttps) {
-            return String.format("%s %s", initialCommand, SSL_OPTION);
+    private static RepeatableCommand constructCommand(final List<String> commandPieces) {
+        return new RepeatableCommand(String.join(" ", commandPieces));
+    }
+
+    private static void appendArguments(final List<String> commandPieces, final String arguments) {
+        appendArguments(commandPieces, false, arguments);
+    }
+
+    private static void appendArguments(final List<String> commandPieces, final boolean isHttps, final String arguments) {
+        if (StringUtils.isNotBlank(arguments)) {
+            commandPieces.add(arguments);
         }
-        return initialCommand;
+        if (isHttps && commandPieces.stream().noneMatch(str -> str.contains(Argument.SSL.toString()))) {
+            commandPieces.add(Argument.SSL.toString());
+        }
     }
 
     public String getCommand() {
@@ -79,6 +107,24 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     @Override
     public RepeatableCommandDescriptor getDescriptor() {
         return (RepeatableCommandDescriptor) super.getDescriptor();
+    }
+
+    public enum Argument {
+        DIR("--dir"),
+        HOST("--host"),
+        PORT("--port"),
+        STREAM("--stream"),
+        SSL("--ssl");
+
+        private final String text;
+
+        Argument(final String text) {
+            this.text = text;
+        }
+
+        public String toString() {
+            return this.text;
+        }
     }
 
     @Extension

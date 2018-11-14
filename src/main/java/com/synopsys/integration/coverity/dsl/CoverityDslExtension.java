@@ -43,9 +43,11 @@ public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
     public Object coverity(final String coverityToolName, final String onCommandFailure, final List<String> commands, final String buildStatusForIssues, final String projectName, final String streamName,
         final String viewName, final String coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetExclusionPatterns, final String changeSetInclusionPatterns,
-        final Boolean checkForIssuesInView, final Boolean configureChangeSetPatterns) {
+        final Boolean commandArguments, final String covBuildArguments, final String covAnalyzeArguments, final String covRunDesktopArguments, final String covCommitDefectsArguments, final Boolean checkForIssuesInView,
+        final Boolean configureChangeSetPatterns) {
         return new CoverityBuildStep(coverityToolName, OnCommandFailure.valueOf(onCommandFailure), stringsToCommands(commands), BuildStatus.valueOf(buildStatusForIssues), projectName, streamName,
-            CoverityRunConfiguration.valueOf(coverityRunConfiguration), CoverityAnalysisType.valueOf(coverityAnalysisType), buildCommand, viewName, changeSetExclusionPatterns, changeSetInclusionPatterns, checkForIssuesInView,
+            CoverityRunConfiguration.valueOf(coverityRunConfiguration), CoverityAnalysisType.valueOf(coverityAnalysisType), buildCommand, viewName, changeSetExclusionPatterns, changeSetInclusionPatterns, commandArguments, covBuildArguments,
+            covAnalyzeArguments, covRunDesktopArguments, covCommitDefectsArguments, checkForIssuesInView,
             configureChangeSetPatterns);
     }
 

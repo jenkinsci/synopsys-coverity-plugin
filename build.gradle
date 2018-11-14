@@ -1,3 +1,6 @@
+import com.synopsys.integration.jenkins.coverity.GenerateHtml
+import com.synopsys.integration.jenkins.coverity.GenerateJelly
+
 buildscript {
     repositories {
         jcenter()
@@ -15,7 +18,6 @@ group = 'org.jenkins-ci.plugins'
 version = '1.1.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
-apply from: 'generateHelp.gradle'
 apply plugin: 'com.blackducksoftware.integration.solution'
 
 def jcenterRepo = project.repositories.findByName('BintrayJCenter')
@@ -66,5 +68,18 @@ task renameFile {
     }
 }
 
-jar.dependsOn generateHelp
+task generateJelly(type: GenerateJelly) {
+    outputPathToJson = ['src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep'        : 'src/main/resources/templates/jelly/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep'      : 'src/main/resources/templates/jelly/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityGlobalConfig': 'src/main/resources/templates/jelly/globalConfig.json',]
+}
+
+task generateHelp(type: GenerateHtml) {
+    outputPathToJson = ['src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep'        : 'src/main/resources/templates/html/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep'      : 'src/main/resources/templates/html/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityGlobalConfig': 'src/main/resources/templates/html/globalConfig.json',
+                        'src/main/webapp/help'                                                                    : 'src/main/resources/templates/html/embeddedHelp.json',]
+}
+
+compileJava.dependsOn generateHelp, generateJelly
 jpi.finalizedBy renameFile

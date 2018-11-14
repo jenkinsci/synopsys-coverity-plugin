@@ -1,4 +1,4 @@
-package templates
+package templates.html
 
 div {
     p(overview.join('<br>'))

@@ -23,7 +23,18 @@
  */
 package com.synopsys.integration.coverity.common;
 
-public enum CoverityRunConfiguration {
-    SIMPLE,
-    ADVANCED;
+public enum CoverityRunConfiguration implements CoveritySelectBoxEnum {
+    SIMPLE("Run Coverity build, analyze, and commit defects"),
+    ADVANCED("Run custom Coverity commands");
+
+    private final String displayName;
+
+    CoverityRunConfiguration(final String displayName) {
+        this.displayName = displayName;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return displayName;
+    }
 }

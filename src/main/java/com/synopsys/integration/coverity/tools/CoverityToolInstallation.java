@@ -38,7 +38,6 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.CoverityVersion;
-import com.synopsys.integration.coverity.Messages;
 import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 
 import hudson.EnvVars;
@@ -84,7 +83,7 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
     public static final class CoverityToolInstallationDescriptor extends ToolDescriptor<CoverityToolInstallation> {
         @Override
         public String getDisplayName() {
-            return Messages.CoverityToolInstallation_getDisplayName();
+            return "Synopsys Coverity static analysis";
         }
 
         /**
