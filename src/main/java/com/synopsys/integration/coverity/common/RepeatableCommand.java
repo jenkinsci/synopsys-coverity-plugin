@@ -24,6 +24,8 @@
 
 package com.synopsys.integration.coverity.common;
 
+import java.net.URL;
+
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -37,7 +39,8 @@ import hudson.util.FormValidation;
 
 public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand> {
     private static final String JENKINS_INTERMEDIATE_DIRECTORY = "--dir ${WORKSPACE}/idir";
-    private static final String CIM_CONNECTION_OPTIONS = "--host ${COVERITY_HOST} --port ${COVERITY_PORT}";
+    private static final String CIM_INSTANCE_HOST = "--host ${COVERITY_HOST}";
+    private static final String CIM_INSTANCE_PORT = "--port ${COVERITY_PORT}";
     private static final String COVERITY_STREAM = "--stream ${COV_STREAM}";
     private static final String SSL_OPTION = "--ssl";
     private final String command;
@@ -51,25 +54,34 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         return new RepeatableCommand("cov-analyze " + JENKINS_INTERMEDIATE_DIRECTORY);
     }
 
-    public static RepeatableCommand DEFAULT_COV_COMMIT_DEFECTS(final boolean isHttps) {
-        final String covCommitDefects = String.format("cov-commit-defects %s %s %s", JENKINS_INTERMEDIATE_DIRECTORY, CIM_CONNECTION_OPTIONS, COVERITY_STREAM);
-        return new RepeatableCommand(handleSslOption(isHttps, covCommitDefects));
+    public static RepeatableCommand DEFAULT_COV_COMMIT_DEFECTS(final URL url) {
+        String covCommitDefects = String.format("cov-commit-defects %s %s", JENKINS_INTERMEDIATE_DIRECTORY, COVERITY_STREAM);
+        covCommitDefects = handleConnectionOptions(url, covCommitDefects);
+        return new RepeatableCommand(covCommitDefects);
     }
 
-    public static RepeatableCommand DEFAULT_COV_RUN_DESKTOP(final boolean isHttps, final String filePaths) {
-        final String covRunDesktop = String.format("cov-run-desktop %s %s %s %s", JENKINS_INTERMEDIATE_DIRECTORY, CIM_CONNECTION_OPTIONS, COVERITY_STREAM, filePaths);
-        return new RepeatableCommand(handleSslOption(isHttps, covRunDesktop));
+    public static RepeatableCommand DEFAULT_COV_RUN_DESKTOP(final URL url, final String filePaths) {
+        String covRunDesktop = String.format("cov-run-desktop %s %s", JENKINS_INTERMEDIATE_DIRECTORY, COVERITY_STREAM);
+        covRunDesktop = handleConnectionOptions(url, covRunDesktop);
+        covRunDesktop = String.format("%s %s", covRunDesktop, filePaths);
+        return new RepeatableCommand(covRunDesktop);
     }
 
     public static RepeatableCommand DEFAULT_COV_BUILD(final String buildCommand) {
         return new RepeatableCommand(String.format("cov-build %s %s", JENKINS_INTERMEDIATE_DIRECTORY, buildCommand));
     }
 
-    private static String handleSslOption(final boolean isHttps, final String initialCommand) {
-        if (isHttps) {
-            return String.format("%s %s", initialCommand, SSL_OPTION);
+    private static String handleConnectionOptions(final URL url, final String initialCommand) {
+        String newCommand = String.format("%s %s", initialCommand, CIM_INSTANCE_HOST);
+        if (url != null) {
+            if (-1 != url.getPort()) {
+                newCommand = String.format("%s %s", newCommand, CIM_INSTANCE_PORT);
+            }
+            if ("https".equals(url.getProtocol())) {
+                newCommand = String.format("%s %s", newCommand, SSL_OPTION);
+            }
         }
-        return initialCommand;
+        return newCommand;
     }
 
     public String getCommand() {

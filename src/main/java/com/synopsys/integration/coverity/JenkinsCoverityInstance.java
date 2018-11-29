@@ -43,6 +43,7 @@ import jenkins.model.Jenkins;
 
 public class JenkinsCoverityInstance implements Serializable {
     private static final long serialVersionUID = -7638734141012629078L;
+    private static final String HTTPS = "https";
     private final String url;
     private final String credentialId;
 

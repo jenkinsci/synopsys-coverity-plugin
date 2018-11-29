@@ -84,16 +84,15 @@ public class CoverityToolStep extends BaseCoverityStep {
 
     public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final CoverityAnalysisType coverityAnalysisType) {
         final RepeatableCommand[] commands;
-        final boolean isHttps = getCoverityInstance()
+
+        final URL coverityUrl = getCoverityInstance()
                                     .flatMap(JenkinsCoverityInstance::getCoverityURL)
-                                    .map(URL::getProtocol)
-                                    .filter("https"::equals)
-                                    .isPresent();
+                                    .orElse(null);
 
         if (CoverityAnalysisType.COV_ANALYZE.equals(coverityAnalysisType)) {
-            commands = new RepeatableCommand[] { RepeatableCommand.DEFAULT_COV_BUILD(buildCommand), RepeatableCommand.DEFAULT_COV_ANALYZE(), RepeatableCommand.DEFAULT_COV_COMMIT_DEFECTS(isHttps) };
+            commands = new RepeatableCommand[] { RepeatableCommand.DEFAULT_COV_BUILD(buildCommand), RepeatableCommand.DEFAULT_COV_ANALYZE(), RepeatableCommand.DEFAULT_COV_COMMIT_DEFECTS(coverityUrl) };
         } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType)) {
-            commands = new RepeatableCommand[] { RepeatableCommand.DEFAULT_COV_BUILD(buildCommand), RepeatableCommand.DEFAULT_COV_RUN_DESKTOP(isHttps, JENKINS_CHANGE_SET), RepeatableCommand.DEFAULT_COV_COMMIT_DEFECTS(isHttps) };
+            commands = new RepeatableCommand[] { RepeatableCommand.DEFAULT_COV_BUILD(buildCommand), RepeatableCommand.DEFAULT_COV_RUN_DESKTOP(coverityUrl, JENKINS_CHANGE_SET), RepeatableCommand.DEFAULT_COV_COMMIT_DEFECTS(coverityUrl) };
         } else {
             commands = new RepeatableCommand[] {};
         }
