@@ -1,6 +1,8 @@
 {
   "template": "buildStep.tpl",
   "model": {
+    "coverityInstanceUrlField": "coverityInstanceUrl",
+    "coverityInstanceUrlTitle": "Coverity instance",
     "coverityToolNameField": "coverityToolName",
     "coverityToolNameTitle": "Synopsys Coverity installation",
     "projectNameField": "projectName",
@@ -40,6 +42,7 @@
     "covRunDesktopArgumentsTitle": "cov-run-desktop",
     "covCommitDefectsArgumentsField": "covCommitDefectsArguments",
     "covCommitDefectsArgumentsTitle": "cov-commit-defects",
+    "commandsTitle": "Custom Coverity commands",
     "commandsField": "commands",
     "commandsAddTitle": "Add command",
     "commandsDeleteTitle": "Delete command",

@@ -47,7 +47,7 @@ jenkinsPlugin {
 }
 
 dependencies {
-    jenkinsPlugins 'org.jenkins-ci.plugins:credentials:1.9.4'
+    jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
 
     implementation 'com.synopsys.integration:coverity-common:0.1.4'
 

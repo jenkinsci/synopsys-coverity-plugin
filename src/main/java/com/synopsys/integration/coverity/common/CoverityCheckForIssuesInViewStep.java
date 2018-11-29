@@ -33,7 +33,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.JenkinsCoverityInstance;
+import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -54,8 +54,8 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 
 public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
-    public CoverityCheckForIssuesInViewStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
-        super(node, listener, envVars, workspace, run);
+    public CoverityCheckForIssuesInViewStep(final String coverityInstanceUrl, final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+        super(coverityInstanceUrl, node, listener, envVars, workspace, run);
     }
 
     public boolean runCoverityCheckForIssuesInViewStep(final BuildStatus buildStatus, final String projectName, final String viewName) {
@@ -73,7 +73,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
                 return false;
             }
 
-            final JenkinsCoverityInstance coverityInstance = getCoverityInstance().orElse(null);
+            final CoverityConnectInstance coverityInstance = verifyAndGetCoverityInstance().orElse(null);
             if (coverityInstance == null) {
                 logger.error("Skipping the Synopsys Coverity Check for Issues in View step because no configured Coverity server was detected in the Jenkins System Configuration.");
                 return false;
@@ -153,7 +153,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
         return shouldContinue;
     }
 
-    private Boolean validateGlobalConfiguration(final JenkinsCoverityInstance coverityInstance) {
+    private Boolean validateGlobalConfiguration(final CoverityConnectInstance coverityInstance) {
         boolean shouldContinue = true;
         if (null == coverityInstance) {
             logger.error("No global Synopsys Coverity configuration found.");

@@ -5,6 +5,7 @@ import groovy.text.Template
 class GenerationUtils {
     static void writeTemplate(Template template, Map model, String outputPath) {
         def file = new File(outputPath)
+        file.mkdirs()
         if (file.exists()) {
             file.delete()
         }

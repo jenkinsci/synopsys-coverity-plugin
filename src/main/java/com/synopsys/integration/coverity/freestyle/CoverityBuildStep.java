@@ -29,7 +29,6 @@ import java.io.IOException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.common.BuildStatus;
-import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityCheckForIssuesInViewStep;
 import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
@@ -46,48 +45,36 @@ import hudson.tasks.Builder;
 public class CoverityBuildStep extends Builder {
     private final String coverityToolName;
     private final OnCommandFailure onCommandFailure;
-    private final RepeatableCommand[] commands;
     private final BuildStatus buildStatusForIssues;
+    private final CoverityRunConfiguration coverityRunConfiguration;
     private final String projectName;
     private final String streamName;
     private final String viewName;
     private final String changeSetExclusionPatterns;
     private final String changeSetInclusionPatterns;
-    private final CoverityRunConfiguration coverityRunConfiguration;
-    private final CoverityAnalysisType coverityAnalysisType;
-    private final String buildCommand;
-    private final Boolean commandArguments;
-    private final String covBuildArguments;
-    private final String covAnalyzeArguments;
-    private final String covRunDesktopArguments;
-    private final String covCommitDefectsArguments;
     private final Boolean checkForIssuesInView;
     private final Boolean configureChangeSetPatterns;
+    private final String coverityInstanceUrl;
 
     @DataBoundConstructor
-    public CoverityBuildStep(final String coverityToolName, final OnCommandFailure onCommandFailure, final RepeatableCommand[] commands, final BuildStatus buildStatusForIssues, final String projectName, final String streamName,
-        final CoverityRunConfiguration coverityRunConfiguration, final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final String viewName, final String changeSetExclusionPatterns,
-        final String changeSetInclusionPatterns, final Boolean commandArguments, final String covBuildArguments, final String covAnalyzeArguments, final String covRunDesktopArguments, final String covCommitDefectsArguments,
-        final Boolean checkForIssuesInView, final Boolean configureChangeSetPatterns) {
+    public CoverityBuildStep(final String coverityInstanceUrl, final String coverityToolName, final String onCommandFailure, final String buildStatusForIssues, final String projectName, final String streamName, final String viewName,
+        final String changeSetExclusionPatterns, final String changeSetInclusionPatterns, final Boolean checkForIssuesInView, final Boolean configureChangeSetPatterns, final CoverityRunConfiguration coverityRunConfiguration) {
+        this.coverityInstanceUrl = coverityInstanceUrl;
         this.coverityToolName = coverityToolName;
-        this.onCommandFailure = onCommandFailure;
-        this.commands = commands;
-        this.buildStatusForIssues = buildStatusForIssues;
+        this.onCommandFailure = OnCommandFailure.valueOf(onCommandFailure);
+        this.buildStatusForIssues = BuildStatus.valueOf(buildStatusForIssues);
         this.projectName = projectName;
         this.streamName = streamName;
-        this.coverityRunConfiguration = coverityRunConfiguration;
-        this.coverityAnalysisType = coverityAnalysisType;
-        this.buildCommand = buildCommand;
         this.viewName = viewName;
         this.changeSetExclusionPatterns = changeSetExclusionPatterns;
         this.changeSetInclusionPatterns = changeSetInclusionPatterns;
-        this.commandArguments = commandArguments;
-        this.covBuildArguments = covBuildArguments;
-        this.covAnalyzeArguments = covAnalyzeArguments;
-        this.covRunDesktopArguments = covRunDesktopArguments;
-        this.covCommitDefectsArguments = covCommitDefectsArguments;
         this.checkForIssuesInView = checkForIssuesInView;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
+        this.coverityRunConfiguration = coverityRunConfiguration;
+    }
+
+    public String getCoverityInstanceUrl() {
+        return coverityInstanceUrl;
     }
 
     public String getCoverityToolName() {
@@ -106,10 +93,6 @@ public class CoverityBuildStep extends Builder {
         return null != checkForIssuesInView && checkForIssuesInView;
     }
 
-    public RepeatableCommand[] getCommands() {
-        return commands;
-    }
-
     public BuildStatus getBuildStatusForIssues() {
         return buildStatusForIssues;
     }
@@ -120,18 +103,6 @@ public class CoverityBuildStep extends Builder {
 
     public String getStreamName() {
         return streamName;
-    }
-
-    public CoverityRunConfiguration getCoverityRunConfiguration() {
-        return coverityRunConfiguration;
-    }
-
-    public CoverityAnalysisType getCoverityAnalysisType() {
-        return coverityAnalysisType;
-    }
-
-    public String getBuildCommand() {
-        return buildCommand;
     }
 
     public String getViewName() {
@@ -146,24 +117,8 @@ public class CoverityBuildStep extends Builder {
         return changeSetInclusionPatterns;
     }
 
-    public Boolean getCommandArguments() {
-        return commandArguments;
-    }
-
-    public String getCovBuildArguments() {
-        return covBuildArguments;
-    }
-
-    public String getCovAnalyzeArguments() {
-        return covAnalyzeArguments;
-    }
-
-    public String getCovRunDesktopArguments() {
-        return covRunDesktopArguments;
-    }
-
-    public String getCovCommitDefectsArguments() {
-        return covCommitDefectsArguments;
+    public CoverityRunConfiguration getCoverityRunConfiguration() {
+        return coverityRunConfiguration;
     }
 
     @Override
@@ -178,19 +133,23 @@ public class CoverityBuildStep extends Builder {
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
-        final CoverityToolStep coverityToolStep = new CoverityToolStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
+        final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityInstanceUrl, build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
 
         final boolean shouldContinueOurSteps;
-        if (CoverityRunConfiguration.ADVANCED.equals(coverityRunConfiguration)) {
-            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, commands, onCommandFailure, this.getConfigureChangeSetPatterns(), changeSetInclusionPatterns, changeSetExclusionPatterns);
+        if (coverityRunConfiguration.getCommands() != null) {
+            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, coverityRunConfiguration.getCommands(), onCommandFailure, this.getConfigureChangeSetPatterns(), changeSetInclusionPatterns,
+                changeSetExclusionPatterns);
         } else {
-            final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(buildCommand, covBuildArguments, covAnalyzeArguments, covRunDesktopArguments, covCommitDefectsArguments, coverityAnalysisType);
+            final RepeatableCommand[] simpleModeCommands = coverityToolStep
+                                                               .getSimpleModeCommands(coverityRunConfiguration.getBuildCommand(), coverityRunConfiguration.getCovBuildArguments(), coverityRunConfiguration.getCovAnalyzeArguments(),
+                                                                   coverityRunConfiguration.getCovRunDesktopArguments(), coverityRunConfiguration.getCovCommitDefectsArguments(), coverityRunConfiguration.getCoverityAnalysisType());
             shouldContinueOurSteps = coverityToolStep
                                          .runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, onCommandFailure, this.getConfigureChangeSetPatterns(), changeSetInclusionPatterns, changeSetExclusionPatterns);
         }
 
         if (shouldContinueOurSteps && getCheckForIssuesInView()) {
-            final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
+            final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(coverityInstanceUrl, build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build),
+                build);
             coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(buildStatusForIssues, projectName, viewName);
         }
 

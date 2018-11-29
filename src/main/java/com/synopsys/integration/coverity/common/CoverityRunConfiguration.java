@@ -23,18 +23,124 @@
  */
 package com.synopsys.integration.coverity.common;
 
-public enum CoverityRunConfiguration implements CoveritySelectBoxEnum {
-    SIMPLE("Run Coverity build, analyze, and commit defects"),
-    ADVANCED("Run custom Coverity commands");
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
-    private final String displayName;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
 
-    CoverityRunConfiguration(final String displayName) {
-        this.displayName = displayName;
+public class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRunConfiguration> {
+    private RepeatableCommand[] commands;
+    private CoverityAnalysisType coverityAnalysisType;
+    private String buildCommand;
+    private Boolean commandArguments;
+    private String covBuildArguments;
+    private String covAnalyzeArguments;
+    private String covRunDesktopArguments;
+    private String covCommitDefectsArguments;
+
+    @DataBoundConstructor
+    public CoverityRunConfiguration() {
+    }
+
+    public RepeatableCommand[] getCommands() {
+        return commands;
+    }
+
+    @DataBoundSetter
+    public void setCommands(final RepeatableCommand[] commands) {
+        this.commands = commands;
+    }
+
+    public CoverityAnalysisType getCoverityAnalysisType() {
+        return coverityAnalysisType;
+    }
+
+    @DataBoundSetter
+    public void setCoverityAnalysisType(final CoverityAnalysisType coverityAnalysisType) {
+        this.coverityAnalysisType = coverityAnalysisType;
+    }
+
+    public String getBuildCommand() {
+        return buildCommand;
+    }
+
+    @DataBoundSetter
+    public void setBuildCommand(final String buildCommand) {
+        this.buildCommand = buildCommand;
+    }
+
+    public Boolean getCommandArguments() {
+        return commandArguments;
+    }
+
+    @DataBoundSetter
+    public void setCommandArguments(final Boolean commandArguments) {
+        this.commandArguments = commandArguments;
+    }
+
+    public String getCovBuildArguments() {
+        return covBuildArguments;
+    }
+
+    @DataBoundSetter
+    public void setCovBuildArguments(final String covBuildArguments) {
+        this.covBuildArguments = covBuildArguments;
+    }
+
+    public String getCovAnalyzeArguments() {
+        return covAnalyzeArguments;
+    }
+
+    @DataBoundSetter
+    public void setCovAnalyzeArguments(final String covAnalyzeArguments) {
+        this.covAnalyzeArguments = covAnalyzeArguments;
+    }
+
+    public String getCovRunDesktopArguments() {
+        return covRunDesktopArguments;
+    }
+
+    @DataBoundSetter
+    public void setCovRunDesktopArguments(final String covRunDesktopArguments) {
+        this.covRunDesktopArguments = covRunDesktopArguments;
+    }
+
+    public String getCovCommitDefectsArguments() {
+        return covCommitDefectsArguments;
+    }
+
+    @DataBoundSetter
+    public void setCovCommitDefectsArguments(final String covCommitDefectsArguments) {
+        this.covCommitDefectsArguments = covCommitDefectsArguments;
     }
 
     @Override
-    public String getDisplayName() {
-        return displayName;
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
+
+    public enum Value implements CoveritySelectBoxEnum {
+        SIMPLE("Run Coverity build, analyze, and commit defects"),
+        ADVANCED("Run custom Coverity commands");
+
+        private final String displayName;
+
+        Value(final String displayName) {
+            this.displayName = displayName;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    private class DescriptorImpl extends Descriptor<CoverityRunConfiguration> {
+        public DescriptorImpl() {
+            super(CoverityRunConfiguration.class);
+            load();
+        }
+    }
+
 }

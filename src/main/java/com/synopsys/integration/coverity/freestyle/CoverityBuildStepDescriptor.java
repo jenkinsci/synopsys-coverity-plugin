@@ -29,7 +29,6 @@ import java.io.Serializable;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
-import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
@@ -37,7 +36,6 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.GlobalConfiguration;
 
 @Extension
 public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> implements Serializable {
@@ -60,16 +58,20 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
         return true;
     }
 
-    private CoverityGlobalConfig getCoverityGlobalConfig() {
-        return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
+    public ListBoxModel doFillCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+        return coverityCommonDescriptor.doFillCoverityInstanceUrlItems(coverityInstanceUrl);
     }
 
-    public ListBoxModel doFillCoverityToolNameItems() {
-        return coverityCommonDescriptor.doFillCoverityToolNameItems(getCoverityGlobalConfig().getCoverityToolInstallations());
+    public FormValidation doCheckCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+        return coverityCommonDescriptor.doCheckCoverityInstanceUrl(coverityInstanceUrl);
+    }
+
+    public ListBoxModel doFillCoverityToolNameItems(@QueryParameter("coverityToolName") final String coverityToolName) {
+        return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolName);
     }
 
     public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") final String coverityToolName) {
-        return coverityCommonDescriptor.doCheckCoverityToolName(getCoverityGlobalConfig().getCoverityToolInstallations(), coverityToolName);
+        return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolName);
     }
 
     public ListBoxModel doFillBuildStatusForIssuesItems() {
@@ -88,28 +90,30 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
         return coverityCommonDescriptor.doFillCoverityRunConfigurationItems();
     }
 
-    public ListBoxModel doFillProjectNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
-        return coverityCommonDescriptor.doFillProjectNameItems(projectName, updateNow);
+    public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName,
+        final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);
     }
 
-    public FormValidation doCheckProjectName() {
-        return coverityCommonDescriptor.testConnectionSilently();
+    public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+        return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
     }
 
-    public ListBoxModel doFillStreamNameItems(final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
-        return coverityCommonDescriptor.doFillStreamNameItems(projectName, streamName, updateNow);
+    public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName,
+        final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillStreamNameItems(coverityInstanceUrl, projectName, streamName, updateNow);
     }
 
-    public FormValidation doCheckStreamName() {
-        return coverityCommonDescriptor.testConnectionSilently();
+    public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+        return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
     }
 
-    public ListBoxModel doFillViewNameItems(final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
-        return coverityCommonDescriptor.doFillViewNameItems(viewName, updateNow);
+    public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
+        return coverityCommonDescriptor.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
     }
 
-    public FormValidation doCheckViewName() {
-        return coverityCommonDescriptor.testConnectionSilently();
+    public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+        return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
     }
 
     public FormValidation doCheckCovBuildArguments(final @QueryParameter("covBuildArguments") String covBuildArguments) {

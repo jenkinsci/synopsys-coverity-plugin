@@ -27,20 +27,17 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.verb.POST;
 
-import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.CoverityVersion;
-import com.synopsys.integration.coverity.JenkinsCoverityInstance;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 
@@ -58,7 +55,7 @@ public class CoverityGlobalConfig extends GlobalConfiguration implements Seriali
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
 
     private final CoverityCommonDescriptor coverityCommonDescriptor;
-    private JenkinsCoverityInstance coverityInstance;
+    private CoverityConnectInstance[] coverityConnectInstances;
     private CoverityToolInstallation[] coverityToolInstallations;
 
     public CoverityGlobalConfig() {
@@ -68,31 +65,9 @@ public class CoverityGlobalConfig extends GlobalConfiguration implements Seriali
 
     @Override
     public boolean configure(final StaplerRequest req, final JSONObject formData) throws Descriptor.FormException {
-        final String url = formData.getString("url");
-        final String credentialId = formData.getString("credentialId");
-        coverityInstance = new JenkinsCoverityInstance(url, credentialId);
+        req.bindJSON(this, formData);
         save();
         return super.configure(req, formData);
-    }
-
-    public Optional<JenkinsCoverityInstance> getCoverityInstance() {
-        return Optional.ofNullable(coverityInstance);
-    }
-
-    public String getUrl() {
-        String url = null;
-        if (null != coverityInstance) {
-            url = coverityInstance.getUrl();
-        }
-        return url;
-    }
-
-    public String getCredentialId() {
-        String credentialId = null;
-        if (null != coverityInstance) {
-            credentialId = coverityInstance.getCredentialId();
-        }
-        return credentialId;
     }
 
     public CoverityToolInstallation[] getCoverityToolInstallations() {
@@ -104,7 +79,15 @@ public class CoverityGlobalConfig extends GlobalConfiguration implements Seriali
         save();
     }
 
-    @POST
+    public CoverityConnectInstance[] getCoverityConnectInstances() {
+        return coverityConnectInstances;
+    }
+
+    public void setCoverityConnectInstances(final CoverityConnectInstance[] coverityConnectInstances) {
+        this.coverityConnectInstances = coverityConnectInstances;
+        save();
+    }
+
     public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         if (StringUtils.isBlank(url)) {
@@ -120,24 +103,12 @@ public class CoverityGlobalConfig extends GlobalConfiguration implements Seriali
 
     public ListBoxModel doFillCredentialIdItems() {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-        ListBoxModel boxModel;
-        final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-        boolean changed = false;
-        try {
-            if (this.getClass().getClassLoader() != originalClassLoader) {
-                changed = true;
-                Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-            }
-            final CredentialsMatcher credentialsMatcher = CredentialsMatchers.anyOf(CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
-            // Dont want to limit the search to a particular project for the drop down menu
-            boxModel = new StandardListBoxModel().withEmptySelection()
-                           .withMatching(credentialsMatcher, CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()));
-        } finally {
-            if (changed) {
-                Thread.currentThread().setContextClassLoader(originalClassLoader);
-            }
-        }
-        return boxModel;
+        return new StandardListBoxModel()
+                   .includeEmptyValue()
+                   .includeMatchingAs(ACL.SYSTEM, Jenkins.getInstance(), StandardUsernamePasswordCredentials.class, Collections.emptyList(), CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
+
+        // There was classloader logic here that has been removed for brevity. -- rotte 11-16-2018 (with advice from jrichard)
+        // Previous code can be found at 6c4432a8347d80a6fa01e3f28846c612862b61a6
     }
 
     @POST
@@ -152,8 +123,8 @@ public class CoverityGlobalConfig extends GlobalConfiguration implements Seriali
             return FormValidation.error("Please specify the credentials for the Coverity Connect instance.");
         }
 
-        final JenkinsCoverityInstance jenkinsCoverityInstance = new JenkinsCoverityInstance(url, credentialId);
-        return coverityCommonDescriptor.testConnectionToCoverityInstance(jenkinsCoverityInstance);
+        final CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId);
+        return coverityCommonDescriptor.testConnectionToCoverityInstance(coverityConnectInstance);
     }
 
 }

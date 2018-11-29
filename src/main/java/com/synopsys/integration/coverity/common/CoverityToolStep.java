@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
-import com.synopsys.integration.coverity.JenkinsCoverityInstance;
+import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.PluginHelper;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
@@ -77,16 +77,16 @@ public class CoverityToolStep extends BaseCoverityStep {
     public static final String COVERITY_STREAM_ENVIRONMENT_VARIABLE = "COV_STREAM";
     private final List<ChangeLogSet<?>> changeLogSets;
 
-    public CoverityToolStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run, final List<ChangeLogSet<?>> changeLogSets) {
-        super(node, listener, envVars, workspace, run);
+    public CoverityToolStep(final String coverityInstanceUrl, final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run, final List<ChangeLogSet<?>> changeLogSets) {
+        super(coverityInstanceUrl, node, listener, envVars, workspace, run);
         this.changeLogSets = changeLogSets;
     }
 
     public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final String covBuildArguments, final String covAnalyzeArguments, final String covRunDesktopArguments,
         final String covCommitDefectsArguments, final CoverityAnalysisType coverityAnalysisType) {
         final RepeatableCommand[] commands;
-        final boolean isHttps = getCoverityInstance()
-                                    .flatMap(JenkinsCoverityInstance::getCoverityURL)
+        final boolean isHttps = verifyAndGetCoverityInstance()
+                                    .flatMap(CoverityConnectInstance::getCoverityURL)
                                     .map(URL::getProtocol)
                                     .filter("https"::equals)
                                     .isPresent();
@@ -125,13 +125,13 @@ public class CoverityToolStep extends BaseCoverityStep {
                 getEnvVars().put(COVERITY_STREAM_ENVIRONMENT_VARIABLE, streamName);
             }
 
-            final JenkinsCoverityInstance coverityInstance = getCoverityInstance().orElse(null);
+            final CoverityConnectInstance coverityInstance = verifyAndGetCoverityInstance().orElse(null);
             if (coverityInstance == null) {
                 logger.error("Skipping the Synopsys Coverity step because no configured Coverity server was detected in the Jenkins System Configuration.");
                 return false;
             }
 
-            logGlobalConfiguration(getCoverityInstance().orElse(null));
+            logGlobalConfiguration(coverityInstance);
 
             boolean configurationErrors = false;
             final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), getCoverityToolInstallations(), getNode());
@@ -192,7 +192,7 @@ public class CoverityToolStep extends BaseCoverityStep {
     }
 
     private void executeCoverityCommands(final RepeatableCommand[] commands, final boolean changeSetPatternsConfigured, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns,
-        final OnCommandFailure onCommandFailure, final JenkinsCoverityInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse)
+        final OnCommandFailure onCommandFailure, final CoverityConnectInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse)
         throws IntegrationException, InterruptedException, IOException {
         for (final RepeatableCommand repeatableCommand : commands) {
 
@@ -353,7 +353,7 @@ public class CoverityToolStep extends BaseCoverityStep {
         return correctedParameters;
     }
 
-    private PhoneHomeResponse phoneHome(final JenkinsCoverityInstance coverityInstance, final String pluginVersion) {
+    private PhoneHomeResponse phoneHome(final CoverityConnectInstance coverityInstance, final String pluginVersion) {
         PhoneHomeResponse phoneHomeResponse = null;
 
         try {

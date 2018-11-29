@@ -28,7 +28,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.coverity.JenkinsCoverityInstance;
+import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -49,7 +49,7 @@ public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
     }
 
     @Override
-    public List<ProjectDataObj> retrieveData(final JenkinsCoverityInstance coverityInstance) {
+    public List<ProjectDataObj> retrieveData(final CoverityConnectInstance coverityInstance) {
         final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
         List<ProjectDataObj> projects = Collections.emptyList();
         try {

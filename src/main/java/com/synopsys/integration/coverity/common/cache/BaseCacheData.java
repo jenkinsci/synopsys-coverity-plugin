@@ -28,7 +28,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.synopsys.integration.coverity.JenkinsCoverityInstance;
+import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.exception.IntegrationException;
 
 public abstract class BaseCacheData<T> {
@@ -43,7 +43,7 @@ public abstract class BaseCacheData<T> {
 
     public abstract String getDataType();
 
-    public void checkAndWaitForData(final JenkinsCoverityInstance coverityInstance, final Boolean updateNow) throws InterruptedException, IntegrationException {
+    public void checkAndWaitForData(final CoverityConnectInstance coverityInstance, final Boolean updateNow) throws InterruptedException, IntegrationException {
         checkAndUpdateCachedData(coverityInstance, updateNow);
         final Instant startingTime = Instant.now();
         Instant now;
@@ -58,7 +58,7 @@ public abstract class BaseCacheData<T> {
         }
     }
 
-    private void checkAndUpdateCachedData(final JenkinsCoverityInstance coverityInstance, final Boolean updateNow) {
+    private void checkAndUpdateCachedData(final CoverityConnectInstance coverityInstance, final Boolean updateNow) {
         boolean forceUpdate = false;
         if (null != updateNow) {
             forceUpdate = updateNow;
@@ -84,5 +84,5 @@ public abstract class BaseCacheData<T> {
         }
     }
 
-    public abstract List<T> retrieveData(JenkinsCoverityInstance coverityInstance);
+    public abstract List<T> retrieveData(CoverityConnectInstance coverityInstance);
 }

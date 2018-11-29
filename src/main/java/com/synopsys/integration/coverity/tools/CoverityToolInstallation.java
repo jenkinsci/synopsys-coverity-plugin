@@ -158,7 +158,7 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
                 String line, version = "";
                 while ((line = br.readLine()) != null) {
                     if (line.startsWith(prefix)) {
-                        version = line.substring(prefix.length(), line.length());
+                        version = line.substring(prefix.length());
                         break;
                     }
                 }

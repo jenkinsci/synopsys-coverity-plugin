@@ -27,26 +27,26 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
-import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 
 import hudson.security.ACL;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
-public class JenkinsCoverityInstance implements Serializable {
+public class CoverityConnectInstance implements Serializable {
     private static final long serialVersionUID = -7638734141012629078L;
     private final String url;
     private final String credentialId;
 
-    public JenkinsCoverityInstance(final String url, final String credentialId) {
+    @DataBoundConstructor
+    public CoverityConnectInstance(final String url, final String credentialId) {
         this.url = url;
         this.credentialId = credentialId;
     }
@@ -73,31 +73,28 @@ public class JenkinsCoverityInstance implements Serializable {
     }
 
     public Optional<String> getCoverityUsername() {
-        return getCredentials()
-                   .filter(UsernamePasswordCredentialsImpl.class::isInstance)
-                   .map(UsernamePasswordCredentialsImpl.class::cast)
-                   .map(UsernamePasswordCredentialsImpl::getUsername);
+        return getCredentials().map(StandardUsernamePasswordCredentials::getUsername);
     }
 
     public Optional<String> getCoverityPassword() {
         return getCredentials()
-                   .filter(UsernamePasswordCredentialsImpl.class::isInstance)
-                   .map(UsernamePasswordCredentialsImpl.class::cast)
-                   .map(UsernamePasswordCredentialsImpl::getPassword)
+                   .map(StandardUsernamePasswordCredentials::getPassword)
                    .map(Secret::getPlainText);
     }
 
-    public Optional<BaseStandardCredentials> getCredentials() {
-        Optional<BaseStandardCredentials> optionalCredentials = Optional.empty();
-        if (StringUtils.isNotBlank(credentialId)) {
-            final List<BaseStandardCredentials> credentials = CredentialsProvider.lookupCredentials(BaseStandardCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList());
-            final IdMatcher matcher = new IdMatcher(credentialId);
-            optionalCredentials = credentials.stream()
-                                      .filter(matcher::matches)
-                                      .findAny();
+    private Optional<StandardUsernamePasswordCredentials> getCredentials() {
+        if (StringUtils.isBlank(credentialId)) {
+            return Optional.empty();
         }
 
-        return optionalCredentials;
+        return findUsernamePasswordCredentialsWithId(credentialId);
+    }
+
+    private Optional<StandardUsernamePasswordCredentials> findUsernamePasswordCredentialsWithId(final String credentialId) {
+        final IdMatcher idMatcher = new IdMatcher(credentialId);
+        return CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()).stream()
+                   .filter(idMatcher::matches)
+                   .findAny();
     }
 
     public boolean isEmpty() {

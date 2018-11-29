@@ -27,8 +27,11 @@ package com.synopsys.integration.coverity.common;
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import com.synopsys.integration.coverity.JenkinsCoverityInstance;
+import org.apache.commons.lang3.StringUtils;
+
+import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.JenkinsProxyHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
@@ -45,6 +48,7 @@ import hudson.model.TaskListener;
 import jenkins.model.GlobalConfiguration;
 
 public abstract class BaseCoverityStep {
+    private final String coverityInstanceUrl;
     private final Node node;
     private final TaskListener listener;
     private final EnvVars envVars;
@@ -52,7 +56,8 @@ public abstract class BaseCoverityStep {
     private final Run run;
     protected JenkinsCoverityLogger logger;
 
-    public BaseCoverityStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+    public BaseCoverityStep(final String coverityInstanceUrl, final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+        this.coverityInstanceUrl = coverityInstanceUrl;
         this.node = node;
         this.listener = listener;
         this.envVars = envVars;
@@ -92,8 +97,19 @@ public abstract class BaseCoverityStep {
         return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
     }
 
-    public Optional<JenkinsCoverityInstance> getCoverityInstance() {
-        return getCoverityGlobalConfig().getCoverityInstance();
+    protected Optional<CoverityConnectInstance> verifyAndGetCoverityInstance() {
+        final CoverityConnectInstance[] coverityInstances = getCoverityGlobalConfig().getCoverityConnectInstances();
+        if (StringUtils.isBlank(coverityInstanceUrl)) {
+            logger.error("[ERROR] No Coverity instance configured for this Job.");
+        } else if (null == coverityInstances || coverityInstances.length == 0) {
+            logger.error("[ERROR] No Coverity instance configured in Jenkins.");
+        } else {
+            return Stream.of(coverityInstances)
+                       .filter(coverityInstance -> coverityInstance.getUrl().equals(coverityInstanceUrl))
+                       .findFirst();
+        }
+
+        return Optional.empty();
     }
 
     public void initializeJenkinsCoverityLogger() {
@@ -124,7 +140,7 @@ public abstract class BaseCoverityStep {
         return new JenkinsProxyHelper();
     }
 
-    public void logGlobalConfiguration(final JenkinsCoverityInstance coverityInstance) {
+    public void logGlobalConfiguration(final CoverityConnectInstance coverityInstance) {
         if (null == coverityInstance) {
             logger.warn("No configured Coverity server was detected in the Jenkins System Configuration.");
         } else {

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.coverity.JenkinsCoverityInstance;
+import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
@@ -47,7 +47,7 @@ public class ViewCacheData extends BaseCacheData<String> {
     }
 
     @Override
-    public List<String> retrieveData(final JenkinsCoverityInstance coverityInstance) {
+    public List<String> retrieveData(final CoverityConnectInstance coverityInstance) {
         final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
         List<String> data = Collections.emptyList();
         try {

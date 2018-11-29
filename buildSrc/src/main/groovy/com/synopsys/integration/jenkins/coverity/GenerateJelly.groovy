@@ -15,6 +15,7 @@ class GenerateJelly extends DefaultTask {
         final def config = new TemplateConfiguration()
         config.setAutoIndent(true)
         config.setAutoNewLine(true)
+        config.setUseDoubleQuotes(true)
 
         final def engine = new MarkupTemplateEngine(GenerateJelly.getClassLoader(), config)
         final def jsonSlurper = new JsonSlurper()

@@ -1,18 +1,4 @@
 {
   "helpHtml.tpl": {
-    "url": {
-      "overview": [
-        "Specify the URL for your Coverity Connect instance.",
-        "Populates the $COV_HOST and $COV_PORT environment variables"
-      ]
-    },
-    "credentialId": {
-      "overview": [
-        "Specify credentials for authenticating with your Coverity Connect instance."
-      ],
-      "notes": [
-        "\"Username with password\" is the only kind of credentials supported."
-      ]
-    }
   }
 }

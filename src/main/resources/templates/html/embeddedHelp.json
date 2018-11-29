@@ -6,6 +6,20 @@
         "The command should start with the name of the Coverity command you want to run. Ex: cov-build, cov-analyze, etc.",
         "For examples and a list of the available environment variables that can be used, refer to <a target=\"_blank\" href=\"https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/314081286/Coverity+Command+Examples\">Command Examples</a>"
       ]
+    },
+    "url": {
+      "overview": [
+        "Specify the URL for your Coverity Connect instance.",
+        "Populates the $COV_HOST and $COV_PORT environment variables"
+      ]
+    },
+    "credentialId": {
+      "overview": [
+        "Specify credentials for authenticating with your Coverity Connect instance."
+      ],
+      "notes": [
+        "\"Username with password\" is the only kind of credentials supported."
+      ]
     }
   }
 }
