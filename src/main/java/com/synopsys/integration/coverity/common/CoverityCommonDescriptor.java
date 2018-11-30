@@ -218,7 +218,7 @@ public class CoverityCommonDescriptor {
     }
 
     public FormValidation testConnectionToCoverityInstance(final JenkinsCoverityInstance jenkinsCoverityInstance) {
-        final String url = jenkinsCoverityInstance.getCoverityURL().map(this::transformCoverityUrlToString).orElse(null);
+        final String url = jenkinsCoverityInstance.getCoverityURL().map(URL::toString).orElse(null);
         final String username = jenkinsCoverityInstance.getCoverityUsername().orElse(null);
         final String password = jenkinsCoverityInstance.getCoverityPassword().orElse(null);
 
@@ -257,24 +257,6 @@ public class CoverityCommonDescriptor {
         } catch (final Exception e) {
             return FormValidation.error(e, String.format("An unexpected error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
         }
-    }
-
-    private String transformCoverityUrlToString(final URL url) {
-        String coverityUrlAsString = url.toString();
-        if (url.getPort() == -1) {
-            try {
-                final int defaultCoverityPort;
-                if ("https".equals(url.getProtocol())) {
-                    defaultCoverityPort = 8443;
-                } else {
-                    defaultCoverityPort = 8080;
-                }
-                coverityUrlAsString = new URL(url.getProtocol(), url.getHost(), defaultCoverityPort, url.getFile()).toString();
-            } catch (final MalformedURLException ignored) {
-                // Just don't reconstruct the URL in this case
-            }
-        }
-        return coverityUrlAsString;
     }
 
     private ListBoxModel getListBoxModelOf(final CoveritySelectBoxEnum[] coveritySelectBoxEnumValues) {
