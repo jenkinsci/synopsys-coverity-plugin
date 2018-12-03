@@ -72,11 +72,8 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     }
 
     private static String handleConnectionOptions(final URL url, final String initialCommand) {
-        String newCommand = String.format("%s %s", initialCommand, CIM_INSTANCE_HOST);
+        String newCommand = String.format("%s %s %s", initialCommand, CIM_INSTANCE_HOST, CIM_INSTANCE_PORT);
         if (url != null) {
-            if (-1 != url.getPort()) {
-                newCommand = String.format("%s %s", newCommand, CIM_INSTANCE_PORT);
-            }
             if ("https".equals(url.getProtocol())) {
                 newCommand = String.format("%s %s", newCommand, SSL_OPTION);
             }

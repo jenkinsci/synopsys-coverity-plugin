@@ -155,7 +155,10 @@ public class CoverityToolStep extends BaseCoverityStep {
                 final URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
                 if (null != coverityUrl) {
                     getEnvVars().put(Executable.COVERITY_HOST_ENVIRONMENT_VARIABLE, coverityUrl.getHost());
-                    if (coverityUrl.getPort() > -1) {
+                    if (coverityUrl.getPort() == -1) {
+                        // If the user passes a URL that has no port, we must supply the implicit URL port. Coverity uses tomcat defaults if it can't find any ports (8080/8443)
+                        getEnvVars().put(Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getDefaultPort()));
+                    } else {
                         getEnvVars().put(Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getPort()));
                     }
                 }
