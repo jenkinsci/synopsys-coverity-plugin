@@ -113,7 +113,7 @@ public abstract class BaseCoverityStep {
         if (value != null) {
             final String newValue = Util.replaceMacro(value, variables);
             if (newValue.contains("$")) {
-                throw new CoverityJenkinsException("Variable was not properly replaced. Value : " + value + ", Result : " + newValue + ". Make sure the variable has been properly defined.");
+                throw new CoverityJenkinsException("Variable was not properly replaced. Value: " + value + ", Result: " + newValue + ". Make sure the variable has been properly defined.");
             }
             return newValue;
         }
@@ -132,13 +132,13 @@ public abstract class BaseCoverityStep {
             if (!optionalCoverityURL.isPresent()) {
                 logger.warn("No Coverity URL configured.");
             } else {
-                logger.alwaysLog("-- Coverity URL : " + optionalCoverityURL.get().toString());
+                logger.alwaysLog("-- Coverity URL: " + optionalCoverityURL.get().toString());
             }
             final Optional<String> optionalCoverityUsername = coverityInstance.getCoverityUsername();
             if (!optionalCoverityUsername.isPresent()) {
                 logger.warn("No Coverity Username configured.");
             } else {
-                logger.alwaysLog("-- Coverity username : " + optionalCoverityUsername.get());
+                logger.alwaysLog("-- Coverity username: " + optionalCoverityUsername.get());
             }
         }
     }

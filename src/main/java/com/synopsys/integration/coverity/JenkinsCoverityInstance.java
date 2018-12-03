@@ -43,7 +43,6 @@ import jenkins.model.Jenkins;
 
 public class JenkinsCoverityInstance implements Serializable {
     private static final long serialVersionUID = -7638734141012629078L;
-    private static final String HTTPS = "https";
     private final String url;
     private final String credentialId;
 
@@ -65,15 +64,6 @@ public class JenkinsCoverityInstance implements Serializable {
         if (url != null) {
             try {
                 coverityUrl = new URL(url);
-                if (coverityUrl.getPort() == -1) {
-                    final int defaultCoverityPort;
-                    if ("https".equals(coverityUrl.getProtocol())) {
-                        defaultCoverityPort = 8443;
-                    } else {
-                        defaultCoverityPort = 8080;
-                    }
-                    coverityUrl = new URL(coverityUrl.getProtocol(), coverityUrl.getHost(), defaultCoverityPort, coverityUrl.getFile());
-                }
             } catch (final MalformedURLException ignored) {
                 // Handled by form validation in the global configuration
             }
