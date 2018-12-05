@@ -24,8 +24,8 @@
 
 package com.synopsys.integration.coverity.dsl;
 
-import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
-import com.synopsys.integration.coverity.freestyle.CoverityBuildStep;
+import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.buildstep.freestyle.CoverityBuildStep;
 
 import hudson.Extension;
 import javaposse.jobdsl.dsl.helpers.step.StepContext;

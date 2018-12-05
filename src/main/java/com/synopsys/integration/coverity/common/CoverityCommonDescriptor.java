@@ -40,7 +40,6 @@ import javax.xml.ws.WebServiceException;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.common.cache.BaseCacheData;
 import com.synopsys.integration.coverity.common.cache.ProjectCacheData;
 import com.synopsys.integration.coverity.common.cache.ViewCacheData;
@@ -55,6 +54,9 @@ import com.synopsys.integration.coverity.ws.v9.ProjectIdDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamIdDataObj;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.log.PrintStreamIntLogger;

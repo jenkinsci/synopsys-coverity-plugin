@@ -21,15 +21,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.coverity.common;
+package com.synopsys.integration.jenkins.coverity.buildstep;
+
+import java.io.Serializable;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.coverity.common.CoverityAnalysisType;
+import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
+import com.synopsys.integration.coverity.common.CoveritySelectBoxEnum;
+
+import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.util.FormValidation;
 
-public class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRunConfiguration> {
+public class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRunConfiguration> implements Serializable {
+    private static final long serialVersionUID = -8235345319349012937L;
     private RepeatableCommand[] commands;
     private CoverityAnalysisType coverityAnalysisType;
     private String buildCommand;
@@ -57,8 +67,8 @@ public class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRu
     }
 
     @DataBoundSetter
-    public void setCoverityAnalysisType(final CoverityAnalysisType coverityAnalysisType) {
-        this.coverityAnalysisType = coverityAnalysisType;
+    public void setCoverityAnalysisType(final String coverityAnalysisType) {
+        this.coverityAnalysisType = CoverityAnalysisType.valueOf(coverityAnalysisType);
     }
 
     public String getBuildCommand() {
@@ -136,10 +146,30 @@ public class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRu
         }
     }
 
-    private class DescriptorImpl extends Descriptor<CoverityRunConfiguration> {
+    @Extension
+    public static class DescriptorImpl extends Descriptor<CoverityRunConfiguration> {
+        private final CoverityCommonDescriptor coverityCommonDescriptor;
+
         public DescriptorImpl() {
             super(CoverityRunConfiguration.class);
             load();
+            this.coverityCommonDescriptor = new CoverityCommonDescriptor();
+        }
+
+        public FormValidation doCheckCovBuildArguments(final @QueryParameter("covBuildArguments") String covBuildArguments) {
+            return coverityCommonDescriptor.doCheckCovBuildArguments(covBuildArguments);
+        }
+
+        public FormValidation doCheckCovAnalyzeArguments(final @QueryParameter("covAnalyzeArguments") String covAnalyzeArguments) {
+            return coverityCommonDescriptor.doCheckCovAnalyzeArguments(covAnalyzeArguments);
+        }
+
+        public FormValidation doCheckCovRunDesktopArguments(final @QueryParameter("covRunDesktopArguments") String covRunDesktopArguments) {
+            return coverityCommonDescriptor.doCheckCovRunDesktopArguments(covRunDesktopArguments);
+        }
+
+        public FormValidation doCheckCovCommitDefectsArguments(final @QueryParameter("covCommitDefectsArguments") String covCommitDefectsArguments) {
+            return coverityCommonDescriptor.doCheckCovCommitDefectsArguments(covCommitDefectsArguments);
         }
     }
 

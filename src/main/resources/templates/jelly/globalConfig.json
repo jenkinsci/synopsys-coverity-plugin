@@ -2,17 +2,14 @@
   "template": "globalConfig.tpl",
   "model": {
     "globalConfigSectionTitle": "Synopsys Coverity",
+    "coverityConnectInstancesTitle": "Coverity Connect Instances",
     "coverityConnectInstancesField": "coverityConnectInstances",
     "coverityConnectInstancesAddTitle": "Add Coverity Connect instance",
     "coverityConnectInstancesDeleteTitle": "Delete Coverity Connect instance",
-    "coverityConnectInstanceVar": "coverityConnectInstance",
-    "coverityConnectInstancesTitle": "Coverity Connect Instances",
     "credentialsField": "credentialId",
     "credentialsTitle": "Credentials",
-    "credentialsHelp": "/plugin/synopsys-coverity/help/help-credentialId.html",
     "urlField": "url",
     "urlTitle": "URL",
-    "urlHelp": "/plugin/synopsys-coverity/help/help-url.html",
     "testConnectionMethod": "testConnection",
     "testConnectionTitle": "Test Connection",
     "testConnectionProgress": "Testing..."

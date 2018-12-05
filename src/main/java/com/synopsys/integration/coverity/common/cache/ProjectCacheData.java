@@ -28,7 +28,6 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -38,6 +37,7 @@ import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Excepti
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.exception.EncryptionException;
+import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.log.PrintStreamIntLogger;

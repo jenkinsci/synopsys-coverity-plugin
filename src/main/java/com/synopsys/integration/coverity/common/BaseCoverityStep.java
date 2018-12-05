@@ -31,10 +31,10 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.coverity.JenkinsProxyHelper;
 import com.synopsys.integration.coverity.exception.CoverityJenkinsException;
+import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 

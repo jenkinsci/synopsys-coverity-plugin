@@ -22,7 +22,7 @@
  * under the License.
  */
 
-package com.synopsys.integration.coverity.common;
+package com.synopsys.integration.jenkins.coverity.buildstep;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,8 +105,8 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     }
 
     @Override
-    public RepeatableCommandDescriptor getDescriptor() {
-        return (RepeatableCommandDescriptor) super.getDescriptor();
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     public enum Argument {
@@ -128,8 +128,8 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     }
 
     @Extension
-    public static class RepeatableCommandDescriptor extends Descriptor<RepeatableCommand> {
-        public RepeatableCommandDescriptor() {
+    public static class DescriptorImpl extends Descriptor<RepeatableCommand> {
+        public DescriptorImpl() {
             super(RepeatableCommand.class);
             load();
         }

@@ -22,7 +22,7 @@
  * under the License.
  */
 
-package com.synopsys.integration.coverity.freestyle;
+package com.synopsys.integration.jenkins.coverity.buildstep.freestyle;
 
 import java.io.IOException;
 
@@ -30,10 +30,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.common.BuildStatus;
 import com.synopsys.integration.coverity.common.CoverityCheckForIssuesInViewStep;
-import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.OnCommandFailure;
-import com.synopsys.integration.coverity.common.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
 
 import hudson.FilePath;
 import hudson.Launcher;
@@ -119,6 +119,10 @@ public class CoverityBuildStep extends Builder {
 
     public CoverityRunConfiguration getCoverityRunConfiguration() {
         return coverityRunConfiguration;
+    }
+
+    public String getBuildCommand() {
+        return coverityRunConfiguration.getBuildCommand();
     }
 
     @Override

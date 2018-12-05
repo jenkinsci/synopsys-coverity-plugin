@@ -22,7 +22,7 @@
  * under the License.
  */
 
-package com.synopsys.integration.coverity.freestyle;
+package com.synopsys.integration.jenkins.coverity.buildstep.freestyle;
 
 import java.io.Serializable;
 
@@ -114,22 +114,6 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
 
     public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
         return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
-    }
-
-    public FormValidation doCheckCovBuildArguments(final @QueryParameter("covBuildArguments") String covBuildArguments) {
-        return coverityCommonDescriptor.doCheckCovBuildArguments(covBuildArguments);
-    }
-
-    public FormValidation doCheckCovAnalyzeArguments(final @QueryParameter("covAnalyzeArguments") String covAnalyzeArguments) {
-        return coverityCommonDescriptor.doCheckCovAnalyzeArguments(covAnalyzeArguments);
-    }
-
-    public FormValidation doCheckCovRunDesktopArguments(final @QueryParameter("covRunDesktopArguments") String covRunDesktopArguments) {
-        return coverityCommonDescriptor.doCheckCovRunDesktopArguments(covRunDesktopArguments);
-    }
-
-    public FormValidation doCheckCovCommitDefectsArguments(final @QueryParameter("covCommitDefectsArguments") String covCommitDefectsArguments) {
-        return coverityCommonDescriptor.doCheckCovCommitDefectsArguments(covCommitDefectsArguments);
     }
 
 }

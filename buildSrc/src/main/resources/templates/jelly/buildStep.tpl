@@ -61,8 +61,8 @@ def refreshConnectionButton(def buttonValue) {
 }
 
 def commands(def groupTitle, def groupField, def individualField, def individualTitle, def addTitle, def deleteTitle) {
-    'f:entry'(title: groupTitle, field: groupField) {
-        'f:repeatable'(var: individualField, name: groupField, items: "\${descriptor.${groupField}}", add: addTitle, minimum: 1) {
+    'f:entry'(title: groupTitle) {
+        'f:repeatable'(field: groupField, add: addTitle, minimum: 1) {
             table(style: 'width:100%', id: "${groupField}Id") {
                 'f:entry'(field: individualField, title: individualTitle, help: '/plugin/synopsys-coverity/help/help-command.html') {
                     'f:textbox'()

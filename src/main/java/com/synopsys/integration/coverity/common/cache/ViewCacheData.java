@@ -30,12 +30,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.log.PrintStreamIntLogger;

@@ -28,8 +28,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 
 public abstract class BaseCacheData<T> {
     public static final int CACHE_TIME_IN_MINUTES = 5;

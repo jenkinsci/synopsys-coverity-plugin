@@ -69,16 +69,16 @@ task renameFile {
 }
 
 task generateJelly(type: GenerateJelly) {
-    outputPathToJson = ['src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep'        : 'src/main/resources/templates/jelly/buildStep.json',
-                        'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep'      : 'src/main/resources/templates/jelly/buildStep.json',
-                        'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityGlobalConfig': 'src/main/resources/templates/jelly/globalConfig.json',]
+    outputPathToJson = ['src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/freestyle/CoverityBuildStep'  : 'src/main/resources/templates/jelly/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/pipeline/CoverityPipelineStep': 'src/main/resources/templates/jelly/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityGlobalConfig'            : 'src/main/resources/templates/jelly/globalConfig.json',]
 }
 
 task generateHelp(type: GenerateHtml) {
-    outputPathToJson = ['src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep'        : 'src/main/resources/templates/html/buildStep.json',
-                        'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep'      : 'src/main/resources/templates/html/buildStep.json',
-                        'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityGlobalConfig': 'src/main/resources/templates/html/globalConfig.json',
-                        'src/main/webapp/help'                                                                    : 'src/main/resources/templates/html/embeddedHelp.json',]
+    outputPathToJson = ['src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/freestyle/CoverityBuildStep'  : 'src/main/resources/templates/html/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/pipeline/CoverityPipelineStep': 'src/main/resources/templates/html/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityConnectInstance'         : 'src/main/resources/templates/html/coverityConnectInstance.json',
+                        'src/main/webapp/help'                                                                                : 'src/main/resources/templates/html/embeddedHelp.json',]
 }
 
 compileJava.dependsOn generateHelp, generateJelly

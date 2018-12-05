@@ -43,7 +43,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
-import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.PluginHelper;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
@@ -55,6 +54,8 @@ import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.phonehome.PhoneHomeCallable;
 import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
@@ -165,7 +166,10 @@ public class CoverityToolStep extends BaseCoverityStep {
                 final URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
                 if (null != coverityUrl) {
                     getEnvVars().put(Executable.COVERITY_HOST_ENVIRONMENT_VARIABLE, coverityUrl.getHost());
-                    if (coverityUrl.getPort() > -1) {
+                    if (coverityUrl.getPort() == -1) {
+                        // If the user passes a URL that has no port, we must supply the implicit URL port. Coverity uses tomcat defaults if it can't find any ports (8080/8443)
+                        getEnvVars().put(Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getDefaultPort()));
+                    } else {
                         getEnvVars().put(Executable.COVERITY_PORT_ENVIRONMENT_VARIABLE, String.valueOf(coverityUrl.getPort()));
                     }
                 }

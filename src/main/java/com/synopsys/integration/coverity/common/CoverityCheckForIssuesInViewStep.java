@@ -33,7 +33,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.CoverityConnectInstance;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -45,6 +44,7 @@ import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 
 import hudson.EnvVars;
 import hudson.FilePath;

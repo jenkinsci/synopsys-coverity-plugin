@@ -22,7 +22,7 @@
  * under the License.
  */
 
-package com.synopsys.integration.coverity.pipeline;
+package com.synopsys.integration.jenkins.coverity.buildstep.pipeline;
 
 import java.io.IOException;
 import java.util.Set;
@@ -42,10 +42,10 @@ import com.google.common.collect.ImmutableSet;
 import com.synopsys.integration.coverity.common.BuildStatus;
 import com.synopsys.integration.coverity.common.CoverityCheckForIssuesInViewStep;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
-import com.synopsys.integration.coverity.common.CoverityRunConfiguration;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.OnCommandFailure;
-import com.synopsys.integration.coverity.common.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
 
 import hudson.EnvVars;
 import hudson.Extension;
