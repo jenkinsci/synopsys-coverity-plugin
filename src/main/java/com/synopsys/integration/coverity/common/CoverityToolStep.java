@@ -55,6 +55,7 @@ import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.buildstep.SimpleCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.phonehome.PhoneHomeCallable;
@@ -83,8 +84,7 @@ public class CoverityToolStep extends BaseCoverityStep {
         this.changeLogSets = changeLogSets;
     }
 
-    public RepeatableCommand[] getSimpleModeCommands(final String buildCommand, final String covBuildArguments, final String covAnalyzeArguments, final String covRunDesktopArguments,
-        final String covCommitDefectsArguments, final CoverityAnalysisType coverityAnalysisType) {
+    public RepeatableCommand[] getSimpleModeCommands(final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration) {
         final RepeatableCommand[] commands;
         final boolean isHttps = verifyAndGetCoverityInstance()
                                     .flatMap(CoverityConnectInstance::getCoverityURL)
@@ -92,17 +92,17 @@ public class CoverityToolStep extends BaseCoverityStep {
                                     .filter("https"::equals)
                                     .isPresent();
 
-        if (CoverityAnalysisType.COV_ANALYZE.equals(coverityAnalysisType)) {
+        if (CoverityAnalysisType.COV_ANALYZE.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
             commands = new RepeatableCommand[] {
-                RepeatableCommand.COV_BUILD(buildCommand, covBuildArguments),
-                RepeatableCommand.COV_ANALYZE(covAnalyzeArguments),
-                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
+                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), simpleCoverityRunConfiguration.getCovBuildArguments()),
+                RepeatableCommand.COV_ANALYZE(simpleCoverityRunConfiguration.getCovAnalyzeArguments()),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, simpleCoverityRunConfiguration.getCovCommitDefectsArguments())
             };
-        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType)) {
+        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
             commands = new RepeatableCommand[] {
-                RepeatableCommand.COV_BUILD(buildCommand, covBuildArguments),
-                RepeatableCommand.COV_RUN_DESKTOP(isHttps, covRunDesktopArguments, JENKINS_CHANGE_SET),
-                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
+                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), simpleCoverityRunConfiguration.getCovBuildArguments()),
+                RepeatableCommand.COV_RUN_DESKTOP(isHttps, simpleCoverityRunConfiguration.getCovRunDesktopArguments(), JENKINS_CHANGE_SET),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, simpleCoverityRunConfiguration.getCovCommitDefectsArguments())
             };
         } else {
             commands = new RepeatableCommand[] {};

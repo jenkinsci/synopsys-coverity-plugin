@@ -25,40 +25,43 @@ package com.synopsys.integration.jenkins.coverity.buildstep;
 
 import java.io.Serializable;
 
-import com.synopsys.integration.coverity.common.CoveritySelectBoxEnum;
+import org.kohsuke.stapler.DataBoundConstructor;
 
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.Descriptor;
+import hudson.Extension;
 
-public abstract class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRunConfiguration> implements Serializable {
-    private static final long serialVersionUID = -8235345319349012937L;
+public class AdvancedCoverityRunConfiguration extends CoverityRunConfiguration implements Serializable {
+    private static final long serialVersionUID = -1293423958272198347L;
+    private final RepeatableCommand[] commands;
 
-    public abstract RunConfigurationType getRunConFigurationType();
+    @DataBoundConstructor
+    public AdvancedCoverityRunConfiguration(final RepeatableCommand[] commands) {
+        this.commands = commands;
+    }
+
+    public RepeatableCommand[] getCommands() {
+        return commands;
+    }
 
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-    public enum RunConfigurationType implements CoveritySelectBoxEnum {
-        SIMPLE("Run Coverity build, analyze, and commit defects"),
-        ADVANCED("Run custom Coverity commands");
+    @Override
+    public RunConfigurationType getRunConFigurationType() {
+        return RunConfigurationType.ADVANCED;
+    }
 
-        private final String displayName;
-
-        RunConfigurationType(final String displayName) {
-            this.displayName = displayName;
+    @Extension
+    public static class DescriptorImpl extends CoverityRunConfiguration.DescriptorImpl {
+        public DescriptorImpl() {
+            super(AdvancedCoverityRunConfiguration.class);
+            load();
         }
 
         @Override
         public String getDisplayName() {
-            return displayName;
-        }
-    }
-
-    public static abstract class DescriptorImpl extends Descriptor<CoverityRunConfiguration> {
-        public DescriptorImpl(final Class<? extends CoverityRunConfiguration> clazz) {
-            super(clazz);
+            return RunConfigurationType.ADVANCED.getDisplayName();
         }
     }
 

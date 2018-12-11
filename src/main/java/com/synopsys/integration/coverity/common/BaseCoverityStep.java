@@ -129,7 +129,7 @@ public abstract class BaseCoverityStep {
         if (value != null) {
             final String newValue = Util.replaceMacro(value, variables);
             if (newValue.contains("$")) {
-                throw new CoverityJenkinsException("Variable was not properly replaced. Value : " + value + ", Result : " + newValue + ". Make sure the variable has been properly defined.");
+                throw new CoverityJenkinsException("Variable was not properly replaced. RunConfigurationType : " + value + ", Result : " + newValue + ". Make sure the variable has been properly defined.");
             }
             return newValue;
         }

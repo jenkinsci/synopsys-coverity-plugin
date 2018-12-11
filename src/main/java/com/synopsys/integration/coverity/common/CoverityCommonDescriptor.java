@@ -143,7 +143,7 @@ public class CoverityCommonDescriptor {
     }
 
     public ListBoxModel doFillCoverityRunConfigurationItems() {
-        return getListBoxModelOf(CoverityRunConfiguration.Value.values());
+        return getListBoxModelOf(CoverityRunConfiguration.RunConfigurationType.values());
     }
 
     public ListBoxModel doFillProjectNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final Boolean updateNow) {

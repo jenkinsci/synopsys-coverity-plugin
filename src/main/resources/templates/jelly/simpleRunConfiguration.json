@@ -1,0 +1,19 @@
+{
+  "template": "simpleRunConfiguration.tpl",
+  "model": {
+    "coverityAnalysisTypeField": "coverityAnalysisType",
+    "coverityAnalysisTypeTitle": "Analysis type",
+    "buildCommandField": "buildCommand",
+    "buildCommandTitle": "Build command",
+    "commandArgumentsField": "commandArguments",
+    "commandArgumentsTitle": "Provide command-specific arguments",
+    "covBuildArgumentsField": "covBuildArguments",
+    "covBuildArgumentsTitle": "cov-build",
+    "covAnalyzeArgumentsField": "covAnalyzeArguments",
+    "covAnalyzeArgumentsTitle": "cov-analyze",
+    "covRunDesktopArgumentsField": "covRunDesktopArguments",
+    "covRunDesktopArgumentsTitle": "cov-run-desktop",
+    "covCommitDefectsArgumentsField": "covCommitDefectsArguments",
+    "covCommitDefectsArgumentsTitle": "cov-commit-defects"
+  }
+}

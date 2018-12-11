@@ -27,15 +27,21 @@ package com.synopsys.integration.jenkins.coverity.buildstep.freestyle;
 import java.io.Serializable;
 
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
+import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
+import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.buildstep.SimpleCoverityRunConfiguration;
 
 import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import net.sf.json.JSONObject;
 
 @Extension
 public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> implements Serializable {
@@ -46,6 +52,17 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
         super(CoverityBuildStep.class);
         load();
         coverityCommonDescriptor = new CoverityCommonDescriptor();
+    }
+
+    public CoverityRunConfiguration getDefaultCoverityRunConfiguration() {
+        return new SimpleCoverityRunConfiguration(CoverityAnalysisType.COV_ANALYZE, "", false, "", "", "", "");
+    }
+
+    @Override
+    public boolean configure(final StaplerRequest req, final JSONObject formData) throws Descriptor.FormException {
+        req.bindJSON(this, formData);
+        save();
+        return super.configure(req, formData);
     }
 
     @Override
@@ -78,16 +95,8 @@ public class CoverityBuildStepDescriptor extends BuildStepDescriptor<Builder> im
         return coverityCommonDescriptor.doFillBuildStatusForIssuesItems();
     }
 
-    public ListBoxModel doFillCoverityAnalysisTypeItems() {
-        return coverityCommonDescriptor.doFillCoverityAnalysisTypeItems();
-    }
-
     public ListBoxModel doFillOnCommandFailureItems() {
         return coverityCommonDescriptor.doFillOnCommandFailureItems();
-    }
-
-    public ListBoxModel doFillCoverityRunConfigurationItems() {
-        return coverityCommonDescriptor.doFillCoverityRunConfigurationItems();
     }
 
     public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName,

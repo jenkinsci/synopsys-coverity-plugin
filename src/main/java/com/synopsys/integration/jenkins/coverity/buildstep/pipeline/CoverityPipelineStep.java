@@ -44,8 +44,10 @@ import com.synopsys.integration.coverity.common.CoverityCheckForIssuesInViewStep
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.OnCommandFailure;
+import com.synopsys.integration.jenkins.coverity.buildstep.AdvancedCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.buildstep.SimpleCoverityRunConfiguration;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -270,15 +272,12 @@ public class CoverityPipelineStep extends Step {
             final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityPipelineStep.getCoverityInstanceUrl(), computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
             final boolean shouldContinueOurSteps;
 
-            if (coverityPipelineStep.getCoverityRunConfiguration().getCommands() != null) {
-                shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), coverityPipelineStep.getCoverityRunConfiguration().getCommands(),
+            if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityPipelineStep.getCoverityRunConfiguration().getRunConFigurationType())) {
+                shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(),
+                    ((AdvancedCoverityRunConfiguration) coverityPipelineStep.getCoverityRunConfiguration()).getCommands(),
                     coverityPipelineStep.getOnCommandFailure(), coverityPipelineStep.getConfigureChangeSetPatterns(), coverityPipelineStep.getChangeSetInclusionPatterns(), coverityPipelineStep.getChangeSetExclusionPatterns());
             } else {
-                final RepeatableCommand[] simpleModeCommands = coverityToolStep
-                                                                   .getSimpleModeCommands(coverityPipelineStep.getCoverityRunConfiguration().getBuildCommand(), coverityPipelineStep.getCoverityRunConfiguration().getCovBuildArguments(),
-                                                                       coverityPipelineStep.getCoverityRunConfiguration().getCovAnalyzeArguments(),
-                                                                       coverityPipelineStep.getCoverityRunConfiguration().getCovRunDesktopArguments(), coverityPipelineStep.getCoverityRunConfiguration().getCovCommitDefectsArguments(),
-                                                                       coverityPipelineStep.getCoverityRunConfiguration().getCoverityAnalysisType());
+                final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityPipelineStep.getCoverityRunConfiguration());
                 shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), simpleModeCommands,
                     coverityPipelineStep.getOnCommandFailure(), coverityPipelineStep.getConfigureChangeSetPatterns(), coverityPipelineStep.getChangeSetInclusionPatterns(), coverityPipelineStep.getChangeSetExclusionPatterns());
             }

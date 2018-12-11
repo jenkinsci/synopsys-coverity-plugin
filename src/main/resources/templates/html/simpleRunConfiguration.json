@@ -1,0 +1,69 @@
+{
+  "helpHtml.tpl": {
+    "covBuildArguments": {
+      "overview": [
+        "Specify additional arguments to apply to the invocation of the cov-build command. Affects full and incremental analysis."
+      ],
+      "notes": [
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "--dir ${WORKSPACE}/idir",
+        "<em>build command</em>"
+      ]
+    },
+    "covAnalyzeArguments": {
+      "overview": [
+        "Specify additional arguments to apply to the invocation of the cov-analyze command. Affects full analysis."
+      ],
+      "notes": [
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "--dir ${WORKSPACE}/idir"
+      ]
+    },
+    "covRunDesktopArguments": {
+      "overview": [
+        "Specify additional arguments to apply to the invocation of the cov-run-desktop command. Affects incremental analysis."
+      ],
+      "notes": [
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "--dir ${WORKSPACE}/idir",
+        "--host ${COVERITY_HOST}",
+        "--port ${COVERITY_PORT}",
+        "--stream ${COVERITY_STREAM}",
+        "--ssl (if COVERITY_HOST is an https address)"
+      ]
+    },
+    "covCommitDefectsArguments": {
+      "overview": [
+        "Specify additional arguments to apply to the invocation of the cov-commit-defects command. Affects both full and incremental analysis."
+      ],
+      "notes": [
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "--dir ${WORKSPACE}/idir",
+        "--host ${COVERITY_HOST}",
+        "--port ${COVERITY_PORT}",
+        "--stream ${COVERITY_STREAM}",
+        "--ssl (if COVERITY_HOST is an https address)",
+        "${CHANGE_SET}"
+      ]
+    }
+  },
+  "coverityAnalysisType.tpl": {
+    "coverityAnalysisType": {
+      "overview": [
+        "Specify the type of analysis you would like to run.",
+        "<strong>Full Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects commands (in that order)",
+        "<strong>Incremental Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects commands (in that order)",
+        "Specifically, the commands will be invoked with the following parameters:"
+      ],
+      "commands": [
+        "cov-build --dir ${WORKSPACE}/idir <em>build command</em>",
+        "cov-analyze --dir ${WORKSPACE}/idir",
+        "cov-run-desktop --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}",
+        "cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}"
+      ],
+      "notes": [
+        "If the configured COVERITY_HOST uses https, --ssl will be automatically applied to the end of the command."
+      ]
+    }
+  }
+}

@@ -112,8 +112,8 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
     }
 
     @Override
-    public CoverityConnectInstance.DescriptorImpl getDescriptor() {
-        return (CoverityConnectInstance.DescriptorImpl) super.getDescriptor();
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension

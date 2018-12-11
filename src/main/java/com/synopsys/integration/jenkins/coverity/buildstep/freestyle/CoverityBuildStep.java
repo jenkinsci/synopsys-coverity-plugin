@@ -32,8 +32,10 @@ import com.synopsys.integration.coverity.common.BuildStatus;
 import com.synopsys.integration.coverity.common.CoverityCheckForIssuesInViewStep;
 import com.synopsys.integration.coverity.common.CoverityToolStep;
 import com.synopsys.integration.coverity.common.OnCommandFailure;
+import com.synopsys.integration.jenkins.coverity.buildstep.AdvancedCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.buildstep.SimpleCoverityRunConfiguration;
 
 import hudson.FilePath;
 import hudson.Launcher;
@@ -121,10 +123,6 @@ public class CoverityBuildStep extends Builder {
         return coverityRunConfiguration;
     }
 
-    public String getBuildCommand() {
-        return coverityRunConfiguration.getBuildCommand();
-    }
-
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
@@ -140,13 +138,11 @@ public class CoverityBuildStep extends Builder {
         final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityInstanceUrl, build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
 
         final boolean shouldContinueOurSteps;
-        if (coverityRunConfiguration.getCommands() != null) {
-            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, coverityRunConfiguration.getCommands(), onCommandFailure, this.getConfigureChangeSetPatterns(), changeSetInclusionPatterns,
-                changeSetExclusionPatterns);
+        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands(), onCommandFailure, this.getConfigureChangeSetPatterns(),
+                changeSetInclusionPatterns, changeSetExclusionPatterns);
         } else {
-            final RepeatableCommand[] simpleModeCommands = coverityToolStep
-                                                               .getSimpleModeCommands(coverityRunConfiguration.getBuildCommand(), coverityRunConfiguration.getCovBuildArguments(), coverityRunConfiguration.getCovAnalyzeArguments(),
-                                                                   coverityRunConfiguration.getCovRunDesktopArguments(), coverityRunConfiguration.getCovCommitDefectsArguments(), coverityRunConfiguration.getCoverityAnalysisType());
+            final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration);
             shouldContinueOurSteps = coverityToolStep
                                          .runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, onCommandFailure, this.getConfigureChangeSetPatterns(), changeSetInclusionPatterns, changeSetExclusionPatterns);
         }
