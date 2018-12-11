@@ -195,14 +195,6 @@ public class CoverityPipelineStep extends Step {
             return coverityCommonDescriptor.doFillBuildStatusForIssuesItems();
         }
 
-        public ListBoxModel doFillCoverityAnalysisTypeItems() {
-            return coverityCommonDescriptor.doFillCoverityAnalysisTypeItems();
-        }
-
-        public ListBoxModel doFillCoverityRunConfigurationItems() {
-            return coverityCommonDescriptor.doFillCoverityRunConfigurationItems();
-        }
-
         public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName,
             final @QueryParameter("updateNow") Boolean updateNow) {
             return coverityCommonDescriptor.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);

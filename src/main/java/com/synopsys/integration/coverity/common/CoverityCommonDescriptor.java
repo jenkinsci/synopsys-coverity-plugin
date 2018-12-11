@@ -54,7 +54,6 @@ import com.synopsys.integration.coverity.ws.v9.ProjectIdDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamIdDataObj;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.global.CoverityGlobalConfig;
@@ -140,10 +139,6 @@ public class CoverityCommonDescriptor {
 
     public ListBoxModel doFillOnCommandFailureItems() {
         return getListBoxModelOf(OnCommandFailure.values());
-    }
-
-    public ListBoxModel doFillCoverityRunConfigurationItems() {
-        return getListBoxModelOf(CoverityRunConfiguration.RunConfigurationType.values());
     }
 
     public ListBoxModel doFillProjectNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final Boolean updateNow) {

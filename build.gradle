@@ -15,7 +15,7 @@ plugins {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '1.1.0-SNAPSHOT'
+version = '2.0.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
@@ -81,7 +81,7 @@ task generateHelp(type: GenerateHtml) {
                         'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/SimpleCoverityRunConfiguration': 'src/main/resources/templates/html/simpleRunConfiguration.json',
                         'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/pipeline/CoverityPipelineStep' : 'src/main/resources/templates/html/buildStep.json',
                         'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityConnectInstance'          : 'src/main/resources/templates/html/coverityConnectInstance.json',
-                        'src/main/webapp/help'                                                                                 : 'src/main/resources/templates/html/embeddedHelp.json',]
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/RepeatableCommand'             : 'src/main/resources/templates/html/repeatableCommand.json',]
 }
 
 compileJava.dependsOn generateHelp, generateJelly
