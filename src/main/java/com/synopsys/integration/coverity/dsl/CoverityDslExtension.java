@@ -24,6 +24,8 @@
 
 package com.synopsys.integration.coverity.dsl;
 
+import com.synopsys.integration.jenkins.coverity.buildstep.CheckForIssuesInView;
+import com.synopsys.integration.jenkins.coverity.buildstep.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.buildstep.freestyle.CoverityBuildStep;
 
@@ -35,12 +37,9 @@ import javaposse.jobdsl.plugin.DslExtensionMethod;
 @Extension(optional = true)
 public class CoverityDslExtension extends ContextExtensionPoint {
     @DslExtensionMethod(context = StepContext.class)
-    public Object coverity(final String coverityInstanceUrl, final String coverityToolName, final String onCommandFailure, final String buildStatusForIssues, final String projectName, final String streamName,
-        final String viewName, final CoverityRunConfiguration coverityRunConfiguration, final String coverityAnalysisType, final String buildCommand, final String changeSetExclusionPatterns, final String changeSetInclusionPatterns,
-        final Boolean checkForIssuesInView,
-        final Boolean configureChangeSetPatterns) {
-        return new CoverityBuildStep(coverityInstanceUrl, coverityToolName, onCommandFailure, buildStatusForIssues, projectName, streamName, viewName, changeSetExclusionPatterns, changeSetInclusionPatterns, checkForIssuesInView,
-            configureChangeSetPatterns, coverityRunConfiguration);
+    public Object coverity(final String coverityInstanceUrl, final String coverityToolName, final String onCommandFailure, final String projectName, final String streamName, final CoverityRunConfiguration coverityRunConfiguration,
+        final CheckForIssuesInView checkForIssuesInView, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        return new CoverityBuildStep(coverityInstanceUrl, coverityToolName, onCommandFailure, projectName, streamName, checkForIssuesInView, configureChangeSetPatterns, coverityRunConfiguration);
     }
 
 }

@@ -54,6 +54,8 @@ import com.synopsys.integration.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.coverity.tools.CoverityToolInstallation;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.buildstep.CommandArguments;
+import com.synopsys.integration.jenkins.coverity.buildstep.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.buildstep.SimpleCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
@@ -92,17 +94,34 @@ public class CoverityToolStep extends BaseCoverityStep {
                                     .filter("https"::equals)
                                     .isPresent();
 
+        final CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();
+        final String covBuildArguments;
+        final String covAnalyzeArguments;
+        final String covCommitDefectsArguments;
+        final String covRunDesktopArguments;
+        if (commandArguments == null) {
+            covBuildArguments = StringUtils.EMPTY;
+            covAnalyzeArguments = StringUtils.EMPTY;
+            covCommitDefectsArguments = StringUtils.EMPTY;
+            covRunDesktopArguments = StringUtils.EMPTY;
+        } else {
+            covBuildArguments = commandArguments.getCovBuildArguments();
+            covAnalyzeArguments = commandArguments.getCovAnalyzeArguments();
+            covCommitDefectsArguments = commandArguments.getCovCommitDefectsArguments();
+            covRunDesktopArguments = commandArguments.getCovRunDesktopArguments();
+        }
+
         if (CoverityAnalysisType.COV_ANALYZE.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
             commands = new RepeatableCommand[] {
-                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), simpleCoverityRunConfiguration.getCovBuildArguments()),
-                RepeatableCommand.COV_ANALYZE(simpleCoverityRunConfiguration.getCovAnalyzeArguments()),
-                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, simpleCoverityRunConfiguration.getCovCommitDefectsArguments())
+                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), covBuildArguments),
+                RepeatableCommand.COV_ANALYZE(covAnalyzeArguments),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
             };
         } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
             commands = new RepeatableCommand[] {
-                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), simpleCoverityRunConfiguration.getCovBuildArguments()),
-                RepeatableCommand.COV_RUN_DESKTOP(isHttps, simpleCoverityRunConfiguration.getCovRunDesktopArguments(), JENKINS_CHANGE_SET),
-                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, simpleCoverityRunConfiguration.getCovCommitDefectsArguments())
+                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), covBuildArguments),
+                RepeatableCommand.COV_RUN_DESKTOP(isHttps, covRunDesktopArguments, JENKINS_CHANGE_SET),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
             };
         } else {
             commands = new RepeatableCommand[] {};
@@ -111,8 +130,7 @@ public class CoverityToolStep extends BaseCoverityStep {
         return commands;
     }
 
-    public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final OnCommandFailure onCommandFailure, final boolean changeSetPatternsConfigured,
-        final String changeSetNamesIncludePatterns, final String changeSetNamesExcludePatterns) {
+    public boolean runCoverityToolStep(final String coverityToolName, final String streamName, final RepeatableCommand[] commands, final OnCommandFailure onCommandFailure, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         initializeJenkinsCoverityLogger();
         try {
             final String pluginVersion = PluginHelper.getPluginVersion();
@@ -155,9 +173,9 @@ public class CoverityToolStep extends BaseCoverityStep {
             logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
             logger.alwaysLog("-- Synopsys stream: " + streamName);
             logger.alwaysLog("-- On command failure: " + onCommandFailure);
-            if (changeSetPatternsConfigured) {
-                logger.alwaysLog("-- Change Set Inclusion Patterns: " + changeSetNamesIncludePatterns);
-                logger.alwaysLog("-- Change Set Exclusion Patterns: " + changeSetNamesExcludePatterns);
+            if (configureChangeSetPatterns != null) {
+                logger.alwaysLog("-- Change Set Inclusion Patterns: " + configureChangeSetPatterns.getChangeSetInclusionPatterns());
+                logger.alwaysLog("-- Change Set Exclusion Patterns: " + configureChangeSetPatterns.getChangeSetExclusionPatterns());
             } else {
                 logger.alwaysLog("-- No Change Set inclusion or exclusion patterns set");
             }
@@ -176,7 +194,7 @@ public class CoverityToolStep extends BaseCoverityStep {
 
                 phoneHomeResponse = phoneHome(coverityInstance, pluginVersion);
 
-                executeCoverityCommands(commands, changeSetPatternsConfigured, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns, onCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
+                executeCoverityCommands(commands, configureChangeSetPatterns, onCommandFailure, coverityInstance, coverityToolInstallation, phoneHomeResponse);
 
             } catch (final InterruptedException e) {
                 if (null != phoneHomeResponse) {
@@ -195,9 +213,8 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
-    private void executeCoverityCommands(final RepeatableCommand[] commands, final boolean changeSetPatternsConfigured, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns,
-        final OnCommandFailure onCommandFailure, final CoverityConnectInstance coverityInstance, final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse)
-        throws IntegrationException, InterruptedException, IOException {
+    private void executeCoverityCommands(final RepeatableCommand[] commands, final ConfigureChangeSetPatterns configureChangeSetPatterns, final OnCommandFailure onCommandFailure, final CoverityConnectInstance coverityInstance,
+        final CoverityToolInstallation coverityToolInstallation, final PhoneHomeResponse phoneHomeResponse) throws IntegrationException, InterruptedException, IOException {
         for (final RepeatableCommand repeatableCommand : commands) {
 
             final String command = repeatableCommand.getCommand();
@@ -205,9 +222,9 @@ public class CoverityToolStep extends BaseCoverityStep {
                 continue;
             }
             final String resolvedCommand;
-            if (changeSetPatternsConfigured) {
+            if (configureChangeSetPatterns != null) {
                 try {
-                    resolvedCommand = updateCommandWithChangeSet(command, changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+                    resolvedCommand = updateCommandWithChangeSet(command, configureChangeSetPatterns);
                 } catch (final EmptyChangeSetException e) {
                     if (OnCommandFailure.EXECUTE_REMAINING_COMMANDS.equals(onCommandFailure)) {
                         logger.error(String.format("[WARNING] Skipping command %s because the CHANGE_SET is empty", command));
@@ -294,11 +311,11 @@ public class CoverityToolStep extends BaseCoverityStep {
         return getCoverityGlobalConfig().getCoverityToolInstallations();
     }
 
-    private String updateCommandWithChangeSet(final String command, final String changeSetNamesExcludePatterns, final String changeSetNamesIncludePatterns) throws EmptyChangeSetException {
+    private String updateCommandWithChangeSet(final String command, final ConfigureChangeSetPatterns configureChangeSetPatterns) throws EmptyChangeSetException {
         String resolvedChangeSetCommand = command;
 
         if (command.contains(JENKINS_CHANGE_SET_BRACKETLESS) || command.contains(JENKINS_CHANGE_SET)) {
-            final ChangeSetFilter changeSetFilter = new ChangeSetFilter(changeSetNamesExcludePatterns, changeSetNamesIncludePatterns);
+            final ChangeSetFilter changeSetFilter = new ChangeSetFilter(configureChangeSetPatterns);
 
             final Stream<ChangeLogSet.Entry> changeSetEntryStream = changeLogSets.stream()
                                                                         .filter(changeLogSet -> !changeLogSet.isEmptySet())

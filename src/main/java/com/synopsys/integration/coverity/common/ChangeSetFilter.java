@@ -31,10 +31,16 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.lang3.StringUtils;
 
-public class ChangeSetFilter {
+import com.synopsys.integration.jenkins.coverity.buildstep.ConfigureChangeSetPatterns;
 
+public class ChangeSetFilter {
     private final Set<String> excludedSet;
     private final Set<String> includedSet;
+
+    public ChangeSetFilter(final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        excludedSet = createSetFromString(configureChangeSetPatterns.getChangeSetExclusionPatterns());
+        includedSet = createSetFromString(configureChangeSetPatterns.getChangeSetInclusionPatterns());
+    }
 
     /**
      * Provide a comma-separated list of names to exclude and/or a comma-separated list of names to include. Exclusion rules always win.

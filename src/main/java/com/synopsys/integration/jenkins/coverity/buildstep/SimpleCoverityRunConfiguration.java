@@ -26,13 +26,11 @@ package com.synopsys.integration.jenkins.coverity.buildstep;
 import java.io.Serializable;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.common.CoverityAnalysisType;
 import com.synopsys.integration.coverity.common.CoverityCommonDescriptor;
 
 import hudson.Extension;
-import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration implements Serializable {
@@ -40,22 +38,13 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
 
     private final CoverityAnalysisType coverityAnalysisType;
     private final String buildCommand;
-    private final Boolean commandArguments;
-    private final String covBuildArguments;
-    private final String covAnalyzeArguments;
-    private final String covRunDesktopArguments;
-    private final String covCommitDefectsArguments;
+    private final CommandArguments commandArguments;
 
     @DataBoundConstructor
-    public SimpleCoverityRunConfiguration(final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final Boolean commandArguments, final String covBuildArguments, final String covAnalyzeArguments,
-        final String covRunDesktopArguments, final String covCommitDefectsArguments) {
+    public SimpleCoverityRunConfiguration(final CoverityAnalysisType coverityAnalysisType, final String buildCommand, final CommandArguments commandArguments) {
         this.coverityAnalysisType = coverityAnalysisType;
         this.buildCommand = buildCommand;
         this.commandArguments = commandArguments;
-        this.covBuildArguments = covBuildArguments;
-        this.covAnalyzeArguments = covAnalyzeArguments;
-        this.covRunDesktopArguments = covRunDesktopArguments;
-        this.covCommitDefectsArguments = covCommitDefectsArguments;
     }
 
     public CoverityAnalysisType getCoverityAnalysisType() {
@@ -66,24 +55,8 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
         return buildCommand;
     }
 
-    public Boolean getCommandArguments() {
+    public CommandArguments getCommandArguments() {
         return commandArguments;
-    }
-
-    public String getCovBuildArguments() {
-        return covBuildArguments;
-    }
-
-    public String getCovAnalyzeArguments() {
-        return covAnalyzeArguments;
-    }
-
-    public String getCovRunDesktopArguments() {
-        return covRunDesktopArguments;
-    }
-
-    public String getCovCommitDefectsArguments() {
-        return covCommitDefectsArguments;
     }
 
     @Override
@@ -110,21 +83,26 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
             return coverityCommonDescriptor.doFillCoverityAnalysisTypeItems();
         }
 
-        public FormValidation doCheckCovBuildArguments(final @QueryParameter("covBuildArguments") String covBuildArguments) {
-            return coverityCommonDescriptor.doCheckCovBuildArguments(covBuildArguments);
-        }
-
-        public FormValidation doCheckCovAnalyzeArguments(final @QueryParameter("covAnalyzeArguments") String covAnalyzeArguments) {
-            return coverityCommonDescriptor.doCheckCovAnalyzeArguments(covAnalyzeArguments);
-        }
-
-        public FormValidation doCheckCovRunDesktopArguments(final @QueryParameter("covRunDesktopArguments") String covRunDesktopArguments) {
-            return coverityCommonDescriptor.doCheckCovRunDesktopArguments(covRunDesktopArguments);
-        }
-
-        public FormValidation doCheckCovCommitDefectsArguments(final @QueryParameter("covCommitDefectsArguments") String covCommitDefectsArguments) {
-            return coverityCommonDescriptor.doCheckCovCommitDefectsArguments(covCommitDefectsArguments);
-        }
+        //////////
+        // These methods included here only because Jenkins insists that they be here instead of in CommandArgument's descriptor, which is what I would expect. We should investigate why this is and see if we can fix it.
+        // If we do fix it, the plugin is presently generating the help html files in the SimpleCoverityRunConfiguration folder, which should be changed to the CommandArguments folder.  - rotte (12/14/2018)
+        //public FormValidation doCheckCovBuildArguments(final @QueryParameter("covBuildArguments") String covBuildArguments) {
+        //    return ((CommandArguments.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(CommandArguments.class)).doCheckCovBuildArguments(covBuildArguments);
+        //}
+        //
+        //public FormValidation doCheckCovAnalyzeArguments(final @QueryParameter("covAnalyzeArguments") String covAnalyzeArguments) {
+        //    return ((CommandArguments.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(CommandArguments.class)).doCheckCovAnalyzeArguments(covAnalyzeArguments);
+        //}
+        //
+        //public FormValidation doCheckCovRunDesktopArguments(final @QueryParameter("covRunDesktopArguments") String covRunDesktopArguments) {
+        //    return ((CommandArguments.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(CommandArguments.class)).doCheckCovRunDesktopArguments(covRunDesktopArguments);
+        //}
+        //
+        //public FormValidation doCheckCovCommitDefectsArguments(final @QueryParameter("covCommitDefectsArguments") String covCommitDefectsArguments) {
+        //    return ((CommandArguments.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(CommandArguments.class)).doCheckCovCommitDefectsArguments(covCommitDefectsArguments);
+        //}
+        // End methods that seem unnecessary
+        //////////
 
         @Override
         public String getDisplayName() {

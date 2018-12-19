@@ -33,6 +33,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,6 +70,8 @@ import hudson.util.ListBoxModel;
 import jenkins.model.GlobalConfiguration;
 
 public class CoverityCommonDescriptor {
+    private static final Logger logger = Logger.getLogger(CoverityCommonDescriptor.class.getName());
+
     private final ProjectCacheData projectCacheData = new ProjectCacheData();
     private final ViewCacheData viewCacheData = new ViewCacheData();
 
@@ -194,7 +198,7 @@ public class CoverityCommonDescriptor {
             }
         }
 
-        return FormValidation.error("There are no Coverity instance configured with the name %s", jenkinsCoverityInstanceUrl);
+        return FormValidation.error("There are no Coverity instances configured with the name %s", jenkinsCoverityInstanceUrl);
     }
 
     public FormValidation testConnectionIgnoreSuccessMessage(final CoverityConnectInstance coverityConnectInstance) {
@@ -281,8 +285,8 @@ public class CoverityCommonDescriptor {
     }
 
     private <T> Optional<T> findDataObjectThatMatchesDisplayName(final T[] dataObjects, final Function<T, String> displayNameMapper, final String dataObjectDisplayNameToFind) {
-        return Stream.of(dataObjects)
-                   .filter(dataObject -> dataObjectDisplayNameToFind.equals(displayNameMapper.apply(dataObject)))
+        return Arrays.stream(dataObjects)
+                   .filter(dataObject -> displayNameMapper.apply(dataObject).equals(dataObjectDisplayNameToFind))
                    .findFirst();
     }
 
@@ -333,7 +337,7 @@ public class CoverityCommonDescriptor {
                     cacheData.checkAndWaitForData(jenkinsCoverityInstanceOptional.get(), updateNow);
                     return true;
                 } catch (final IntegrationException | InterruptedException e) {
-                    e.printStackTrace();
+                    logger.log(Level.WARNING, "Unexpected exception encountered when checking or waiting for Coverity data", e);
                 } catch (final IllegalStateException ignored) {
                     // Handled by form validation
                 }

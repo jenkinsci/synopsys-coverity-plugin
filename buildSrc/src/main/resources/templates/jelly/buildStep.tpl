@@ -12,26 +12,36 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
     entry(projectNameField, projectNameTitle, SELECT)
     entry(streamNameField, streamNameTitle, SELECT)
 
-    'f:optionalBlock'(field: checkForIssuesInViewField, title: checkForIssuesInViewTitle, inline: true) {
-        entry(viewNameField, viewNameTitle, SELECT)
-        entry(buildStatusForIssuesField, buildStatusForIssuesTitle, SELECT)
+    'f:optionalBlock'(checked: "\${instance.$checkForIssuesInViewField != null}", field: checkForIssuesInViewField, title: checkForIssuesInViewTitle) {
+        'j:scope' {
+            'j:set'(var: 'instance', value: "\${instance.$checkForIssuesInViewField}")
+            'j:set'(var: 'descriptor', value: "\${instance.descriptor}")
+            'j:set'(var: 'it', value: "\${it.$checkForIssuesInViewField}")
+            entry(viewNameField, viewNameTitle, SELECT)
+            entry(buildStatusForIssuesField, buildStatusForIssuesTitle, SELECT)
+        }
     }
 
-    'f:optionalBlock'(field: configureChangeSetPatternsField, title: configureChangeSetPatternsTitle, inline: true) {
-        entry(changeSetInclusionPatternsField, changeSetInclusionPatternsTitle, TEXTBOX)
-        entry(changeSetExclusionPatternsField, changeSetExclusionPatternsTitle, TEXTBOX)
+    'f:optionalBlock'(checked: "\${instance.$configureChangeSetPatternsField != null}", field: configureChangeSetPatternsField, title: configureChangeSetPatternsTitle) {
+        'j:scope' {
+            'j:set'(var: 'instance', value: "\${instance.$configureChangeSetPatternsField}")
+            'j:set'(var: 'descriptor', value: "\${instance.descriptor}")
+            'j:set'(var: 'it', value: "\${it.$configureChangeSetPatternsField}")
+            entry(changeSetInclusionPatternsField, changeSetInclusionPatternsTitle, TEXTBOX)
+            entry(changeSetExclusionPatternsField, changeSetExclusionPatternsTitle, TEXTBOX)
+        }
     }
 
     refreshConnectionButton(refreshConnectionButtonValue)
 
-    'f:dropdownDescriptorSelector'(field: coverityRunConfigurationField, title: coverityRunConfigurationTitle, default: "\${descriptor.$coverityRunConfigurationDefault}")
+    'f:dropdownDescriptorSelector'(field: coverityRunConfigurationField, title: coverityRunConfigurationTitle, default: "\${instance.$coverityRunConfigurationDefault}")
 
     entry(onCommandFailureField, onCommandFailureTitle, SELECT)
 }
 
 def entry(def field, def title, def inputTag) {
     'f:entry'(field: field, title: title) {
-        "$inputTag"()
+        "$inputTag"(id: "${field}Id")
     }
 }
 

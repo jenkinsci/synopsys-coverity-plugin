@@ -1,0 +1,14 @@
+{
+  "helpHtml.tpl": {
+    "buildStatusForIssues": {
+      "overview": [
+        "Specify the build status to set if issues are found in the configured view."
+      ]
+    },
+    "viewName": {
+      "overview": [
+        "Specify the name of the Coverity view that you would like to check for issues."
+      ]
+    }
+  }
+}

@@ -78,8 +78,11 @@ task generateJelly(type: GenerateJelly) {
 
 task generateHelp(type: GenerateHtml) {
     outputPathToJson = ['src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/freestyle/CoverityBuildStep'   : 'src/main/resources/templates/html/buildStep.json',
-                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/SimpleCoverityRunConfiguration': 'src/main/resources/templates/html/simpleRunConfiguration.json',
                         'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/pipeline/CoverityPipelineStep' : 'src/main/resources/templates/html/buildStep.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/SimpleCoverityRunConfiguration': 'src/main/resources/templates/html/simpleRunConfiguration.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/CommandArguments'              : 'src/main/resources/templates/html/commandArguments.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/CheckForIssuesInView'          : 'src/main/resources/templates/html/checkForIssuesInView.json',
+                        'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/ConfigureChangeSetPatterns'    : 'src/main/resources/templates/html/configureChangeSetPatterns.json',
                         'src/main/resources/com/synopsys/integration/jenkins/coverity/global/CoverityConnectInstance'          : 'src/main/resources/templates/html/coverityConnectInstance.json',
                         'src/main/resources/com/synopsys/integration/jenkins/coverity/buildstep/RepeatableCommand'             : 'src/main/resources/templates/html/repeatableCommand.json',]
 }

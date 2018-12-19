@@ -44,6 +44,7 @@ import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.buildstep.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.global.CoverityConnectInstance;
 
 import hudson.EnvVars;
@@ -58,7 +59,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
         super(coverityInstanceUrl, node, listener, envVars, workspace, run);
     }
 
-    public boolean runCoverityCheckForIssuesInViewStep(final BuildStatus buildStatus, final String projectName, final String viewName) {
+    public boolean runCoverityCheckForIssuesInViewStep(final CheckForIssuesInView checkForIssuesInView, final String projectName) {
         super.initializeJenkinsCoverityLogger();
         try {
             // getResult() returns null if the build is still in progress
@@ -67,7 +68,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
                 return false;
             }
 
-            if (!validateCheckForIssuesInViewStepConfiguration(buildStatus, projectName, viewName)) {
+            if (!validateCheckForIssuesInViewStepConfiguration(checkForIssuesInView.getBuildStatusForIssues(), projectName, checkForIssuesInView.getViewName())) {
                 logger.warn("Skipping the Synopsys Coverity Check for Issues in View step.");
                 setResult(Result.UNSTABLE);
                 return false;
@@ -86,10 +87,10 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
             }
 
             final String resolvedProjectName = handleVariableReplacement(getEnvVars(), projectName);
-            final String resolvedViewName = handleVariableReplacement(getEnvVars(), viewName);
+            final String resolvedViewName = handleVariableReplacement(getEnvVars(), checkForIssuesInView.getViewName());
 
             super.logGlobalConfiguration(coverityInstance);
-            logFailureConditionConfiguration(buildStatus, resolvedProjectName, resolvedViewName);
+            logFailureConditionConfiguration(checkForIssuesInView.getBuildStatusForIssues(), resolvedProjectName, resolvedViewName);
 
             logger.alwaysLog("Checking for issues in project and view.");
             final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
@@ -126,7 +127,12 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
             logger.info(String.format("[Coverity] Found %s issues for project \"%s\" and view \"%s\"", defectSize, resolvedProjectName, resolvedViewName));
 
             if (defectSize > 0) {
-                setResult(buildStatus.getResult());
+                final BuildStatus buildStatus = checkForIssuesInView.getBuildStatusForIssues();
+                if (buildStatus != null) {
+                    setResult(buildStatus.getResult());
+                } else {
+                    logger.error("[ERROR] Attempted to set build status for job, but build status was configured as null. Please check your configuration.");
+                }
             }
         } catch (final Exception e) {
             logger.error("[ERROR] " + e.getMessage(), e);

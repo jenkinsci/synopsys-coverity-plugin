@@ -1,0 +1,82 @@
+{
+  "changeSetPattern.tpl": {
+    "changeSetInclusionPatterns": {
+      "overview": [
+        "Specify a comma separated list of filename patterns that you would like to explicitly included from the Jenkins change set.",
+        "The pattern is applied to the $CHANGE_SET environment variable, and will affect which files are analyzed in an incremental analysis (cov-run-desktop).",
+        "Examples:"
+      ],
+      "columnNames": [
+        "File Name",
+        "Pattern",
+        "Will be included"
+      ],
+      "rowContents": [
+        [
+          "test.java",
+          "*.java",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "*.jpg",
+          "No"
+        ],
+        [
+          "test.java",
+          "test.*",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.????",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.?????",
+          "No"
+        ]
+      ]
+    },
+    "changeSetExclusionPatterns": {
+      "overview": [
+        "Specify a comma separated list of filename patterns that you would like to explicitly excluded from the Jenkins change set.",
+        "The pattern is applied to the $CHANGE_SET environment variable, and will affect which files are analyzed in an incremental analysis (cov-run-desktop).",
+        "Examples:"
+      ],
+      "columnNames": [
+        "File Name",
+        "Pattern",
+        "Will be excluded"
+      ],
+      "rowContents": [
+        [
+          "test.java",
+          "*.java",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "*.jpg",
+          "No"
+        ],
+        [
+          "test.java",
+          "test.*",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.????",
+          "Yes"
+        ],
+        [
+          "test.java",
+          "test.?????",
+          "No"
+        ]
+      ]
+    }
+  }
+}
