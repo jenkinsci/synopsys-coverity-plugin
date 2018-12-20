@@ -11,7 +11,7 @@ function loadProjects() {
     var coverityUrlSelect = document.getElementById('coverityInstanceUrlId');
     var coverityUrl = coverityUrlSelect.value;
 
-    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.jenkins.coverity.buildstep.freestyle.CoverityBuildStep/fillProjectNameItems";
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.jenkins.coverity.extensions.buildstep.freestyle.CoverityBuildStep/fillProjectNameItems";
     var requestParameters = {coverityInstanceUrl: coverityUrl, projectName: oldProjectSelected, updateNow: true};
     loadList('projectNameId', 'projectsLoading', 'Loading projects...', fillURL, requestParameters);
 }
@@ -26,7 +26,7 @@ function loadStreams() {
     var coverityUrlSelect = document.getElementById('coverityInstanceUrlId');
     var coverityUrl = coverityUrlSelect.value;
 
-    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.jenkins.coverity.buildstep.freestyle.CoverityBuildStep/fillStreamNameItems";
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.jenkins.coverity.extensions.buildstep.freestyle.CoverityBuildStep/fillStreamNameItems";
     var requestParameters = {coverityInstanceUrl: coverityUrl, projectName: oldProjectSelected, streamName: oldStreamSelected, updateNow: true};
     loadList('streamNameId', 'streamsLoading', 'Loading streams...', fillURL, requestParameters);
 }
@@ -38,7 +38,7 @@ function loadViews() {
     var coverityUrlSelect = document.getElementById('coverityInstanceUrlId');
     var coverityUrl = coverityUrlSelect.value;
 
-    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.jenkins.coverity.buildstep.CheckForIssuesInView/fillViewNameItems";
+    var fillURL = jenkinsRootUrl + "/descriptor/com.synopsys.integration.jenkins.coverity.extensions.buildstep.CheckForIssuesInView/fillViewNameItems";
     var requestParameters = {coverityInstanceUrl: coverityUrl, viewName: oldViewSelected, updateNow: true};
     loadList('viewNameId', 'viewsLoading', 'Loading views...', fillURL, requestParameters);
 }

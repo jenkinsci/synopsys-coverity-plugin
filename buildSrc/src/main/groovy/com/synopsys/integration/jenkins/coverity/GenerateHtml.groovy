@@ -9,6 +9,8 @@ import org.gradle.api.tasks.TaskAction
 
 class GenerateHtml extends DefaultTask {
     Map<String, String> outputPathToJson = [:]
+    String pathToExtensionResourcesPackage = ''
+    String pathToHelpJson = ''
 
     @TaskAction
     void generateHtml() {
@@ -20,21 +22,17 @@ class GenerateHtml extends DefaultTask {
         def jsonSlurper = new JsonSlurper()
 
         outputPathToJson.entrySet().each {
-            def outputPath = it.key
-            def json = new File(it.value)
+            def outputPath = new File(pathToExtensionResourcesPackage, it.key).canonicalPath
+            def json = new File(new File(pathToHelpJson).canonicalPath, it.value)
             def jsonObject = jsonSlurper.parse(json)
 
-            generateHelpHtml(engine, jsonObject, outputPath)
-        }
-    }
-
-    void generateHelpHtml(final MarkupTemplateEngine engine, final Object jsonObject, final String outputPath) {
-        jsonObject.entrySet().each { templateEntry ->
-            Template template = engine.createTemplateByPath("templates/html/${templateEntry.key}")
-            templateEntry.value.entrySet().each { fieldEntry ->
-                String fieldName = fieldEntry.key
-                Map model = fieldEntry.value
-                GenerationUtils.writeTemplate(template, model, "${outputPath}/help-${fieldName}.html")
+            jsonObject.entrySet().each { templateEntry ->
+                Template template = engine.createTemplateByPath("templates/html/${templateEntry.key}")
+                templateEntry.value.entrySet().each { fieldEntry ->
+                    String fieldName = fieldEntry.key
+                    Map model = fieldEntry.value
+                    GenerationUtils.writeTemplate(template, model, outputPath, "help-${fieldName}.html")
+                }
             }
         }
     }

@@ -14,8 +14,8 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
 
     'f:optionalBlock'(checked: "\${instance.$checkForIssuesInViewField != null}", field: checkForIssuesInViewField, title: checkForIssuesInViewTitle) {
         'j:scope' {
+            'j:set'(var: 'descriptor', value: "\${descriptor.getPropertyType(instance,'${checkForIssuesInViewField}').getApplicableDescriptors().get(0)}")
             'j:set'(var: 'instance', value: "\${instance.$checkForIssuesInViewField}")
-            'j:set'(var: 'descriptor', value: "\${instance.descriptor}")
             'j:set'(var: 'it', value: "\${it.$checkForIssuesInViewField}")
             entry(viewNameField, viewNameTitle, SELECT)
             entry(buildStatusForIssuesField, buildStatusForIssuesTitle, SELECT)
@@ -24,8 +24,8 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
 
     'f:optionalBlock'(checked: "\${instance.$configureChangeSetPatternsField != null}", field: configureChangeSetPatternsField, title: configureChangeSetPatternsTitle) {
         'j:scope' {
+            'j:set'(var: 'descriptor', value: "\${descriptor.getPropertyType(instance,'${configureChangeSetPatternsField}').getApplicableDescriptors().get(0)}")
             'j:set'(var: 'instance', value: "\${instance.$configureChangeSetPatternsField}")
-            'j:set'(var: 'descriptor', value: "\${instance.descriptor}")
             'j:set'(var: 'it', value: "\${it.$configureChangeSetPatternsField}")
             entry(changeSetInclusionPatternsField, changeSetInclusionPatternsTitle, TEXTBOX)
             entry(changeSetExclusionPatternsField, changeSetExclusionPatternsTitle, TEXTBOX)
