@@ -8,12 +8,16 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
 class GenerateHtml extends DefaultTask {
-    Map<String, String> outputPathToJson = [:]
-    String pathToExtensionResourcesPackage = ''
-    String pathToHelpJson = ''
+    Map<String, String> outputPathToJson = null
+    String pathToExtensionResourcesPackage = null
+    String pathToHelpJson = null
 
     @TaskAction
     void generateHtml() {
+        if (!outputPathToJson || !pathToExtensionResourcesPackage || !pathToHelpJson) {
+            throw new IllegalStateException('Cannot generate help html, ouptutPathToJson, pathToExtensionResourcesPackage, and/or pathToHelpJson not set')
+        }
+
         def config = new TemplateConfiguration()
         config.setAutoIndent(true)
         config.setAutoNewLine(true)

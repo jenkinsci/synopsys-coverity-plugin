@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,7 +21,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep.pipeline;
 
 import java.io.IOException;
@@ -41,12 +40,12 @@ import org.kohsuke.stapler.QueryParameter;
 import com.google.common.collect.ImmutableSet;
 import com.synopsys.integration.jenkins.coverity.CoverityCheckForIssuesInViewStep;
 import com.synopsys.integration.jenkins.coverity.CoverityToolStep;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
+import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.AdvancedCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityCommonDescriptor;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
 

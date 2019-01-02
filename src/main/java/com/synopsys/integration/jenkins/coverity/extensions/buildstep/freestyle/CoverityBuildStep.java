@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,30 +21,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep.freestyle;
 
 import java.io.IOException;
+import java.io.Serializable;
+
+import javax.annotation.Nonnull;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.jenkins.coverity.CoverityCheckForIssuesInViewStep;
 import com.synopsys.integration.jenkins.coverity.CoverityToolStep;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
+import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.AdvancedCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
 
+import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 
 public class CoverityBuildStep extends Builder {
     private final String coverityToolName;
@@ -111,8 +120,8 @@ public class CoverityBuildStep extends Builder {
     }
 
     @Override
-    public CoverityBuildStepDescriptor getDescriptor() {
-        return (CoverityBuildStepDescriptor) super.getDescriptor();
+    public DescriptorImpl getDescriptor() {
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Override
@@ -140,7 +149,7 @@ public class CoverityBuildStep extends Builder {
         return true;
     }
 
-    public FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) {
+    private FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) {
         final FilePath workingDirectory;
         if (build.getWorkspace() == null) {
             // might be using custom workspace
@@ -149,6 +158,68 @@ public class CoverityBuildStep extends Builder {
             workingDirectory = build.getWorkspace();
         }
         return workingDirectory;
+    }
+
+    @Extension
+    public static class DescriptorImpl extends BuildStepDescriptor<Builder> implements Serializable {
+        private static final long serialVersionUID = -7146909743946288527L;
+        private final transient CoverityCommonDescriptor coverityCommonDescriptor;
+
+        public DescriptorImpl() {
+            super(CoverityBuildStep.class);
+            load();
+            coverityCommonDescriptor = new CoverityCommonDescriptor();
+        }
+
+        @Override
+        @Nonnull
+        public String getDisplayName() {
+            return "Execute Synopsys Coverity static analysis";
+        }
+
+        @Override
+        public boolean isApplicable(final Class<? extends AbstractProject> jobType) {
+            return true;
+        }
+
+        public ListBoxModel doFillCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+            return coverityCommonDescriptor.doFillCoverityInstanceUrlItems(coverityInstanceUrl);
+        }
+
+        public FormValidation doCheckCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+            return coverityCommonDescriptor.doCheckCoverityInstanceUrl(coverityInstanceUrl);
+        }
+
+        public ListBoxModel doFillCoverityToolNameItems(@QueryParameter("coverityToolName") final String coverityToolName) {
+            return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolName);
+        }
+
+        public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") final String coverityToolName) {
+            return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolName);
+        }
+
+        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName,
+            final @QueryParameter("updateNow") boolean updateNow) {
+            return coverityCommonDescriptor.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);
+        }
+
+        public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+            return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+        }
+
+        public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName,
+            final @QueryParameter("streamName") String streamName, final @QueryParameter("updateNow") boolean updateNow) {
+            return coverityCommonDescriptor.doFillStreamNameItems(coverityInstanceUrl, projectName, streamName, updateNow);
+        }
+
+        public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+            return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+        }
+
+        public ListBoxModel doFillOnCommandFailureItems() {
+            return coverityCommonDescriptor.doFillOnCommandFailureItems();
+        }
+
     }
 
 }

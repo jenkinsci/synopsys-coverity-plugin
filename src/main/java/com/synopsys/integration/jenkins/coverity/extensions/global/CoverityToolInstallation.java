@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,8 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package com.synopsys.integration.jenkins.coverity.extensions.global.tools;
+package com.synopsys.integration.jenkins.coverity.extensions.global;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,11 +33,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.CoverityVersion;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -60,6 +57,8 @@ import jenkins.model.GlobalConfiguration;
  * the install directory.
  */
 public class CoverityToolInstallation extends ToolInstallation implements NodeSpecific<CoverityToolInstallation>, EnvironmentSpecific<CoverityToolInstallation> {
+    private static final long serialVersionUID = 2242695353754874380L;
+
     @DataBoundConstructor
     public CoverityToolInstallation(final String name, final String home) {
         super(name, home, new DescribableList<ToolProperty<?>, ToolPropertyDescriptor>(Saveable.NOOP));
@@ -79,7 +78,6 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
      * {@link ToolDescriptor} for {@link CoverityToolInstallation}
      */
     @Extension
-    @Symbol("coverity")
     public static final class CoverityToolInstallationDescriptor extends ToolDescriptor<CoverityToolInstallation> {
         @Override
         public String getDisplayName() {

@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,7 +21,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.synopsys.integration.jenkins.coverity;
 
 import java.io.IOException;
@@ -50,14 +49,14 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.exception.EmptyChangeSetException;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
+import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArguments;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityAnalysisType;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.extensions.global.tools.CoverityToolInstallation;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
 import com.synopsys.integration.jenkins.coverity.remote.CoverityRemoteResponse;
 import com.synopsys.integration.jenkins.coverity.remote.CoverityRemoteRunner;
 import com.synopsys.integration.log.LogLevel;

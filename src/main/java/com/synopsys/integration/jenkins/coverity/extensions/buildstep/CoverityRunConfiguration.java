@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -24,6 +24,8 @@
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.Serializable;
+
+import com.synopsys.integration.jenkins.coverity.extensions.CoveritySelectBoxEnum;
 
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;

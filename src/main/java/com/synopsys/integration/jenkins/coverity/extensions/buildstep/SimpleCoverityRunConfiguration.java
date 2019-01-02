@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -25,7 +25,12 @@ package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.Serializable;
 
+import javax.annotation.Nonnull;
+
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
 
 import hudson.Extension;
 import hudson.util.ListBoxModel;
@@ -81,6 +86,7 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
         }
 
         @Override
+        @Nonnull
         public String getDisplayName() {
             return RunConfigurationType.SIMPLE.getDisplayName();
         }

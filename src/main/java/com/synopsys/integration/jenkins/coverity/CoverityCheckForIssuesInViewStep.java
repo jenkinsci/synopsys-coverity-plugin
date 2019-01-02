@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,7 +21,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package com.synopsys.integration.jenkins.coverity;
 
 import java.io.IOException;
@@ -44,7 +43,7 @@ import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.BuildStatus;
+import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 

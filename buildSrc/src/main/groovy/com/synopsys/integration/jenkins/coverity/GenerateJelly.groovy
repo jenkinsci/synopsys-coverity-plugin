@@ -8,12 +8,16 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
 class GenerateJelly extends DefaultTask {
-    Map<String, String> outputPathToJson = [:]
-    String pathToExtensionResourcesPackage = ''
-    String pathToJellyJson = ''
+    Map<String, String> outputPathToJson = null
+    String pathToExtensionResourcesPackage = null
+    String pathToJellyJson = null
 
     @TaskAction
     void generateJelly() {
+        if (!outputPathToJson || !pathToExtensionResourcesPackage || !pathToJellyJson) {
+            throw new IllegalStateException('Cannot generate jelly files, ouptutPathToJson, pathToExtensionResourcesPackage, and/or pathToJellyJson not set')
+        }
+
         final def config = new TemplateConfiguration()
         config.setAutoIndent(true)
         config.setAutoNewLine(true)

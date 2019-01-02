@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -21,8 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
+package com.synopsys.integration.jenkins.coverity.extensions;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -55,9 +54,10 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.cache.BaseCacheData;
 import com.synopsys.integration.jenkins.coverity.cache.ProjectCacheData;
 import com.synopsys.integration.jenkins.coverity.cache.ViewCacheData;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
-import com.synopsys.integration.jenkins.coverity.extensions.global.tools.CoverityToolInstallation;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.log.PrintStreamIntLogger;
 import com.synopsys.integration.validator.FieldEnum;
@@ -75,7 +75,7 @@ public class CoverityCommonDescriptor {
     private final ViewCacheData viewCacheData = new ViewCacheData();
 
     public ListBoxModel doFillCoverityInstanceUrlItems(final String selectedCoverityInstanceUrl) {
-        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalJenkinsCoverityInstances();
+        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalCoverityConnectInstances();
         if (jenkinsCoverityInstances.isPresent()) {
             return transformDataObjectArrayToListBoxModel(jenkinsCoverityInstances.get(), CoverityConnectInstance::getUrl, selectedCoverityInstanceUrl);
         } else {
@@ -84,7 +84,7 @@ public class CoverityCommonDescriptor {
     }
 
     public FormValidation doCheckCoverityInstanceUrl(final String coverityInstance) {
-        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalJenkinsCoverityInstances();
+        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalCoverityConnectInstances();
         if (!jenkinsCoverityInstances.isPresent() || jenkinsCoverityInstances.get().length == 0) {
             return FormValidation.error("There are no Coverity instances configured");
         }
@@ -189,7 +189,7 @@ public class CoverityCommonDescriptor {
     }
 
     public FormValidation testConnectionIgnoreSuccessMessage(final String jenkinsCoverityInstanceUrl) {
-        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalJenkinsCoverityInstances();
+        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalCoverityConnectInstances();
         if (jenkinsCoverityInstances.isPresent()) {
             final Optional<CoverityConnectInstance> jenkinsCoverityInstance = findDataObjectThatMatchesDisplayName(jenkinsCoverityInstances.get(), CoverityConnectInstance::getUrl, jenkinsCoverityInstanceUrl);
             if (jenkinsCoverityInstance.isPresent()) {
@@ -325,7 +325,7 @@ public class CoverityCommonDescriptor {
     }
 
     private boolean checkAndWaitForCacheData(final String jenkinsCoverityInstanceUrl, final Boolean updateNow, final BaseCacheData cacheData) {
-        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalJenkinsCoverityInstances();
+        final Optional<CoverityConnectInstance[]> jenkinsCoverityInstances = getGlobalCoverityConnectInstances();
         if (jenkinsCoverityInstances.isPresent()) {
             final Optional<CoverityConnectInstance> jenkinsCoverityInstanceOptional = Stream.of(jenkinsCoverityInstances.get())
                                                                                           .filter(jenkinsCoverityInstance -> jenkinsCoverityInstance.getUrl().equals(jenkinsCoverityInstanceUrl))
@@ -353,7 +353,7 @@ public class CoverityCommonDescriptor {
                    .map(CoverityGlobalConfig::getCoverityToolInstallations);
     }
 
-    private Optional<CoverityConnectInstance[]> getGlobalJenkinsCoverityInstances() {
+    private Optional<CoverityConnectInstance[]> getGlobalCoverityConnectInstances() {
         return Optional.ofNullable(getCoverityGlobalConfig())
                    .map(CoverityGlobalConfig::getCoverityConnectInstances);
     }

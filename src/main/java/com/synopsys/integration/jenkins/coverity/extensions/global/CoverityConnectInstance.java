@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (C) 2018 Black Duck Software, Inc.
+ * Copyright (C) 2019 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -39,7 +39,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityCommonDescriptor;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
