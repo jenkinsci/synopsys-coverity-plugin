@@ -78,8 +78,8 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
             this.coverityCommonDescriptor = new CoverityCommonDescriptor();
         }
 
-        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl,
-            final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
+        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName,
+            final @QueryParameter("updateNow") boolean updateNow) {
             return coverityCommonDescriptor.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
         }
 

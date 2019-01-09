@@ -43,7 +43,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
@@ -378,14 +377,8 @@ public class CoverityToolStep extends BaseCoverityStep {
         PhoneHomeResponse phoneHomeResponse = null;
 
         try {
-            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
             final Optional<URL> coverityUrl = coverityInstance.getCoverityURL();
-
-            builder.url(coverityUrl.map(URL::toString).orElse(null));
-            builder.username(coverityInstance.getCoverityUsername().orElse(null));
-            builder.password(coverityInstance.getCoverityPassword().orElse(null));
-
-            final CoverityServerConfig coverityServerConfig = builder.build();
+            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
             final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
             webServiceFactory.connect();
 

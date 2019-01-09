@@ -57,8 +57,8 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
 
     private final EnvVars envVars;
 
-    public CoverityRemoteRunner(final JenkinsCoverityLogger logger, final String coverityUsername, final String coverityPassword,
-        final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath, final EnvVars envVars) {
+    public CoverityRemoteRunner(final JenkinsCoverityLogger logger, final String coverityUsername, final String coverityPassword, final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath,
+        final EnvVars envVars) {
         this.logger = logger;
 
         this.coverityUsername = coverityUsername;
@@ -73,12 +73,8 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
     public CoverityRemoteResponse call() throws IntegrationException {
         final File workspace = new File(workspacePath);
         final Map<String, String> environment = new HashMap<>(envVars);
-        if (null != coverityUsername) {
-            setEnvironmentVariableString(environment, Executable.COVERITY_USER_ENVIRONMENT_VARIABLE, coverityUsername);
-        }
-        if (null != coverityPassword) {
-            setEnvironmentVariableString(environment, Executable.COVERITY_PASSWORD_ENVIRONMENT_VARIABLE, coverityPassword);
-        }
+        setEnvironmentVariableString(environment, Executable.COVERITY_USER_ENVIRONMENT_VARIABLE, coverityUsername);
+        setEnvironmentVariableString(environment, Executable.COVERITY_PASSWORD_ENVIRONMENT_VARIABLE, coverityPassword);
         final Executable executable = new Executable(arguments, workspace, environment);
         final ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
         int exitCode = -1;

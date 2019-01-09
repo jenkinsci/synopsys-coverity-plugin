@@ -39,6 +39,8 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
+import com.synopsys.integration.coverity.config.CoverityServerConfig;
+import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
 
 import hudson.Extension;
@@ -92,16 +94,22 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
                    .map(Secret::getPlainText);
     }
 
+    public CoverityServerConfig getCoverityServerConfig() {
+        final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder()
+                                                        .url(getCoverityURL().map(URL::toString).orElse(null))
+                                                        .username(getCoverityUsername().orElse(null))
+                                                        .password(getCoverityPassword().orElse(null));
+
+        return builder.build();
+    }
+
     private Optional<StandardUsernamePasswordCredentials> getCredentials() {
         if (StringUtils.isBlank(credentialId)) {
             return Optional.empty();
         }
 
-        return findUsernamePasswordCredentialsWithId(credentialId);
-    }
-
-    private Optional<StandardUsernamePasswordCredentials> findUsernamePasswordCredentialsWithId(final String credentialId) {
         final IdMatcher idMatcher = new IdMatcher(credentialId);
+
         return CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()).stream()
                    .filter(idMatcher::matches)
                    .findAny();

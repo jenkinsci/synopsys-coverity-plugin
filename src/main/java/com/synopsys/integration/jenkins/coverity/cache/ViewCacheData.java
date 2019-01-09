@@ -25,13 +25,11 @@ package com.synopsys.integration.jenkins.coverity.cache;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
@@ -52,12 +50,7 @@ public class ViewCacheData extends BaseCacheData<String> {
         List<String> data = Collections.emptyList();
         try {
             logger.info("Attempting retrieval of Coverity Views.");
-            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
-            builder.username(coverityInstance.getCoverityUsername().orElse(null));
-            builder.password(coverityInstance.getCoverityPassword().orElse(null));
-
-            final CoverityServerConfig coverityServerConfig = builder.build();
+            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
             final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 

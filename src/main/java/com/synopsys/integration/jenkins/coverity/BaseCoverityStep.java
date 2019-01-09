@@ -30,7 +30,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.jenkins.JenkinsProxyHelper;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
@@ -123,7 +122,7 @@ public abstract class BaseCoverityStep {
         return variables;
     }
 
-    public String handleVariableReplacement(final Map<String, String> variables, final String value) throws CoverityJenkinsException {
+    protected String handleVariableReplacement(final Map<String, String> variables, final String value) throws CoverityJenkinsException {
         if (value != null) {
             final String newValue = Util.replaceMacro(value, variables);
             if (newValue.contains("$")) {
@@ -134,13 +133,9 @@ public abstract class BaseCoverityStep {
         return null;
     }
 
-    public JenkinsProxyHelper getJenkinsProxyHelper() {
-        return new JenkinsProxyHelper();
-    }
-
-    public void logGlobalConfiguration(final CoverityConnectInstance coverityInstance) {
+    protected void logGlobalConfiguration(final CoverityConnectInstance coverityInstance) {
         if (null == coverityInstance) {
-            logger.warn("No configured Coverity server was detected in the Jenkins System Configuration.");
+            logger.warn("No Coverity Connect instance configured.");
         } else {
             final Optional<URL> optionalCoverityURL = coverityInstance.getCoverityURL();
             if (!optionalCoverityURL.isPresent()) {

@@ -24,12 +24,10 @@
 package com.synopsys.integration.jenkins.coverity.cache;
 
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
@@ -54,12 +52,7 @@ public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
         List<ProjectDataObj> projects = Collections.emptyList();
         try {
             logger.info("Attempting retrieval of Coverity Projects.");
-            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
-            builder.username(coverityInstance.getCoverityUsername().orElse(null));
-            builder.password(coverityInstance.getCoverityPassword().orElse(null));
-
-            final CoverityServerConfig coverityServerConfig = builder.build();
+            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
             final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 

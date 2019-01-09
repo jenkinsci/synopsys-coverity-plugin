@@ -33,7 +33,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
@@ -93,12 +92,8 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
             logFailureConditionConfiguration(checkForIssuesInView.getBuildStatusForIssues(), resolvedProjectName, resolvedViewName);
 
             logger.alwaysLog("Checking for issues in project and view.");
-            final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder();
-            builder.url(coverityInstance.getCoverityURL().map(URL::toString).orElse(null));
-            builder.username(coverityInstance.getCoverityUsername().orElse(null));
-            builder.password(coverityInstance.getCoverityPassword().orElse(null));
 
-            final CoverityServerConfig coverityServerConfig = builder.build();
+            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
             final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
             webServiceFactory.connect();
 
@@ -162,7 +157,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
     private Boolean validateGlobalConfiguration(final CoverityConnectInstance coverityInstance) {
         boolean shouldContinue = true;
         if (null == coverityInstance) {
-            logger.error("No global Synopsys Coverity configuration found.");
+            logger.error("No Coverity Connect instance configured.");
             shouldContinue = false;
         } else {
             final Optional<URL> optionalCoverityURL = coverityInstance.getCoverityURL();
@@ -193,14 +188,15 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
     private Optional<String> getProjectIdFromName(final String projectName, final ConfigurationService configurationService) throws CovRemoteServiceException_Exception {
         final ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
         final List<ProjectDataObj> projects = configurationService.getProjects(projectFilterSpecDataObj);
-        for (final ProjectDataObj projectDataObj : projects) {
-            if (null != projectDataObj.getId() && null != projectDataObj.getId().getName() && projectDataObj.getId().getName().equals(projectName)) {
-                if (null != projectDataObj.getProjectKey()) {
-                    return Optional.of(String.valueOf(projectDataObj.getProjectKey()));
-                }
-            }
-        }
-        return Optional.empty();
+        return projects.stream()
+                   .filter(projectDataObj -> projectDataObjHasName(projectDataObj, projectName))
+                   .findFirst()
+                   .map(ProjectDataObj::getProjectKey)
+                   .map(String::valueOf);
+    }
+
+    private boolean projectDataObjHasName(final ProjectDataObj projectDataObj, final String name) {
+        return projectDataObj.getId() != null && projectDataObj.getId().getName() != null && projectDataObj.getId().getName().equals(name);
     }
 
     private Optional<String> getViewIdFromName(final String viewName, final ViewService viewService) throws IntegrationException, IOException, URISyntaxException {
