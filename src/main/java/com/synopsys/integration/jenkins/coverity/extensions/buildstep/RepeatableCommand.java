@@ -33,6 +33,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -40,9 +42,6 @@ import hudson.util.FormValidation;
 
 public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand> {
     private static final String JENKINS_INTERMEDIATE_DIRECTORY = "${WORKSPACE}/idir";
-    private static final String COVERITY_HOST = "${COVERITY_HOST}";
-    private static final String COVERITY_PORT = "${COVERITY_PORT}";
-    private static final String COVERITY_STREAM = "${COV_STREAM}";
     private final String command;
 
     @DataBoundConstructor
@@ -66,8 +65,12 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     }
 
     public static RepeatableCommand COV_RUN_DESKTOP(final boolean isHttps, final String arguments, final String filePaths) {
-        final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-run-desktop", Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY, Argument.HOST.toString(), COVERITY_HOST, Argument.PORT.toString(), COVERITY_PORT,
-            Argument.STREAM.toString(), COVERITY_STREAM));
+        final List<String> commandPieces = new ArrayList<>(
+            Arrays.asList("cov-run-desktop",
+                Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+                Argument.HOST.toString(), generateExpansionString(CoverityEnvironmentVariable.HOST),
+                Argument.PORT.toString(), generateExpansionString(CoverityEnvironmentVariable.PORT),
+                Argument.STREAM.toString(), generateExpansionString(CoverityEnvironmentVariable.STREAM)));
         appendArguments(commandPieces, isHttps, arguments);
         commandPieces.add(filePaths);
 
@@ -75,8 +78,11 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     }
 
     public static RepeatableCommand COV_COMMIT_DEFECTS(final boolean isHttps, final String arguments) {
-        final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-commit-defects", Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY, Argument.HOST.toString(), COVERITY_HOST, Argument.PORT.toString(), COVERITY_PORT,
-            Argument.STREAM.toString(), COVERITY_STREAM));
+        final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-commit-defects",
+            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            Argument.HOST.toString(), generateExpansionString(CoverityEnvironmentVariable.HOST),
+            Argument.PORT.toString(), generateExpansionString(CoverityEnvironmentVariable.PORT),
+            Argument.STREAM.toString(), generateExpansionString(CoverityEnvironmentVariable.STREAM)));
         appendArguments(commandPieces, isHttps, arguments);
 
         return constructCommand(commandPieces);
@@ -97,6 +103,10 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         if (isHttps && commandPieces.stream().noneMatch(str -> str.contains(Argument.SSL.toString()))) {
             commandPieces.add(Argument.SSL.toString());
         }
+    }
+
+    private static String generateExpansionString(final CoverityEnvironmentVariable environmentVariable) {
+        return String.format("${%s}", environmentVariable.toString());
     }
 
     public String getCommand() {

@@ -32,6 +32,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.jenkins.coverity.CoverityCheckForIssuesInViewStep;
+import com.synopsys.integration.jenkins.coverity.CoverityEnvironmentStep;
 import com.synopsys.integration.jenkins.coverity.CoverityToolStep;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
@@ -126,21 +127,23 @@ public class CoverityBuildStep extends Builder {
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
-        final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityInstanceUrl, build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
+        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(coverityInstanceUrl, build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build, build.getChangeSets());
+        boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(streamName, coverityToolName, configureChangeSetPatterns);
 
-        final boolean shouldContinueOurSteps;
-        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
-            final AdvancedCoverityRunConfiguration advancedCoverityRunConfiguration = (AdvancedCoverityRunConfiguration) coverityRunConfiguration;
+        if (prerequisiteStepSucceeded) {
+            final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityInstanceUrl, build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build), build);
+            final RepeatableCommand[] commands;
 
-            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, advancedCoverityRunConfiguration.getCommands(), onCommandFailure, configureChangeSetPatterns);
-        } else {
-            final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityRunConfiguration;
+            if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+                commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
+            } else {
+                commands = coverityToolStep.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration);
+            }
 
-            final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(simpleCoverityRunConfiguration);
-            shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityToolName, streamName, simpleModeCommands, onCommandFailure, configureChangeSetPatterns);
+            prerequisiteStepSucceeded = coverityToolStep.runCoverityToolStep(commands, onCommandFailure);
         }
 
-        if (shouldContinueOurSteps && checkForIssuesInView != null) {
+        if (prerequisiteStepSucceeded && checkForIssuesInView != null) {
             final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(coverityInstanceUrl, build.getBuiltOn(), listener, build.getEnvironment(listener), getWorkingDirectory(build),
                 build);
             coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(checkForIssuesInView, projectName);

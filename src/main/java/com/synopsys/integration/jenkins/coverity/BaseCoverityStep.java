@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
@@ -72,6 +73,22 @@ public abstract class BaseCoverityStep {
 
     public EnvVars getEnvVars() {
         return envVars;
+    }
+
+    public String getEnvironmentVariable(final JenkinsCoverityEnvironmentVariable jenkinsCoverityEnvironmentVariable) {
+        return envVars.get(jenkinsCoverityEnvironmentVariable.toString());
+    }
+
+    public String getEnvironmentVariable(final CoverityEnvironmentVariable coverityEnvironmentVariable) {
+        return envVars.get(coverityEnvironmentVariable.toString());
+    }
+
+    public void setEnvironmentVariable(final JenkinsCoverityEnvironmentVariable jenkinsCoverityEnvironmentVariable, final String value) {
+        envVars.put(jenkinsCoverityEnvironmentVariable.toString(), value);
+    }
+
+    public void setEnvironmentVariable(final CoverityEnvironmentVariable coverityEnvironmentVariable, final String value) {
+        envVars.put(coverityEnvironmentVariable.toString(), value);
     }
 
     public FilePath getWorkspace() {
@@ -122,11 +139,11 @@ public abstract class BaseCoverityStep {
         return variables;
     }
 
-    protected String handleVariableReplacement(final Map<String, String> variables, final String value) throws CoverityJenkinsException {
-        if (value != null) {
-            final String newValue = Util.replaceMacro(value, variables);
+    protected String handleVariableReplacement(final Map<String, String> variables, final String variableToReplace) throws CoverityJenkinsException {
+        if (variableToReplace != null) {
+            final String newValue = Util.replaceMacro(variableToReplace, variables);
             if (newValue.contains("$")) {
-                throw new CoverityJenkinsException("Variable was not properly replaced. RunConfigurationType: " + value + ", Result: " + newValue + ". Make sure the variable has been properly defined.");
+                throw new CoverityJenkinsException("Variable was not properly replaced. Variable: " + variableToReplace + ", Result: " + newValue + ". Make sure the variable has been properly defined.");
             }
             return newValue;
         }

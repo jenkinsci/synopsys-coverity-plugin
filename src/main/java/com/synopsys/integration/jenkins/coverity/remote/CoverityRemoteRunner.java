@@ -36,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.remoting.Role;
 import org.jenkinsci.remoting.RoleChecker;
 
+import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.executable.ExecutableManager;
 import com.synopsys.integration.exception.IntegrationException;
@@ -73,8 +74,8 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
     public CoverityRemoteResponse call() throws IntegrationException {
         final File workspace = new File(workspacePath);
         final Map<String, String> environment = new HashMap<>(envVars);
-        setEnvironmentVariableString(environment, Executable.COVERITY_USER_ENVIRONMENT_VARIABLE, coverityUsername);
-        setEnvironmentVariableString(environment, Executable.COVERITY_PASSWORD_ENVIRONMENT_VARIABLE, coverityPassword);
+        setEnvironmentVariableString(environment, CoverityEnvironmentVariable.USERNAME, coverityUsername);
+        setEnvironmentVariableString(environment, CoverityEnvironmentVariable.PASSWORD, coverityPassword);
         final Executable executable = new Executable(arguments, workspace, environment);
         final ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
         int exitCode = -1;
@@ -93,9 +94,9 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
         return new CoverityRemoteResponse(exitCode);
     }
 
-    private void setEnvironmentVariableString(final Map<String, String> environment, final String key, final String value) {
-        if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
-            environment.put(key, value);
+    private void setEnvironmentVariableString(final Map<String, String> environment, final CoverityEnvironmentVariable key, final String value) {
+        if (StringUtils.isNotBlank(value)) {
+            environment.put(key.toString(), value);
         }
     }
 

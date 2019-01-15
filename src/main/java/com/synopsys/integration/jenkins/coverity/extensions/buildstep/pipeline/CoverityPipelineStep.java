@@ -39,6 +39,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.google.common.collect.ImmutableSet;
 import com.synopsys.integration.jenkins.coverity.CoverityCheckForIssuesInViewStep;
+import com.synopsys.integration.jenkins.coverity.CoverityEnvironmentStep;
 import com.synopsys.integration.jenkins.coverity.CoverityToolStep;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
@@ -207,24 +208,24 @@ public class CoverityPipelineStep extends Step {
         @Override
         protected Void run() throws Exception {
             final RunWrapper runWrapper = new RunWrapper(run, true);
-            final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityPipelineStep.getCoverityInstanceUrl(), computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
-            final boolean shouldContinueOurSteps;
+            final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(coverityPipelineStep.getCoverityInstanceUrl(), computer.getNode(), listener, envVars, workspace, run, runWrapper.getChangeSets());
+            boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(coverityPipelineStep.getStreamName(), coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getConfigureChangeSetPatterns());
 
-            if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityPipelineStep.getCoverityRunConfiguration().getRunConFigurationType())) {
-                final AdvancedCoverityRunConfiguration advancedCoverityRunConfiguration = (AdvancedCoverityRunConfiguration) coverityPipelineStep.getCoverityRunConfiguration();
+            if (prerequisiteStepSucceeded) {
+                final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityPipelineStep.getCoverityInstanceUrl(), computer.getNode(), listener, envVars, workspace, run);
+                final RepeatableCommand[] commands;
 
-                shouldContinueOurSteps = coverityToolStep
-                                             .runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), advancedCoverityRunConfiguration.getCommands(), coverityPipelineStep.getOnCommandFailure(),
-                                                 coverityPipelineStep.getConfigureChangeSetPatterns());
-            } else {
-                final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityPipelineStep.getCoverityRunConfiguration();
+                final CoverityRunConfiguration coverityRunConfiguration = coverityPipelineStep.getCoverityRunConfiguration();
+                if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+                    commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
+                } else {
+                    commands = coverityToolStep.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration);
+                }
 
-                final RepeatableCommand[] simpleModeCommands = coverityToolStep.getSimpleModeCommands(simpleCoverityRunConfiguration);
-                shouldContinueOurSteps = coverityToolStep.runCoverityToolStep(coverityPipelineStep.getCoverityToolName(), coverityPipelineStep.getStreamName(), simpleModeCommands, coverityPipelineStep.getOnCommandFailure(),
-                    coverityPipelineStep.getConfigureChangeSetPatterns());
+                prerequisiteStepSucceeded = coverityToolStep.runCoverityToolStep(commands, coverityPipelineStep.getOnCommandFailure());
             }
 
-            if (shouldContinueOurSteps && coverityPipelineStep.getCheckForIssuesInView() != null) {
+            if (prerequisiteStepSucceeded && coverityPipelineStep.getCheckForIssuesInView() != null) {
                 final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(coverityPipelineStep.getCoverityInstanceUrl(), computer.getNode(), listener, envVars, workspace, run);
                 coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(coverityPipelineStep.getCheckForIssuesInView(), coverityPipelineStep.getProjectName());
             }
