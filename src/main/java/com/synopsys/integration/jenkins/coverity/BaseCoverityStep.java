@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
+import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
@@ -75,20 +75,12 @@ public abstract class BaseCoverityStep {
         return envVars;
     }
 
-    public String getEnvironmentVariable(final JenkinsCoverityEnvironmentVariable jenkinsCoverityEnvironmentVariable) {
-        return envVars.get(jenkinsCoverityEnvironmentVariable.toString());
+    public String getEnvironmentVariable(final SynopsysEnvironmentVariable synopsysEnvironmentVariable) {
+        return envVars.get(synopsysEnvironmentVariable.toString());
     }
 
-    public String getEnvironmentVariable(final CoverityEnvironmentVariable coverityEnvironmentVariable) {
-        return envVars.get(coverityEnvironmentVariable.toString());
-    }
-
-    public void setEnvironmentVariable(final JenkinsCoverityEnvironmentVariable jenkinsCoverityEnvironmentVariable, final String value) {
-        envVars.put(jenkinsCoverityEnvironmentVariable.toString(), value);
-    }
-
-    public void setEnvironmentVariable(final CoverityEnvironmentVariable coverityEnvironmentVariable, final String value) {
-        envVars.put(coverityEnvironmentVariable.toString(), value);
+    public void setEnvironmentVariable(final SynopsysEnvironmentVariable synopsysEnvironmentVariable, final String value) {
+        envVars.put(synopsysEnvironmentVariable.toString(), value);
     }
 
     public FilePath getWorkspace() {

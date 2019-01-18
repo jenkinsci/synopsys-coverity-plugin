@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
+import com.synopsys.integration.coverity.executable.CoverityToolEnvironmentVariable;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
@@ -67,6 +67,7 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
     }
 
     public boolean setUpCoverityEnvironment(final String streamName, final String coverityToolName, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        this.initializeJenkinsCoverityLogger();
         final String pluginVersion = PluginHelper.getPluginVersion();
         logger.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
 
@@ -74,12 +75,6 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
             logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
             return false;
         }
-
-        if (StringUtils.isNotBlank(streamName)) {
-            setEnvironmentVariable(CoverityEnvironmentVariable.STREAM, streamName);
-        }
-
-        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, computeChangeSet(configureChangeSetPatterns));
 
         final CoverityConnectInstance coverityInstance = verifyAndGetCoverityInstance().orElse(null);
         if (coverityInstance == null) {
@@ -92,10 +87,19 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), getCoverityToolInstallations(), getNode());
         if (!optionalCoverityToolInstallation.isPresent()) {
             setResult(Result.FAILURE);
+            logger.error("No Coverity tool installation was configured");
             return false;
         }
 
         final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
+
+        setEnvironmentVariable(CoverityToolEnvironmentVariable.USER, coverityInstance.getCoverityUsername().orElse(StringUtils.EMPTY));
+        setEnvironmentVariable(CoverityToolEnvironmentVariable.PASSPHRASE, coverityInstance.getCoverityPassword().orElse(StringUtils.EMPTY));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_HOST, computeHost(coverityInstance));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PORT, computePort(coverityInstance));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM, streamName);
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, computeChangeSet(configureChangeSetPatterns));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME, coverityToolInstallation.getHome());
 
         logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
         logger.alwaysLog("-- Synopsys stream: " + streamName);
@@ -104,17 +108,6 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
             logger.alwaysLog("-- Change Set Exclusion Patterns: " + configureChangeSetPatterns.getChangeSetExclusionPatterns());
         } else {
             logger.alwaysLog("-- No Change Set inclusion or exclusion patterns set");
-        }
-
-        final URL coverityUrl = coverityInstance.getCoverityURL().orElse(null);
-        if (null != coverityUrl) {
-            setEnvironmentVariable(CoverityEnvironmentVariable.HOST, coverityUrl.getHost());
-            if (coverityUrl.getPort() == -1) {
-                // If the user passes a URL that has no port, we must supply the implicit URL port. Coverity uses tomcat defaults if it can't find any ports (8080/8443)
-                setEnvironmentVariable(CoverityEnvironmentVariable.PORT, String.valueOf(coverityUrl.getDefaultPort()));
-            } else {
-                setEnvironmentVariable(CoverityEnvironmentVariable.PORT, String.valueOf(coverityUrl.getPort()));
-            }
         }
 
         final PhoneHomeResponse phoneHomeResponse = phoneHome(coverityInstance, pluginVersion);
@@ -148,7 +141,35 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         return Optional.ofNullable(thisNodeCoverityToolInstallation);
     }
 
+    private String computeHost(final CoverityConnectInstance coverityConnectInstance) {
+        return coverityConnectInstance.getCoverityURL()
+                   .map(URL::getHost)
+                   .orElse(StringUtils.EMPTY);
+    }
+
+    private String computePort(final CoverityConnectInstance coverityConnectInstance) {
+        final URL coverityUrl = coverityConnectInstance.getCoverityURL().orElse(null);
+        final String computedPort;
+
+        if (null != coverityUrl) {
+            if (coverityUrl.getPort() == -1) {
+                // If the user passes a URL that has no port, we must supply the implicit URL port. Coverity uses tomcat defaults if it can't find any ports (8080/8443)
+                computedPort = String.valueOf(coverityUrl.getDefaultPort());
+            } else {
+                computedPort = String.valueOf(coverityUrl.getPort());
+            }
+        } else {
+            computedPort = StringUtils.EMPTY;
+        }
+
+        return computedPort;
+    }
+
     private String computeChangeSet(final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        if (configureChangeSetPatterns == null) {
+            return StringUtils.EMPTY;
+        }
+
         final ChangeSetFilter changeSetFilter = new ChangeSetFilter(configureChangeSetPatterns);
 
         return changeLogSets.stream()

@@ -32,11 +32,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.remoting.Role;
 import org.jenkinsci.remoting.RoleChecker;
 
-import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.executable.ExecutableManager;
 import com.synopsys.integration.exception.IntegrationException;
@@ -48,9 +46,6 @@ import hudson.remoting.Callable;
 public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, IntegrationException> {
     private final JenkinsCoverityLogger logger;
 
-    private final String coverityUsername;
-    private final String coverityPassword;
-
     private final String coverityStaticAnalysisDirectory;
     private final List<String> arguments;
 
@@ -58,12 +53,9 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
 
     private final EnvVars envVars;
 
-    public CoverityRemoteRunner(final JenkinsCoverityLogger logger, final String coverityUsername, final String coverityPassword, final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath,
+    public CoverityRemoteRunner(final JenkinsCoverityLogger logger, final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath,
         final EnvVars envVars) {
         this.logger = logger;
-
-        this.coverityUsername = coverityUsername;
-        this.coverityPassword = coverityPassword;
         this.coverityStaticAnalysisDirectory = coverityStaticAnalysisDirectory;
         this.arguments = arguments;
         this.workspacePath = workspacePath;
@@ -74,11 +66,9 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
     public CoverityRemoteResponse call() throws IntegrationException {
         final File workspace = new File(workspacePath);
         final Map<String, String> environment = new HashMap<>(envVars);
-        setEnvironmentVariableString(environment, CoverityEnvironmentVariable.USERNAME, coverityUsername);
-        setEnvironmentVariableString(environment, CoverityEnvironmentVariable.PASSWORD, coverityPassword);
         final Executable executable = new Executable(arguments, workspace, environment);
         final ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
-        int exitCode = -1;
+        final int exitCode;
         final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
         try {
             final PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
@@ -92,12 +82,6 @@ public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, In
             logger.error(new String(errorOutputStream.toByteArray(), StandardCharsets.UTF_8));
         }
         return new CoverityRemoteResponse(exitCode);
-    }
-
-    private void setEnvironmentVariableString(final Map<String, String> environment, final CoverityEnvironmentVariable key, final String value) {
-        if (StringUtils.isNotBlank(value)) {
-            environment.put(key.toString(), value);
-        }
     }
 
     @Override

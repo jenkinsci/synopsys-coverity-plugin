@@ -33,7 +33,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
+import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -68,9 +69,9 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         final List<String> commandPieces = new ArrayList<>(
             Arrays.asList("cov-run-desktop",
                 Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
-                Argument.HOST.toString(), generateExpansionString(CoverityEnvironmentVariable.HOST),
-                Argument.PORT.toString(), generateExpansionString(CoverityEnvironmentVariable.PORT),
-                Argument.STREAM.toString(), generateExpansionString(CoverityEnvironmentVariable.STREAM)));
+                Argument.HOST.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_HOST),
+                Argument.PORT.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_PORT),
+                Argument.STREAM.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM)));
         appendArguments(commandPieces, isHttps, arguments);
         commandPieces.add(filePaths);
 
@@ -80,9 +81,9 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     public static RepeatableCommand COV_COMMIT_DEFECTS(final boolean isHttps, final String arguments) {
         final List<String> commandPieces = new ArrayList<>(Arrays.asList("cov-commit-defects",
             Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
-            Argument.HOST.toString(), generateExpansionString(CoverityEnvironmentVariable.HOST),
-            Argument.PORT.toString(), generateExpansionString(CoverityEnvironmentVariable.PORT),
-            Argument.STREAM.toString(), generateExpansionString(CoverityEnvironmentVariable.STREAM)));
+            Argument.HOST.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_HOST),
+            Argument.PORT.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_PORT),
+            Argument.STREAM.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM)));
         appendArguments(commandPieces, isHttps, arguments);
 
         return constructCommand(commandPieces);
@@ -105,7 +106,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         }
     }
 
-    private static String generateExpansionString(final CoverityEnvironmentVariable environmentVariable) {
+    private static String generateExpansionString(final SynopsysEnvironmentVariable environmentVariable) {
         return String.format("${%s}", environmentVariable.toString());
     }
 

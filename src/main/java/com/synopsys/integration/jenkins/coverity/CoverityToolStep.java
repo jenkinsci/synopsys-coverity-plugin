@@ -31,7 +31,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
-import com.synopsys.integration.coverity.executable.CoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
@@ -119,8 +118,7 @@ public class CoverityToolStep extends BaseCoverityStep {
 
                 final List<String> arguments = getCorrectedParameters(command);
 
-                final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, getEnvironmentVariable(CoverityEnvironmentVariable.USERNAME), getEnvironmentVariable(CoverityEnvironmentVariable.PASSWORD),
-                    getEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME), arguments, getWorkspace().getRemote(), getEnvVars());
+                final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, getEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME), arguments, getWorkspace().getRemote(), getEnvVars());
                 final CoverityRemoteResponse response = getNode().getChannel().call(coverityRemoteRunner);
                 boolean shouldStop = false;
                 if (response.getExitCode() != 0) {

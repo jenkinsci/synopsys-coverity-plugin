@@ -23,8 +23,13 @@
  */
 package com.synopsys.integration.jenkins.coverity;
 
-public enum JenkinsCoverityEnvironmentVariable {
+import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
+
+public enum JenkinsCoverityEnvironmentVariable implements SynopsysEnvironmentVariable {
     CHANGE_SET("CHANGE_SET"),
+    COVERITY_HOST("COV_HOST"),
+    COVERITY_PORT("COV_PORT"),
+    COVERITY_STREAM("COV_STREAM"),
     COVERITY_TOOL_HOME("COV_TOOL_HOME");
 
     private final String name;
