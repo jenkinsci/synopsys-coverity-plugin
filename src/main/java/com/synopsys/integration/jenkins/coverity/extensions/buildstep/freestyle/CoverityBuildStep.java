@@ -133,25 +133,25 @@ public class CoverityBuildStep extends Builder {
         final FilePath workingDirectory = getWorkingDirectory(build);
         final Node node = build.getBuiltOn();
 
-        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(coverityInstanceUrl, node, listener, envVars, workingDirectory, build, build.getChangeSets());
-        boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(streamName, coverityToolName, configureChangeSetPatterns);
+        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, envVars, workingDirectory, build, build.getChangeSets());
+        boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(coverityInstanceUrl, streamName, coverityToolName, configureChangeSetPatterns);
 
         if (prerequisiteStepSucceeded) {
-            final CoverityToolStep coverityToolStep = new CoverityToolStep(coverityInstanceUrl, node, listener, envVars, workingDirectory, build);
+            final CoverityToolStep coverityToolStep = new CoverityToolStep(node, listener, envVars, workingDirectory, build);
             final RepeatableCommand[] commands;
 
             if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
                 commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
             } else {
-                commands = coverityToolStep.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration);
+                commands = coverityToolStep.getSimpleModeCommands(coverityInstanceUrl, (SimpleCoverityRunConfiguration) coverityRunConfiguration);
             }
 
             prerequisiteStepSucceeded = coverityToolStep.runCoverityToolStep(commands, onCommandFailure);
         }
 
         if (prerequisiteStepSucceeded && checkForIssuesInView != null) {
-            final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(coverityInstanceUrl, node, listener, envVars, workingDirectory, build);
-            coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(checkForIssuesInView, projectName);
+            final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(node, listener, envVars, workingDirectory, build);
+            coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(coverityInstanceUrl, checkForIssuesInView, projectName);
         }
 
         return true;

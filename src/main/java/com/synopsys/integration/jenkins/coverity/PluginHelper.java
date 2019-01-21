@@ -23,8 +23,17 @@
  */
 package com.synopsys.integration.jenkins.coverity;
 
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
+import com.synopsys.integration.log.IntLogger;
+
 import hudson.Plugin;
 import hudson.PluginWrapper;
+import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 
 public class PluginHelper {
@@ -32,7 +41,7 @@ public class PluginHelper {
 
     public static String getPluginVersion() {
         String pluginVersion = UNKNOWN_VERSION;
-        final Jenkins jenkins = Jenkins.getInstance();
+        final Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             // Jenkins still active
             final Plugin p = jenkins.getPlugin("synopsys-coverity");
@@ -45,6 +54,31 @@ public class PluginHelper {
             }
         }
         return pluginVersion;
+    }
+
+    public static CoverityGlobalConfig getCoverityGlobalConfig() {
+        return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
+    }
+
+    public static CoverityConnectInstance[] getCoverityConnectInstances() {
+        return getCoverityGlobalConfig().getCoverityConnectInstances();
+    }
+
+    public static CoverityToolInstallation[] getCoverityToolInstallations() {
+        return getCoverityGlobalConfig().getCoverityToolInstallations();
+    }
+
+    public static Optional<CoverityConnectInstance> getCoverityInstanceFromUrl(final IntLogger logger, final String coverityInstanceUrl) {
+        final CoverityConnectInstance[] coverityInstances = getCoverityGlobalConfig().getCoverityConnectInstances();
+        if (null == coverityInstances || coverityInstances.length == 0) {
+            logger.error("[ERROR] No Coverity instance configured in Jenkins.");
+        } else {
+            return Stream.of(coverityInstances)
+                       .filter(coverityInstance -> coverityInstance.getUrl().equals(coverityInstanceUrl))
+                       .findFirst();
+        }
+
+        return Optional.empty();
     }
 
 }

@@ -54,11 +54,11 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 
 public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
-    public CoverityCheckForIssuesInViewStep(final String coverityInstanceUrl, final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
-        super(coverityInstanceUrl, node, listener, envVars, workspace, run);
+    public CoverityCheckForIssuesInViewStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+        super(node, listener, envVars, workspace, run);
     }
 
-    public boolean runCoverityCheckForIssuesInViewStep(final CheckForIssuesInView checkForIssuesInView, final String projectName) {
+    public boolean runCoverityCheckForIssuesInViewStep(final String coverityInstanceUrl, final CheckForIssuesInView checkForIssuesInView, final String projectName) {
         super.initializeJenkinsCoverityLogger();
         try {
             // getResult() returns null if the build is still in progress
@@ -73,7 +73,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
                 return false;
             }
 
-            final CoverityConnectInstance coverityInstance = verifyAndGetCoverityInstance().orElse(null);
+            final CoverityConnectInstance coverityInstance = PluginHelper.getCoverityInstanceFromUrl(logger, coverityInstanceUrl).orElse(null);
             if (coverityInstance == null) {
                 logger.error("Skipping the Synopsys Coverity Check for Issues in View step because no configured Coverity server was detected in the Jenkins System Configuration.");
                 return false;

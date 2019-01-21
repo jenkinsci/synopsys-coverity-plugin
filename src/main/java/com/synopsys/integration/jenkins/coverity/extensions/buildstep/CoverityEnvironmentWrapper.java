@@ -24,23 +24,31 @@
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.coverity.CoverityEnvironmentStep;
+import com.synopsys.integration.jenkins.coverity.PluginHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
+import com.synopsys.integration.log.SilentLogger;
 
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.RelativePath;
+import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Node;
@@ -55,15 +63,19 @@ import jenkins.tasks.SimpleBuildWrapper;
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     private final String coverityToolName;
     private final String coverityInstanceUrl;
+    private final String coverityPassphrase;
     private String projectName;
     private String streamName;
     private String viewName;
     private ConfigureChangeSetPatterns configureChangeSetPatterns;
 
     @DataBoundConstructor
-    public CoverityEnvironmentWrapper(final String coverityToolName, final String coverityConnectInstanceName) {
+    public CoverityEnvironmentWrapper(final String coverityToolName, final String coverityInstanceUrl) {
         this.coverityToolName = coverityToolName;
-        this.coverityInstanceUrl = coverityConnectInstanceName;
+        this.coverityInstanceUrl = coverityInstanceUrl;
+        this.coverityPassphrase = PluginHelper.getCoverityInstanceFromUrl(new SilentLogger(), coverityInstanceUrl)
+                                      .flatMap(CoverityConnectInstance::getCoverityPassword)
+                                      .orElse(StringUtils.EMPTY);
     }
 
     public String getCoverityInstanceUrl() {
@@ -79,7 +91,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setProjectName(final String projectName) {
+    public void setProjectName(@QueryParameter("projectName") final String projectName) {
         this.projectName = projectName;
     }
 
@@ -88,7 +100,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setStreamName(final String streamName) {
+    public void setStreamName(@QueryParameter("streamName") final String streamName) {
         this.streamName = streamName;
     }
 
@@ -97,7 +109,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setViewName(final String viewName) {
+    public void setViewName(@QueryParameter("viewName") final String viewName) {
         this.viewName = viewName;
     }
 
@@ -106,7 +118,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setConfigureChangeSetPatterns(final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public void setConfigureChangeSetPatterns(@QueryParameter("configureChangeSetPatterns") final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
@@ -131,13 +143,20 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new IOException(e);
         }
 
-        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(coverityInstanceUrl, node, listener, initialEnvironment, workspace, build, changeSets);
-        coverityEnvironmentStep.setUpCoverityEnvironment(streamName, coverityToolName, configureChangeSetPatterns);
+        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build, changeSets);
+        coverityEnvironmentStep.setUpCoverityEnvironment(coverityInstanceUrl, streamName, coverityToolName, configureChangeSetPatterns);
+
+        initialEnvironment.forEach(context::env);
     }
 
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
+    }
+
+    @Override
+    public ConsoleLogFilter createLoggerDecorator(@Nonnull final Run<?, ?> build) {
+        return new FilterImpl(coverityPassphrase);
     }
 
     @Symbol("withCoverityEnvironment")
@@ -184,8 +203,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName,
-            final @QueryParameter("updateNow") boolean updateNow) {
+        public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
             return coverityCommonDescriptor.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
         }
 
@@ -203,4 +221,18 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             return "Inject Coverity environment into the build process";
         }
     }
+
+    private static final class FilterImpl extends ConsoleLogFilter {
+        private final String passwordToMask;
+
+        public FilterImpl(final String passwordToMask) {
+            this.passwordToMask = passwordToMask;
+        }
+
+        @Override
+        public OutputStream decorateLogger(final Run ignored, final OutputStream logger) {
+            return new PasswordMaskingOutputStream(logger, passwordToMask);
+        }
+    }
+
 }

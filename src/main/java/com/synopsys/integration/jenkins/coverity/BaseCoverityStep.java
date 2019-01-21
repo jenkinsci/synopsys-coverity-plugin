@@ -26,14 +26,11 @@ package com.synopsys.integration.jenkins.coverity;
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
@@ -43,10 +40,8 @@ import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import jenkins.model.GlobalConfiguration;
 
 public abstract class BaseCoverityStep {
-    private final String coverityInstanceUrl;
     private final Node node;
     private final TaskListener listener;
     private final EnvVars envVars;
@@ -54,8 +49,7 @@ public abstract class BaseCoverityStep {
     private final Run run;
     protected JenkinsCoverityLogger logger;
 
-    public BaseCoverityStep(final String coverityInstanceUrl, final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
-        this.coverityInstanceUrl = coverityInstanceUrl;
+    public BaseCoverityStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
         this.node = node;
         this.listener = listener;
         this.envVars = envVars;
@@ -83,6 +77,10 @@ public abstract class BaseCoverityStep {
         envVars.put(synopsysEnvironmentVariable.toString(), value);
     }
 
+    public void addToPath(final CoverityToolInstallation coverityToolInstallation) {
+        coverityToolInstallation.buildEnvVars(envVars);
+    }
+
     public FilePath getWorkspace() {
         return workspace;
     }
@@ -97,25 +95,6 @@ public abstract class BaseCoverityStep {
 
     public void setResult(final Result result) {
         getRun().setResult(result);
-    }
-
-    protected CoverityGlobalConfig getCoverityGlobalConfig() {
-        return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
-    }
-
-    protected Optional<CoverityConnectInstance> verifyAndGetCoverityInstance() {
-        final CoverityConnectInstance[] coverityInstances = getCoverityGlobalConfig().getCoverityConnectInstances();
-        if (StringUtils.isBlank(coverityInstanceUrl)) {
-            logger.error("[ERROR] No Coverity instance configured for this Job.");
-        } else if (null == coverityInstances || coverityInstances.length == 0) {
-            logger.error("[ERROR] No Coverity instance configured in Jenkins.");
-        } else {
-            return Stream.of(coverityInstances)
-                       .filter(coverityInstance -> coverityInstance.getUrl().equals(coverityInstanceUrl))
-                       .findFirst();
-        }
-
-        return Optional.empty();
     }
 
     public void initializeJenkinsCoverityLogger() {

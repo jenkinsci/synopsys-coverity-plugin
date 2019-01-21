@@ -74,6 +74,11 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
         return new CoverityToolInstallation(getName(), environment.expand(getHome()));
     }
 
+    @Override
+    public void buildEnvVars(final EnvVars env) {
+        env.put("PATH+COVERITYTOOLS", new File(getHome(), "bin").getAbsolutePath());
+    }
+
     /**
      * {@link ToolDescriptor} for {@link CoverityToolInstallation}
      */

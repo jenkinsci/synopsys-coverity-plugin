@@ -75,7 +75,8 @@ task generateJelly(type: GenerateJelly) {
                         'buildstep/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
                         'buildstep/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
                         'buildstep/pipeline/CoverityPipelineStep'   : 'buildStep.json',
-                        'global/CoverityGlobalConfig'               : 'globalConfig.json',]
+                        'global/CoverityGlobalConfig'               : 'globalConfig.json',
+                        'buildstep/CoverityEnvironmentWrapper'      : 'environmentWrapper.json',]
 }
 
 task generateHelp(type: GenerateHtml) {
@@ -88,7 +89,8 @@ task generateHelp(type: GenerateHtml) {
                         'buildstep/CheckForIssuesInView'          : 'checkForIssuesInView.json',
                         'buildstep/ConfigureChangeSetPatterns'    : 'configureChangeSetPatterns.json',
                         'global/CoverityConnectInstance'          : 'coverityConnectInstance.json',
-                        'buildstep/RepeatableCommand'             : 'repeatableCommand.json',]
+                        'buildstep/RepeatableCommand'             : 'repeatableCommand.json',
+                        'buildstep/CoverityEnvironmentWrapper'    : 'environmentWrapper.json']
 }
 
 compileJava.dependsOn generateHelp, generateJelly

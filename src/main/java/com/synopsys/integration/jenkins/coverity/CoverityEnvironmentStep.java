@@ -61,12 +61,12 @@ import jenkins.model.Jenkins;
 public class CoverityEnvironmentStep extends BaseCoverityStep {
     private final List<ChangeLogSet<?>> changeLogSets;
 
-    public CoverityEnvironmentStep(final String coverityInstanceUrl, final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run, final List<ChangeLogSet<?>> changeLogSets) {
-        super(coverityInstanceUrl, node, listener, envVars, workspace, run);
+    public CoverityEnvironmentStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run, final List<ChangeLogSet<?>> changeLogSets) {
+        super(node, listener, envVars, workspace, run);
         this.changeLogSets = changeLogSets;
     }
 
-    public boolean setUpCoverityEnvironment(final String streamName, final String coverityToolName, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public boolean setUpCoverityEnvironment(final String coverityInstanceUrl, final String streamName, final String coverityToolName, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         this.initializeJenkinsCoverityLogger();
         final String pluginVersion = PluginHelper.getPluginVersion();
         logger.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
@@ -76,15 +76,15 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
             return false;
         }
 
-        final CoverityConnectInstance coverityInstance = verifyAndGetCoverityInstance().orElse(null);
+        final CoverityConnectInstance coverityInstance = PluginHelper.getCoverityInstanceFromUrl(logger, coverityInstanceUrl).orElse(null);
         if (coverityInstance == null) {
-            logger.error("Skipping the Synopsys Coverity step because no configured Coverity server was detected in the Jenkins System Configuration.");
+            logger.error("Skipping the Synopsys Coverity step because no configured Coverity server was detected.");
             return false;
         }
 
         logGlobalConfiguration(coverityInstance);
 
-        final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), getCoverityToolInstallations(), getNode());
+        final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), PluginHelper.getCoverityToolInstallations(), getNode());
         if (!optionalCoverityToolInstallation.isPresent()) {
             setResult(Result.FAILURE);
             logger.error("No Coverity tool installation was configured");
@@ -93,6 +93,7 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
 
         final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
 
+        addToPath(coverityToolInstallation);
         setEnvironmentVariable(CoverityToolEnvironmentVariable.USER, coverityInstance.getCoverityUsername().orElse(StringUtils.EMPTY));
         setEnvironmentVariable(CoverityToolEnvironmentVariable.PASSPHRASE, coverityInstance.getCoverityPassword().orElse(StringUtils.EMPTY));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_HOST, computeHost(coverityInstance));
@@ -209,10 +210,6 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         }
 
         return shouldInclude;
-    }
-
-    private CoverityToolInstallation[] getCoverityToolInstallations() {
-        return getCoverityGlobalConfig().getCoverityToolInstallations();
     }
 
     private PhoneHomeResponse phoneHome(final CoverityConnectInstance coverityInstance, final String pluginVersion) {

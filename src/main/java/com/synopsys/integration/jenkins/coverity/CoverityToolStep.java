@@ -49,13 +49,13 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 
 public class CoverityToolStep extends BaseCoverityStep {
-    public CoverityToolStep(final String coverityInstanceUrl, final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
-        super(coverityInstanceUrl, node, listener, envVars, workspace, run);
+    public CoverityToolStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
+        super(node, listener, envVars, workspace, run);
     }
 
-    public RepeatableCommand[] getSimpleModeCommands(final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration) {
+    public RepeatableCommand[] getSimpleModeCommands(final String coverityConnectInstanceUrl, final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration) {
         final RepeatableCommand[] commands;
-        final boolean isHttps = verifyAndGetCoverityInstance()
+        final boolean isHttps = PluginHelper.getCoverityInstanceFromUrl(logger, coverityConnectInstanceUrl)
                                     .flatMap(CoverityConnectInstance::getCoverityURL)
                                     .map(URL::getProtocol)
                                     .filter("https"::equals)

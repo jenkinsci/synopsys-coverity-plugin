@@ -1,0 +1,22 @@
+{
+  "template": "environmentWrapper.tpl",
+  "model": {
+    "coverityInstanceUrlField": "coverityInstanceUrl",
+    "coverityInstanceUrlTitle": "Coverity instance",
+    "coverityToolNameField": "coverityToolName",
+    "coverityToolNameTitle": "Synopsys Coverity installation",
+    "projectNameField": "projectName",
+    "projectNameTitle": "Coverity project",
+    "streamNameField": "streamName",
+    "streamNameTitle": "Coverity stream",
+    "viewNameField": "viewName",
+    "viewNameTitle": "Coverity view",
+    "configureChangeSetPatternsField": "configureChangeSetPatterns",
+    "configureChangeSetPatternsTitle": "Customize change set",
+    "changeSetInclusionPatternsField": "changeSetInclusionPatterns",
+    "changeSetInclusionPatternsTitle": "Change set inclusion patterns",
+    "changeSetExclusionPatternsField": "changeSetExclusionPatterns",
+    "changeSetExclusionPatternsTitle": "Change set exclusion patterns",
+    "refreshConnectionButtonValue": "Refresh Coverity projects, streams, and views"
+  }
+}

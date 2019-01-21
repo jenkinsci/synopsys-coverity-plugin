@@ -1,0 +1,36 @@
+{
+  "helpHtml.tpl": {
+    "buildCommand": {
+      "overview": [
+        "Specify the build command for Coverity to run to build your project."
+      ]
+    },
+    "coverityInstanceUrl": {
+      "overview": [
+        "Specify which Synopsys Coverity connect instance to run this job against."
+      ]
+    },
+    "coverityToolName": {
+      "overview": [
+        "Specify which Synopsys Coverity static analysis installation to use."
+      ]
+    },
+    "projectName": {
+      "overview": [
+        "Specify the name of the Coverity project.",
+        "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis"
+      ]
+    },
+    "streamName": {
+      "overview": [
+        "Specify the name of the Coverity stream that you would like to use for the commands.",
+        "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis."
+      ]
+    },
+    "viewName": {
+      "overview": [
+        "Specify the name of the Coverity view that you would like to check for issues."
+      ]
+    }
+  }
+}
