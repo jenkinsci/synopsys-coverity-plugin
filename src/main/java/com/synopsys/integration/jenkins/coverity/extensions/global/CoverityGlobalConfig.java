@@ -23,52 +23,40 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.global;
 
+import java.util.List;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
-
-import com.synopsys.integration.coverity.CoverityVersion;
 
 import hudson.Extension;
-import hudson.model.Descriptor;
 import jenkins.model.GlobalConfiguration;
-import net.sf.json.JSONObject;
 
 @Extension
 public class CoverityGlobalConfig extends GlobalConfiguration {
-    public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
-
-    private CoverityConnectInstance[] coverityConnectInstances;
-    private CoverityToolInstallation[] coverityToolInstallations;
+    private List<CoverityConnectInstance> coverityConnectInstances;
+    private List<CoverityToolInstallation> coverityToolInstallations;
 
     @DataBoundConstructor
     public CoverityGlobalConfig() {
         load();
     }
 
-    @Override
-    public boolean configure(final StaplerRequest req, final JSONObject formData) throws Descriptor.FormException {
-        req.bindJSON(this, formData);
-        save();
-        return super.configure(req, formData);
-    }
-
-    public CoverityToolInstallation[] getCoverityToolInstallations() {
+    public List<CoverityToolInstallation> getCoverityToolInstallations() {
         return coverityToolInstallations;
     }
 
     @DataBoundSetter
-    public void setCoverityToolInstallations(final CoverityToolInstallation[] coverityToolInstallations) {
+    public void setCoverityToolInstallations(final List<CoverityToolInstallation> coverityToolInstallations) {
         this.coverityToolInstallations = coverityToolInstallations;
         save();
     }
 
-    public CoverityConnectInstance[] getCoverityConnectInstances() {
+    public List<CoverityConnectInstance> getCoverityConnectInstances() {
         return coverityConnectInstances;
     }
 
     @DataBoundSetter
-    public void setCoverityConnectInstances(final CoverityConnectInstance[] coverityConnectInstances) {
+    public void setCoverityConnectInstances(final List<CoverityConnectInstance> coverityConnectInstances) {
         this.coverityConnectInstances = coverityConnectInstances;
         save();
     }

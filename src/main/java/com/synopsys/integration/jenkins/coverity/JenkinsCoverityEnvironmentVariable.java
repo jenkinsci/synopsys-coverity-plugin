@@ -30,7 +30,8 @@ public enum JenkinsCoverityEnvironmentVariable implements SynopsysEnvironmentVar
     COVERITY_HOST("COV_HOST"),
     COVERITY_PORT("COV_PORT"),
     COVERITY_STREAM("COV_STREAM"),
-    COVERITY_TOOL_HOME("COV_TOOL_HOME");
+    COVERITY_TOOL_HOME("COVERITY_TOOL_HOME"),
+    COVERITY_INTERMEDIATE_DIRECTORY("COV_DIR");
 
     private final String name;
 

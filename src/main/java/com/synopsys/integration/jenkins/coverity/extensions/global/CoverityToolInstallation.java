@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,7 @@ import java.util.Optional;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.synopsys.integration.coverity.CoverityVersion;
+import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -50,13 +52,13 @@ import hudson.tools.ToolProperty;
 import hudson.tools.ToolPropertyDescriptor;
 import hudson.util.DescribableList;
 import hudson.util.FormValidation;
-import jenkins.model.GlobalConfiguration;
 
 /**
  * Coverity Static Analysis Tool {@link ToolInstallation}, this represents a named tool configuration with a path to
  * the install directory.
  */
 public class CoverityToolInstallation extends ToolInstallation implements NodeSpecific<CoverityToolInstallation>, EnvironmentSpecific<CoverityToolInstallation> {
+    public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
     private static final long serialVersionUID = 2242695353754874380L;
 
     @DataBoundConstructor
@@ -104,16 +106,12 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
 
         @Override
         public CoverityToolInstallation[] getInstallations() {
-            return getCoverityGlobalConfig().getCoverityToolInstallations();
+            return (CoverityToolInstallation[]) GlobalValueHelper.getCoverityGlobalConfig().getCoverityToolInstallations().toArray();
         }
 
         @Override
         public void setInstallations(final CoverityToolInstallation... installations) {
-            getCoverityGlobalConfig().setCoverityToolInstallations(installations);
-        }
-
-        private CoverityGlobalConfig getCoverityGlobalConfig() {
-            return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
+            GlobalValueHelper.getCoverityGlobalConfig().setCoverityToolInstallations(Arrays.asList(installations));
         }
 
         @Override
@@ -140,8 +138,8 @@ public class CoverityToolInstallation extends ToolInstallation implements NodeSp
 
                 final CoverityVersion version = optionalVersion.get();
 
-                if (version.compareTo(CoverityGlobalConfig.MINIMUM_SUPPORTED_VERSION) < 0) {
-                    return FormValidation.error(String.format("Analysis version %s detected. The minimum supported version is %s", version.toString(), CoverityGlobalConfig.MINIMUM_SUPPORTED_VERSION.toString()));
+                if (version.compareTo(MINIMUM_SUPPORTED_VERSION) < 0) {
+                    return FormValidation.error(String.format("Analysis version %s detected. The minimum supported version is %s", version.toString(), MINIMUM_SUPPORTED_VERSION.toString()));
                 }
 
                 return FormValidation.ok("Analysis installation directory has been verified.");

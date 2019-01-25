@@ -21,48 +21,45 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.cache;
+package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
-import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
-import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
-import com.synopsys.integration.exception.EncryptionException;
+import com.synopsys.integration.coverity.ws.view.ViewService;
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.log.PrintStreamIntLogger;
 
-public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
+public class ViewCacheData extends BaseCacheData<String> {
     @Override
     public String getDataType() {
-        return "Project";
+        return "View";
     }
 
     @Override
-    public List<ProjectDataObj> retrieveData(final CoverityConnectInstance coverityInstance) {
+    public List<String> retrieveData(final CoverityConnectInstance coverityInstance) {
         final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
-        List<ProjectDataObj> projects = Collections.emptyList();
+        List<String> data = Collections.emptyList();
         try {
-            logger.info("Attempting retrieval of Coverity Projects.");
+            logger.info("Attempting retrieval of Coverity Views.");
             final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
             final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
             webServiceFactory.connect();
 
-            final ConfigurationService configurationService = webServiceFactory.createConfigurationService();
-            final ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
-            projects = configurationService.getProjects(projectFilterSpecDataObj);
-            logger.info("Completed retrieval of Coverity Projects.");
-        } catch (EncryptionException | MalformedURLException | CoverityIntegrationException | CovRemoteServiceException_Exception e) {
+            final ViewService viewService = webServiceFactory.createViewService();
+            logger.info("Completed retrieval of Coverity Views.");
+            data = new ArrayList<>(viewService.getViews().values());
+        } catch (IOException | IntegrationException | URISyntaxException e) {
             logger.error(e);
         }
-        return projects;
+        return data;
     }
 }

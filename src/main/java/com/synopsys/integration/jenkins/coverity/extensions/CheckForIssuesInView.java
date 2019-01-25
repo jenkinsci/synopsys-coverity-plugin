@@ -21,18 +21,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
+package com.synopsys.integration.jenkins.coverity.extensions;
 
 import java.io.Serializable;
-import java.util.logging.Logger;
 
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
-import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.freestyle.CoverityBuildStep;
+import com.synopsys.integration.jenkins.coverity.extensions.build.CoverityBuildStep;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
 
 import hudson.Extension;
 import hudson.RelativePath;
@@ -45,7 +44,6 @@ import hudson.util.ListBoxModel;
 
 public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssuesInView> implements Serializable {
     private static final long serialVersionUID = 850747793907762852L;
-    private static final Logger logger = Logger.getLogger(CheckForIssuesInView.class.getName());
     private final String viewName;
     private final BuildStatus buildStatusForIssues;
 
@@ -70,17 +68,19 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
 
     @Extension
     public static class DescriptorImpl extends Descriptor<CheckForIssuesInView> {
-        private transient final CoverityCommonDescriptor coverityCommonDescriptor;
+        private transient final CommonFieldValueProvider commonFieldValueProvider;
+        private transient final CommonFieldValidator commonFieldValidator;
 
         public DescriptorImpl() {
             super(CheckForIssuesInView.class);
             load();
-            this.coverityCommonDescriptor = new CoverityCommonDescriptor();
+            this.commonFieldValueProvider = new CommonFieldValueProvider();
+            this.commonFieldValidator = new CommonFieldValidator();
         }
 
         public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName,
             final @QueryParameter("updateNow") boolean updateNow) {
-            return coverityCommonDescriptor.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
+            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
         }
 
         public FormValidation doCheckViewName(final @AncestorInPath Project<? extends Project, ? extends Build> project, final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
@@ -95,7 +95,7 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
                                .map(CoverityBuildStep.class::cast)
                                .findFirst()
                                .map(CoverityBuildStep::getCoverityInstanceUrl)
-                               .map(coverityCommonDescriptor::testConnectionIgnoreSuccessMessage)
+                               .map(commonFieldValidator::testConnectionIgnoreSuccessMessage)
                                .orElseGet(() -> FormValidation.warning("There was a failure validating this field"));
                 } else {
                     // If the project is null, we're likely in the snippet generator which has no previous state to get the URL from.
@@ -105,11 +105,11 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
                     return FormValidation.ok();
                 }
             }
-            return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillBuildStatusForIssuesItems() {
-            return coverityCommonDescriptor.doFillBuildStatusForIssuesItems();
+            return CommonFieldValueProvider.getListBoxModelOf(BuildStatus.values());
         }
 
     }

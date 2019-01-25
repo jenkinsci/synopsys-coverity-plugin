@@ -21,10 +21,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
+package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -37,10 +38,12 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
-import com.synopsys.integration.jenkins.coverity.CoverityEnvironmentStep;
-import com.synopsys.integration.jenkins.coverity.PluginHelper;
-import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
+import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
+import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
 import com.synopsys.integration.log.SilentLogger;
 
 import hudson.AbortException;
@@ -73,7 +76,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     public CoverityEnvironmentWrapper(final String coverityToolName, final String coverityInstanceUrl) {
         this.coverityToolName = coverityToolName;
         this.coverityInstanceUrl = coverityInstanceUrl;
-        this.coverityPassphrase = PluginHelper.getCoverityInstanceFromUrl(new SilentLogger(), coverityInstanceUrl)
+        this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentLogger(), coverityInstanceUrl)
                                       .flatMap(CoverityConnectInstance::getCoverityPassword)
                                       .orElse(StringUtils.EMPTY);
     }
@@ -128,12 +131,12 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         final Computer computer = workspace.toComputer();
         if (computer == null) {
-            throw new AbortException("Cannot retrieve Coverity tools installation");
+            throw new AbortException("Could not access workspace's computer to inject Coverity environment.");
         }
 
         final Node node = computer.getNode();
         if (node == null) {
-            throw new AbortException("Cannot retrieve Coverity tools installation");
+            throw new AbortException("Could not access workspace's node to inject Coverity environment.");
         }
 
         final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
@@ -143,8 +146,12 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new IOException(e);
         }
 
-        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build, changeSets);
-        coverityEnvironmentStep.setUpCoverityEnvironment(coverityInstanceUrl, streamName, coverityToolName, configureChangeSetPatterns);
+        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build);
+        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSets, coverityInstanceUrl, streamName, coverityToolName, configureChangeSetPatterns);
+
+        if (!setUpSuccessful) {
+            throw new AbortException("Could not successfully inject Coverity environment into build process.");
+        }
 
         initialEnvironment.forEach(context::env);
     }
@@ -162,53 +169,55 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     @Symbol("withCoverityEnvironment")
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
-        private final transient CoverityCommonDescriptor coverityCommonDescriptor;
+        private final transient CommonFieldValidator commonFieldValidator;
+        private final transient CommonFieldValueProvider commonFieldValueProvider;
 
         public DescriptorImpl() {
             super(CoverityEnvironmentWrapper.class);
             load();
-            coverityCommonDescriptor = new CoverityCommonDescriptor();
+            commonFieldValidator = new CommonFieldValidator();
+            commonFieldValueProvider = new CommonFieldValueProvider();
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
-            return coverityCommonDescriptor.doFillCoverityInstanceUrlItems(coverityInstanceUrl);
+            return commonFieldValueProvider.doFillCoverityInstanceUrlItems(coverityInstanceUrl);
         }
 
         public FormValidation doCheckCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
-            return coverityCommonDescriptor.doCheckCoverityInstanceUrl(coverityInstanceUrl);
+            return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillCoverityToolNameItems(@QueryParameter("coverityToolName") final String coverityToolName) {
-            return coverityCommonDescriptor.doFillCoverityToolNameItems(coverityToolName);
+            return commonFieldValueProvider.doFillCoverityToolNameItems(coverityToolName);
         }
 
         public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") final String coverityToolName) {
-            return coverityCommonDescriptor.doCheckCoverityToolName(coverityToolName);
+            return commonFieldValidator.doCheckCoverityToolName(coverityToolName);
         }
 
         public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
-            return coverityCommonDescriptor.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);
+            return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);
         }
 
         public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName,
             final @QueryParameter("updateNow") boolean updateNow) {
-            return coverityCommonDescriptor.doFillStreamNameItems(coverityInstanceUrl, projectName, streamName, updateNow);
+            return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, streamName, updateNow);
         }
 
         public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
-            return coverityCommonDescriptor.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
+            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
         }
 
         public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return coverityCommonDescriptor.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
         }
 
         @Override
@@ -222,7 +231,8 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
     }
 
-    private static final class FilterImpl extends ConsoleLogFilter {
+    private static final class FilterImpl extends ConsoleLogFilter implements Serializable {
+        private static final long serialVersionUID = 1787519634824445328L;
         private final String passwordToMask;
 
         public FilterImpl(final String passwordToMask) {

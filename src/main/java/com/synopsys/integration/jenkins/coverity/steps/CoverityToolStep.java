@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity;
+package com.synopsys.integration.jenkins.coverity.steps;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -31,15 +31,19 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
+import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArguments;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.extensions.build.AdvancedCoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.extensions.build.CommandArguments;
+import com.synopsys.integration.jenkins.coverity.extensions.build.CoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.extensions.build.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.extensions.build.SimpleCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.remote.CoverityRemoteResponse;
-import com.synopsys.integration.jenkins.coverity.remote.CoverityRemoteRunner;
+import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteResponse;
+import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteRunner;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -53,52 +57,16 @@ public class CoverityToolStep extends BaseCoverityStep {
         super(node, listener, envVars, workspace, run);
     }
 
-    public RepeatableCommand[] getSimpleModeCommands(final String coverityConnectInstanceUrl, final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration) {
-        final RepeatableCommand[] commands;
-        final boolean isHttps = PluginHelper.getCoverityInstanceFromUrl(logger, coverityConnectInstanceUrl)
-                                    .flatMap(CoverityConnectInstance::getCoverityURL)
-                                    .map(URL::getProtocol)
-                                    .filter("https"::equals)
-                                    .isPresent();
-
-        final CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();
-        final String covBuildArguments;
-        final String covAnalyzeArguments;
-        final String covCommitDefectsArguments;
-        final String covRunDesktopArguments;
-        if (commandArguments == null) {
-            covBuildArguments = StringUtils.EMPTY;
-            covAnalyzeArguments = StringUtils.EMPTY;
-            covCommitDefectsArguments = StringUtils.EMPTY;
-            covRunDesktopArguments = StringUtils.EMPTY;
-        } else {
-            covBuildArguments = commandArguments.getCovBuildArguments();
-            covAnalyzeArguments = commandArguments.getCovAnalyzeArguments();
-            covCommitDefectsArguments = commandArguments.getCovCommitDefectsArguments();
-            covRunDesktopArguments = commandArguments.getCovRunDesktopArguments();
-        }
-
-        if (CoverityAnalysisType.COV_ANALYZE.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
-            commands = new RepeatableCommand[] {
-                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), covBuildArguments),
-                RepeatableCommand.COV_ANALYZE(covAnalyzeArguments),
-                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
-            };
-        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
-            commands = new RepeatableCommand[] {
-                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), covBuildArguments),
-                RepeatableCommand.COV_RUN_DESKTOP(isHttps, covRunDesktopArguments, String.format("${%s}", JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString())),
-                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
-            };
-        } else {
-            commands = new RepeatableCommand[] {};
-        }
-
-        return commands;
-    }
-
-    public boolean runCoverityToolStep(final RepeatableCommand[] commands, final OnCommandFailure onCommandFailure) {
+    public boolean runCoverityToolStep(final String coverityInstanceUrl, final CoverityRunConfiguration coverityRunConfiguration, final OnCommandFailure onCommandFailure) {
         initializeJenkinsCoverityLogger();
+        final RepeatableCommand[] commands;
+
+        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+            commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
+        } else {
+            commands = this.getSimpleModeCommands(coverityInstanceUrl, (SimpleCoverityRunConfiguration) coverityRunConfiguration);
+        }
+
         try {
             if (Result.ABORTED == getResult()) {
                 logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
@@ -155,6 +123,50 @@ public class CoverityToolStep extends BaseCoverityStep {
             return false;
         }
         return true;
+    }
+
+    private RepeatableCommand[] getSimpleModeCommands(final String coverityConnectInstanceUrl, final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration) {
+        final RepeatableCommand[] commands;
+        final boolean isHttps = GlobalValueHelper.getCoverityInstanceWithUrl(logger, coverityConnectInstanceUrl)
+                                    .flatMap(CoverityConnectInstance::getCoverityURL)
+                                    .map(URL::getProtocol)
+                                    .filter("https"::equals)
+                                    .isPresent();
+
+        final CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();
+        final String covBuildArguments;
+        final String covAnalyzeArguments;
+        final String covCommitDefectsArguments;
+        final String covRunDesktopArguments;
+        if (commandArguments == null) {
+            covBuildArguments = StringUtils.EMPTY;
+            covAnalyzeArguments = StringUtils.EMPTY;
+            covCommitDefectsArguments = StringUtils.EMPTY;
+            covRunDesktopArguments = StringUtils.EMPTY;
+        } else {
+            covBuildArguments = commandArguments.getCovBuildArguments();
+            covAnalyzeArguments = commandArguments.getCovAnalyzeArguments();
+            covCommitDefectsArguments = commandArguments.getCovCommitDefectsArguments();
+            covRunDesktopArguments = commandArguments.getCovRunDesktopArguments();
+        }
+
+        if (CoverityAnalysisType.COV_ANALYZE.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
+            commands = new RepeatableCommand[] {
+                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), covBuildArguments),
+                RepeatableCommand.COV_ANALYZE(covAnalyzeArguments),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
+            };
+        } else if (CoverityAnalysisType.COV_RUN_DESKTOP.equals(simpleCoverityRunConfiguration.getCoverityAnalysisType())) {
+            commands = new RepeatableCommand[] {
+                RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getBuildCommand(), covBuildArguments),
+                RepeatableCommand.COV_RUN_DESKTOP(isHttps, covRunDesktopArguments, String.format("${%s}", JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString())),
+                RepeatableCommand.COV_COMMIT_DEFECTS(isHttps, covCommitDefectsArguments)
+            };
+        } else {
+            commands = new RepeatableCommand[] {};
+        }
+
+        return commands;
     }
 
     private boolean verifyCoverityCommands(final RepeatableCommand[] commands) {

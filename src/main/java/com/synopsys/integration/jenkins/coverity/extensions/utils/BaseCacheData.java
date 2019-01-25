@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.cache;
+package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
 import java.time.Duration;
 import java.time.Instant;

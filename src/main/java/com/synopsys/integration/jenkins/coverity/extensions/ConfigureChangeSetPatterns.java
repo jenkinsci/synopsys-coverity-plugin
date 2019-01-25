@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
+package com.synopsys.integration.jenkins.coverity.extensions;
 
 import java.io.Serializable;
 

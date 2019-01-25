@@ -41,7 +41,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
-import com.synopsys.integration.jenkins.coverity.extensions.CoverityCommonDescriptor;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -126,12 +126,12 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
 
     @Extension
     public static class DescriptorImpl extends Descriptor<CoverityConnectInstance> {
-        private final CoverityCommonDescriptor coverityCommonDescriptor;
+        private final CommonFieldValidator commonFieldValidator;
 
         public DescriptorImpl() {
             super(CoverityConnectInstance.class);
             load();
-            coverityCommonDescriptor = new CoverityCommonDescriptor();
+            commonFieldValidator = new CommonFieldValidator();
         }
 
         public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
@@ -170,7 +170,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
             }
 
             final CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId);
-            return coverityCommonDescriptor.testConnectionToCoverityInstance(coverityConnectInstance);
+            return commonFieldValidator.testConnectionToCoverityInstance(coverityConnectInstance);
         }
     }
 

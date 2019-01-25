@@ -21,16 +21,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity;
+package com.synopsys.integration.jenkins.coverity.steps;
 
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
 
 import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;

@@ -31,7 +31,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.ConfigureChangeSetPatterns;
+import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 
 public class ChangeSetFilter {
     private final Set<String> excludedSet;
@@ -80,4 +80,5 @@ public class ChangeSetFilter {
         }
         return set;
     }
+    
 }

@@ -21,7 +21,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity;
+package com.synopsys.integration.jenkins.coverity.steps;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -42,8 +42,9 @@ import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CheckForIssuesInView;
+import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 
 import hudson.EnvVars;
@@ -73,7 +74,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
                 return false;
             }
 
-            final CoverityConnectInstance coverityInstance = PluginHelper.getCoverityInstanceFromUrl(logger, coverityInstanceUrl).orElse(null);
+            final CoverityConnectInstance coverityInstance = GlobalValueHelper.getCoverityInstanceWithUrl(logger, coverityInstanceUrl).orElse(null);
             if (coverityInstance == null) {
                 logger.error("Skipping the Synopsys Coverity Check for Issues in View step because no configured Coverity server was detected in the Jenkins System Configuration.");
                 return false;

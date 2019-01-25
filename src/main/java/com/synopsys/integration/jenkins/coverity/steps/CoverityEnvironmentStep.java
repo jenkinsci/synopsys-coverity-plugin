@@ -21,10 +21,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity;
+package com.synopsys.integration.jenkins.coverity.steps;
 
-import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -39,7 +40,10 @@ import org.apache.commons.lang3.StringUtils;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.executable.CoverityToolEnvironmentVariable;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.ConfigureChangeSetPatterns;
+import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
+import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
+import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
 import com.synopsys.integration.log.LogLevel;
@@ -59,16 +63,13 @@ import hudson.scm.ChangeLogSet;
 import jenkins.model.Jenkins;
 
 public class CoverityEnvironmentStep extends BaseCoverityStep {
-    private final List<ChangeLogSet<?>> changeLogSets;
-
-    public CoverityEnvironmentStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run, final List<ChangeLogSet<?>> changeLogSets) {
+    public CoverityEnvironmentStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
         super(node, listener, envVars, workspace, run);
-        this.changeLogSets = changeLogSets;
     }
 
-    public boolean setUpCoverityEnvironment(final String coverityInstanceUrl, final String streamName, final String coverityToolName, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public boolean setUpCoverityEnvironment(final List<ChangeLogSet<?>> changeLogSets, final String coverityInstanceUrl, final String streamName, final String coverityToolName, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         this.initializeJenkinsCoverityLogger();
-        final String pluginVersion = PluginHelper.getPluginVersion();
+        final String pluginVersion = GlobalValueHelper.getPluginVersion();
         logger.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
 
         if (Result.ABORTED == getResult()) {
@@ -76,22 +77,22 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
             return false;
         }
 
-        final CoverityConnectInstance coverityInstance = PluginHelper.getCoverityInstanceFromUrl(logger, coverityInstanceUrl).orElse(null);
+        final CoverityConnectInstance coverityInstance = GlobalValueHelper.getCoverityInstanceWithUrl(logger, coverityInstanceUrl).orElse(null);
         if (coverityInstance == null) {
-            logger.error("Skipping the Synopsys Coverity step because no configured Coverity server was detected.");
+            logger.error("No Coverity Connect instance with the URL " + coverityInstanceUrl + " could be found in the Jenkins System config.");
+            logger.error("Skipping Synopsys Coverity step...");
             return false;
         }
 
         logGlobalConfiguration(coverityInstance);
 
-        final Optional<CoverityToolInstallation> optionalCoverityToolInstallation = verifyAndGetCoverityToolInstallation(StringUtils.trimToEmpty(coverityToolName), PluginHelper.getCoverityToolInstallations(), getNode());
-        if (!optionalCoverityToolInstallation.isPresent()) {
+        final CoverityToolInstallation coverityToolInstallation = GlobalValueHelper.getCoverityToolInstallationForNodeWithName(logger, StringUtils.trimToEmpty(coverityToolName), getNode()).orElse(null);
+        if (coverityToolInstallation == null) {
             setResult(Result.FAILURE);
-            logger.error("No Coverity tool installation was configured");
+            logger.error("No Synopsys Coverity static analysis installation with the name " + coverityToolName + " could be found in the Global Tool Configuration.");
+            logger.error("Skipping Synopsys Coverity step...");
             return false;
         }
-
-        final CoverityToolInstallation coverityToolInstallation = optionalCoverityToolInstallation.get();
 
         addToPath(coverityToolInstallation);
         setEnvironmentVariable(CoverityToolEnvironmentVariable.USER, coverityInstance.getCoverityUsername().orElse(StringUtils.EMPTY));
@@ -99,8 +100,9 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_HOST, computeHost(coverityInstance));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PORT, computePort(coverityInstance));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM, streamName);
-        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, computeChangeSet(configureChangeSetPatterns));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, computeChangeSet(changeLogSets, configureChangeSetPatterns));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME, coverityToolInstallation.getHome());
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY, computeIntermediateDirectory(getEnvVars()));
 
         logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
         logger.alwaysLog("-- Synopsys stream: " + streamName);
@@ -119,27 +121,11 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         return true;
     }
 
-    private Optional<CoverityToolInstallation> verifyAndGetCoverityToolInstallation(final String coverityToolName, final CoverityToolInstallation[] coverityToolInstallations, final Node node) {
-        CoverityToolInstallation thisNodeCoverityToolInstallation = null;
-
-        if (StringUtils.isBlank(coverityToolName)) {
-            logger.error("[ERROR] No Coverity Static Analysis tool configured for this Job.");
-        } else if (null == coverityToolInstallations || coverityToolInstallations.length == 0) {
-            logger.error("[ERROR] No Coverity Static Analysis tools configured in Jenkins.");
-        } else {
-            for (final CoverityToolInstallation coverityToolInstallation : coverityToolInstallations) {
-                if (coverityToolInstallation.getName().equals(coverityToolName)) {
-                    try {
-                        thisNodeCoverityToolInstallation = coverityToolInstallation.forNode(node, logger.getJenkinsListener());
-                    } catch (final IOException | InterruptedException e) {
-                        logger.error("Problem getting the Synopsys Coverity Static Analysis tool on node " + node.getDisplayName() + ": " + e.getMessage());
-                        logger.debug(null, e);
-                    }
-                }
-            }
-        }
-
-        return Optional.ofNullable(thisNodeCoverityToolInstallation);
+    private String computeIntermediateDirectory(final EnvVars envVars) {
+        final String workspace = envVars.get("WORKSPACE");
+        final Path workspacePath = Paths.get(workspace);
+        final Path intermediateDirectoryPath = workspacePath.resolve("idir");
+        return intermediateDirectoryPath.toString();
     }
 
     private String computeHost(final CoverityConnectInstance coverityConnectInstance) {
@@ -166,7 +152,7 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         return computedPort;
     }
 
-    private String computeChangeSet(final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    private String computeChangeSet(final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         if (configureChangeSetPatterns == null) {
             return StringUtils.EMPTY;
         }

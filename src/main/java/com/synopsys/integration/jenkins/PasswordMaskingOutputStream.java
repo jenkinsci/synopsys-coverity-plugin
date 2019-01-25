@@ -52,4 +52,5 @@ public class PasswordMaskingOutputStream extends LineTransformationOutputStream 
 
         wrappedOutputStream.write(line.getBytes(StandardCharsets.UTF_8));
     }
+
 }
