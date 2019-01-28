@@ -30,7 +30,6 @@ import java.util.Optional;
 import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
@@ -78,8 +77,8 @@ public abstract class BaseCoverityStep {
         envVars.put(synopsysEnvironmentVariable.toString(), value);
     }
 
-    public void addToPath(final CoverityToolInstallation coverityToolInstallation) {
-        coverityToolInstallation.buildEnvVars(envVars);
+    public void addCoverityToolBinToPath(final String coverityToolBinPath) {
+        envVars.put("PATH+COVERITYTOOLBIN", coverityToolBinPath);
     }
 
     public FilePath getWorkspace() {

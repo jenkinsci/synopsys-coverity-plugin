@@ -32,60 +32,47 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jenkinsci.remoting.Role;
-import org.jenkinsci.remoting.RoleChecker;
-
+import com.synopsys.integration.coverity.exception.ExecutableException;
+import com.synopsys.integration.coverity.exception.ExecutableRunnerException;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.executable.ExecutableManager;
-import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 
 import hudson.EnvVars;
-import hudson.remoting.Callable;
 
-public class CoverityRemoteRunner implements Callable<CoverityRemoteResponse, IntegrationException> {
-    private final JenkinsCoverityLogger logger;
-
-    private final String coverityStaticAnalysisDirectory;
+public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
+    private static final long serialVersionUID = -1777043273065180425L;
+    private final String coverityToolHome;
     private final List<String> arguments;
+    private final EnvVars envVars;
 
     private final String workspacePath;
 
-    private final EnvVars envVars;
-
-    public CoverityRemoteRunner(final JenkinsCoverityLogger logger, final String coverityStaticAnalysisDirectory, final List<String> arguments, final String workspacePath,
-        final EnvVars envVars) {
-        this.logger = logger;
-        this.coverityStaticAnalysisDirectory = coverityStaticAnalysisDirectory;
+    public CoverityRemoteToolRunner(final JenkinsCoverityLogger logger, final String coverityToolHome, final List<String> arguments, final String workspacePath, final EnvVars envVars) {
+        super(logger);
+        this.envVars = envVars;
+        this.coverityToolHome = coverityToolHome;
         this.arguments = arguments;
         this.workspacePath = workspacePath;
-        this.envVars = envVars;
     }
 
-    @Override
-    public CoverityRemoteResponse call() throws IntegrationException {
+    public Integer call() throws CoverityJenkinsException {
         final File workspace = new File(workspacePath);
         final Map<String, String> environment = new HashMap<>(envVars);
         final Executable executable = new Executable(arguments, workspace, environment);
-        final ExecutableManager executableManager = new ExecutableManager(new File(coverityStaticAnalysisDirectory));
-        final int exitCode;
+        final ExecutableManager executableManager = new ExecutableManager(new File(coverityToolHome));
+        final Integer exitCode;
         final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
         try {
             final PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
             exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, new PrintStream(errorOutputStream, true, "UTF-8"));
-        } catch (final InterruptedException e) {
-            logger.error("Coverity remote thread was interrupted.", e);
-            return new CoverityRemoteResponse(e);
-        } catch (final IntegrationException | UnsupportedEncodingException e) {
-            return new CoverityRemoteResponse(e);
+        } catch (final UnsupportedEncodingException | InterruptedException | ExecutableException | ExecutableRunnerException e) {
+            throw new CoverityJenkinsException(e);
         } finally {
             logger.error(new String(errorOutputStream.toByteArray(), StandardCharsets.UTF_8));
         }
-        return new CoverityRemoteResponse(exitCode);
+        return exitCode;
     }
 
-    @Override
-    public void checkRoles(final RoleChecker checker) throws SecurityException {
-        checker.check(this, new Role(CoverityRemoteRunner.class));
-    }
 }

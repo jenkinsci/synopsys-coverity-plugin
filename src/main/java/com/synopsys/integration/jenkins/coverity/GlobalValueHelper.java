@@ -23,19 +23,16 @@
  */
 package com.synopsys.integration.jenkins.coverity;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
 import com.synopsys.integration.log.IntLogger;
 
 import hudson.Plugin;
 import hudson.PluginWrapper;
-import hudson.model.Node;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 
@@ -72,49 +69,14 @@ public class GlobalValueHelper {
         return Optional.empty();
     }
 
-    public static Optional<CoverityToolInstallation> getCoverityToolInstallationWithName(final IntLogger logger, final String coverityToolName) {
-        final List<CoverityToolInstallation> coverityToolInstallations = getCoverityGlobalConfig().getCoverityToolInstallations();
-        if (null == coverityToolInstallations || coverityToolInstallations.isEmpty()) {
-            logger.error("[ERROR] No Coverity Static Analysis installations are configured in the Jenkins system config.");
-        } else {
-            return coverityToolInstallations.stream()
-                       .filter(coverityToolInstallation -> coverityToolInstallation.getName().equals(coverityToolName))
-                       .findFirst();
-        }
-
-        return Optional.empty();
-    }
-
-    public static Optional<CoverityToolInstallation> getCoverityToolInstallationForNodeWithName(final JenkinsCoverityLogger logger, final String coverityToolName, final Node node) {
-        return getCoverityToolInstallationWithName(logger, coverityToolName)
-                   .map(coverityToolInstallation -> convertForNode(coverityToolInstallation, node, logger));
-    }
-
-    public static List<CoverityToolInstallation> getGlobalCoverityToolInstallations() {
-        return Optional.ofNullable(getCoverityGlobalConfig())
-                   .map(CoverityGlobalConfig::getCoverityToolInstallations)
-                   .orElseGet(Collections::emptyList);
-    }
-
     public static List<CoverityConnectInstance> getGlobalCoverityConnectInstances() {
         return Optional.ofNullable(getCoverityGlobalConfig())
                    .map(CoverityGlobalConfig::getCoverityConnectInstances)
                    .orElseGet(Collections::emptyList);
     }
 
-    public static CoverityGlobalConfig getCoverityGlobalConfig() {
+    private static CoverityGlobalConfig getCoverityGlobalConfig() {
         return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
-    }
-
-    private static CoverityToolInstallation convertForNode(final CoverityToolInstallation coverityToolInstallation, final Node node, final JenkinsCoverityLogger logger) {
-        try {
-            return coverityToolInstallation.forNode(node, logger.getJenkinsListener());
-        } catch (final IOException | InterruptedException e) {
-            logger.error("Problem getting the Synopsys Coverity Static Analysis tool on node " + node.getDisplayName() + ": " + e.getMessage());
-            logger.debug(null, e);
-        }
-
-        return null;
     }
 
 }

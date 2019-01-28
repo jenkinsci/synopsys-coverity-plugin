@@ -23,6 +23,7 @@
  */
 package com.synopsys.integration.jenkins.coverity.steps;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,7 +46,7 @@ import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
+import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteInstallationValidator;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.phonehome.PhoneHomeCallable;
 import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
@@ -67,50 +68,65 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean setUpCoverityEnvironment(final List<ChangeLogSet<?>> changeLogSets, final String coverityInstanceUrl, final String streamName, final String coverityToolName, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public boolean setUpCoverityEnvironment(final List<ChangeLogSet<?>> changeLogSets, final String coverityInstanceUrl, final String streamName, final String viewName, final ConfigureChangeSetPatterns configureChangeSetPatterns)
+        throws IOException {
         this.initializeJenkinsCoverityLogger();
         final String pluginVersion = GlobalValueHelper.getPluginVersion();
         logger.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
 
         if (Result.ABORTED == getResult()) {
-            logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
+            logger.alwaysLog("Skipping injecting Synopsys Coverity environment because the build was aborted.");
             return false;
         }
 
         final CoverityConnectInstance coverityInstance = GlobalValueHelper.getCoverityInstanceWithUrl(logger, coverityInstanceUrl).orElse(null);
         if (coverityInstance == null) {
             logger.error("No Coverity Connect instance with the URL " + coverityInstanceUrl + " could be found in the Jenkins System config.");
-            logger.error("Skipping Synopsys Coverity step...");
+            logger.error("Skipping Synopsys Coverity environment step...");
             return false;
         }
 
         logGlobalConfiguration(coverityInstance);
-
-        final CoverityToolInstallation coverityToolInstallation = GlobalValueHelper.getCoverityToolInstallationForNodeWithName(logger, StringUtils.trimToEmpty(coverityToolName), getNode()).orElse(null);
-        if (coverityToolInstallation == null) {
-            setResult(Result.FAILURE);
-            logger.error("No Synopsys Coverity static analysis installation with the name " + coverityToolName + " could be found in the Global Tool Configuration.");
-            logger.error("Skipping Synopsys Coverity step...");
+        final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, getEnvVars());
+        final String pathToCoverityToolHome;
+        try {
+            pathToCoverityToolHome = getNode().getChannel().call(coverityRemoteInstallationValidator);
+        } catch (final InterruptedException e) {
+            logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
+            setResult(Result.ABORTED);
+            Thread.currentThread().interrupt();
+            return false;
+        } catch (final Exception e) {
+            logger.error("[ERROR] " + e.getMessage(), e);
+            setResult(Result.UNSTABLE);
             return false;
         }
 
-        addToPath(coverityToolInstallation);
+        if (StringUtils.isBlank(pathToCoverityToolHome)) {
+            logger.error("Could not get path to Coverity tool home or the path provided is invalid.");
+            logger.error("Skipping Synopsys Coverity environment step...");
+            return false;
+        }
+
+        addCoverityToolBinToPath(pathToCoverityToolHome);
         setEnvironmentVariable(CoverityToolEnvironmentVariable.USER, coverityInstance.getCoverityUsername().orElse(StringUtils.EMPTY));
         setEnvironmentVariable(CoverityToolEnvironmentVariable.PASSPHRASE, coverityInstance.getCoverityPassword().orElse(StringUtils.EMPTY));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_HOST, computeHost(coverityInstance));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PORT, computePort(coverityInstance));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM, streamName);
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, viewName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, computeChangeSet(changeLogSets, configureChangeSetPatterns));
-        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME, coverityToolInstallation.getHome());
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY, computeIntermediateDirectory(getEnvVars()));
 
-        logger.alwaysLog("-- Synopsys Coverity Static Analysis tool: " + coverityToolInstallation.getHome());
+        logger.alwaysLog("Synopsys Coverity Environment:");
+        logger.alwaysLog("-- Synopsys Coverity static analysis tool home: " + pathToCoverityToolHome);
+        logger.alwaysLog("-- Synopsys Coverity static analysis intermediate directory: " + getEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY));
         logger.alwaysLog("-- Synopsys stream: " + streamName);
         if (configureChangeSetPatterns != null) {
-            logger.alwaysLog("-- Change Set Inclusion Patterns: " + configureChangeSetPatterns.getChangeSetInclusionPatterns());
-            logger.alwaysLog("-- Change Set Exclusion Patterns: " + configureChangeSetPatterns.getChangeSetExclusionPatterns());
+            logger.alwaysLog("-- Change set inclusion patterns: " + configureChangeSetPatterns.getChangeSetInclusionPatterns());
+            logger.alwaysLog("-- Change set exclusion patterns: " + configureChangeSetPatterns.getChangeSetExclusionPatterns());
         } else {
-            logger.alwaysLog("-- No Change Set inclusion or exclusion patterns set");
+            logger.alwaysLog("-- No change set inclusion or exclusion patterns set");
         }
 
         final PhoneHomeResponse phoneHomeResponse = phoneHome(coverityInstance, pluginVersion);

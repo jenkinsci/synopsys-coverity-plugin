@@ -65,21 +65,6 @@ public class CommonFieldValidator {
         return FormValidation.error("There are no Coverity instances configured with the name %s", coverityInstance);
     }
 
-    public FormValidation doCheckCoverityToolName(final String coverityToolName) {
-        if (GlobalValueHelper.getGlobalCoverityToolInstallations().isEmpty()) {
-            return FormValidation.error("There are no Coverity static analysis installations configured");
-        }
-
-        if (StringUtils.isBlank(coverityToolName)) {
-            return FormValidation.error("Please choose one of the Coverity static analysis installations");
-        }
-
-        if (GlobalValueHelper.getCoverityToolInstallationWithName(new SilentLogger(), coverityToolName).isPresent()) {
-            return FormValidation.ok();
-        }
-        return FormValidation.error("There are no Coverity static analysis installations configured with the name %s", coverityToolName);
-    }
-
     public FormValidation testConnectionIgnoreSuccessMessage(final String jenkinsCoverityInstanceUrl) {
         return GlobalValueHelper.getCoverityInstanceWithUrl(new SilentLogger(), jenkinsCoverityInstanceUrl)
                    .map(this::testConnectionIgnoreSuccessMessage)

@@ -25,26 +25,27 @@ package com.synopsys.integration.jenkins.coverity.steps.remote;
 
 import java.io.Serializable;
 
-public class CoverityRemoteResponse implements Serializable {
-    private final Exception exception;
-    private final int exitCode;
+import org.jenkinsci.remoting.Role;
+import org.jenkinsci.remoting.RoleChecker;
 
-    public CoverityRemoteResponse(final int exitCode) {
-        this.exitCode = exitCode;
-        this.exception = null;
+import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+
+import hudson.remoting.Callable;
+
+public abstract class CoverityRemoteCallable<T extends Serializable> implements Callable<T, IntegrationException> {
+    private static final long serialVersionUID = -4096882757092525358L;
+    protected final JenkinsCoverityLogger logger;
+
+    public CoverityRemoteCallable(final JenkinsCoverityLogger logger) {
+        this.logger = logger;
     }
 
-    public CoverityRemoteResponse(final Exception exception) {
-        this.exitCode = -1;
-        this.exception = exception;
-    }
+    @Override
+    public abstract T call() throws IntegrationException;
 
-    public Exception getException() {
-        return exception;
+    @Override
+    public void checkRoles(final RoleChecker checker) throws SecurityException {
+        checker.check(this, new Role(this.getClass()));
     }
-
-    public int getExitCode() {
-        return exitCode;
-    }
-
 }

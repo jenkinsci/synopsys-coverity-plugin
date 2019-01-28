@@ -34,21 +34,10 @@ import jenkins.model.GlobalConfiguration;
 @Extension
 public class CoverityGlobalConfig extends GlobalConfiguration {
     private List<CoverityConnectInstance> coverityConnectInstances;
-    private List<CoverityToolInstallation> coverityToolInstallations;
 
     @DataBoundConstructor
     public CoverityGlobalConfig() {
         load();
-    }
-
-    public List<CoverityToolInstallation> getCoverityToolInstallations() {
-        return coverityToolInstallations;
-    }
-
-    @DataBoundSetter
-    public void setCoverityToolInstallations(final List<CoverityToolInstallation> coverityToolInstallations) {
-        this.coverityToolInstallations = coverityToolInstallations;
-        save();
     }
 
     public List<CoverityConnectInstance> getCoverityConnectInstances() {
@@ -58,7 +47,6 @@ public class CoverityGlobalConfig extends GlobalConfiguration {
     @DataBoundSetter
     public void setCoverityConnectInstances(final List<CoverityConnectInstance> coverityConnectInstances) {
         this.coverityConnectInstances = coverityConnectInstances;
-        save();
     }
 
 }

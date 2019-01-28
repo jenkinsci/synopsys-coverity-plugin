@@ -23,9 +23,7 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -39,7 +37,6 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.CoveritySelectBoxEnum;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityToolInstallation;
 import com.synopsys.integration.log.SilentLogger;
 
 import hudson.util.ListBoxModel;
@@ -56,11 +53,12 @@ public class CommonFieldValueProvider {
     }
 
     public ListBoxModel doFillCoverityInstanceUrlItems(final String selectedCoverityInstanceUrl) {
-        return transformListToListBoxModel(GlobalValueHelper.getGlobalCoverityConnectInstances(), CoverityConnectInstance::getUrl, selectedCoverityInstanceUrl);
-    }
-
-    public ListBoxModel doFillCoverityToolNameItems(final String selectedCoverityInstallation) {
-        return transformListToListBoxModel(GlobalValueHelper.getGlobalCoverityToolInstallations(), CoverityToolInstallation::getName, selectedCoverityInstallation);
+        final ListBoxModel listBoxModel = GlobalValueHelper.getGlobalCoverityConnectInstances().stream()
+                                              .map(CoverityConnectInstance::getUrl)
+                                              .map(dataObject -> wrapAsListBoxModelOption(dataObject, selectedCoverityInstanceUrl))
+                                              .collect(ListBoxModel::new, ListBoxModel::add, ListBoxModel::addAll);
+        listBoxModel.add("- none -", "");
+        return listBoxModel;
     }
 
     public ListBoxModel doFillProjectNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final Boolean updateNow) {
@@ -98,15 +96,6 @@ public class CommonFieldValueProvider {
         }
 
         return new ListBoxModel();
-    }
-
-    private <T> ListBoxModel transformListToListBoxModel(final List<T> listOfObjects, final Function<T, String> displayNameMapper, final String selectedDisplayName) {
-        final ListBoxModel listBoxModel = listOfObjects.stream()
-                                              .map(displayNameMapper)
-                                              .map(dataObject -> wrapAsListBoxModelOption(dataObject, selectedDisplayName))
-                                              .collect(ListBoxModel::new, ListBoxModel::add, ListBoxModel::addAll);
-        listBoxModel.add("- none -", "");
-        return listBoxModel;
     }
 
     private String toProjectName(final ProjectDataObj projectDataObj) {

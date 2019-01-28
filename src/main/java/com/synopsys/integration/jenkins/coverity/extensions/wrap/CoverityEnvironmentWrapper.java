@@ -64,7 +64,6 @@ import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
-    private final String coverityToolName;
     private final String coverityInstanceUrl;
     private final String coverityPassphrase;
     private String projectName;
@@ -73,8 +72,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     private ConfigureChangeSetPatterns configureChangeSetPatterns;
 
     @DataBoundConstructor
-    public CoverityEnvironmentWrapper(final String coverityToolName, final String coverityInstanceUrl) {
-        this.coverityToolName = coverityToolName;
+    public CoverityEnvironmentWrapper(final String coverityInstanceUrl) {
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentLogger(), coverityInstanceUrl)
                                       .flatMap(CoverityConnectInstance::getCoverityPassword)
@@ -83,10 +81,6 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     public String getCoverityInstanceUrl() {
         return coverityInstanceUrl;
-    }
-
-    public String getCoverityToolName() {
-        return coverityToolName;
     }
 
     public String getProjectName() {
@@ -147,7 +141,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build);
-        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSets, coverityInstanceUrl, streamName, coverityToolName, configureChangeSetPatterns);
+        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSets, coverityInstanceUrl, streamName, viewName, configureChangeSetPatterns);
 
         if (!setUpSuccessful) {
             throw new AbortException("Could not successfully inject Coverity environment into build process.");
@@ -185,14 +179,6 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         public FormValidation doCheckCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
             return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
-        }
-
-        public ListBoxModel doFillCoverityToolNameItems(@QueryParameter("coverityToolName") final String coverityToolName) {
-            return commonFieldValueProvider.doFillCoverityToolNameItems(coverityToolName);
-        }
-
-        public FormValidation doCheckCoverityToolName(@QueryParameter("coverityToolName") final String coverityToolName) {
-            return commonFieldValidator.doCheckCoverityToolName(coverityToolName);
         }
 
         public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {

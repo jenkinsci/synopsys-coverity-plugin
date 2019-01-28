@@ -42,8 +42,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.build.CoverityRunCon
 import com.synopsys.integration.jenkins.coverity.extensions.build.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.build.SimpleCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteResponse;
-import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteRunner;
+import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteToolRunner;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -86,26 +85,14 @@ public class CoverityToolStep extends BaseCoverityStep {
 
                 final List<String> arguments = getCorrectedParameters(command);
 
-                final CoverityRemoteRunner coverityRemoteRunner = new CoverityRemoteRunner(logger, getEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME), arguments, getWorkspace().getRemote(), getEnvVars());
-                final CoverityRemoteResponse response = getNode().getChannel().call(coverityRemoteRunner);
+                final CoverityRemoteToolRunner coverityRemoteToolRunner = new CoverityRemoteToolRunner(logger, getEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME), arguments, getWorkspace().getRemote(),
+                    getEnvVars());
+                final Integer exitCode = getNode().getChannel().call(coverityRemoteToolRunner);
                 boolean shouldStop = false;
-                if (response.getExitCode() != 0) {
-                    logger.error("[ERROR] Coverity failed with exit code: " + response.getExitCode());
+                if (exitCode != null && exitCode != 0) {
+                    logger.error("[ERROR] Coverity failed with exit code: " + exitCode);
                     setResult(Result.FAILURE);
                     shouldStop = true;
-                }
-                if (null != response.getException()) {
-                    final Exception exception = response.getException();
-                    if (exception instanceof InterruptedException) {
-                        setResult(Result.ABORTED);
-                        Thread.currentThread().interrupt();
-                        break;
-                    } else {
-                        setResult(Result.UNSTABLE);
-                        shouldStop = true;
-                        logger.error("[ERROR] " + exception.getMessage());
-                        logger.debug(null, exception);
-                    }
                 }
                 if (OnCommandFailure.SKIP_REMAINING_COMMANDS.equals(onCommandFailure) && shouldStop) {
                     break;
@@ -118,7 +105,8 @@ public class CoverityToolStep extends BaseCoverityStep {
             return false;
 
         } catch (final Exception e) {
-            logger.error("[ERROR] " + e.getMessage(), e);
+            logger.error("[ERROR] " + e.getMessage());
+            logger.debug(null, e);
             setResult(Result.UNSTABLE);
             return false;
         }
