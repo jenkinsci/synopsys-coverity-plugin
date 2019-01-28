@@ -71,24 +71,24 @@ task renameFile {
 task generateJelly(type: GenerateJelly) {
     pathToExtensionResourcesPackage = 'src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/'
     pathToJellyJson = 'src/main/resources/templates/coverity/jelly/'
-    outputPathToJson = ['build/CoverityBuildStep'               : 'buildStep.json',
-                        'build/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
-                        'build/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
-                        'global/CoverityGlobalConfig'           : 'globalConfig.json',
-                        'wrap/CoverityEnvironmentWrapper'       : 'environmentWrapper.json',]
+    outputPathToJson = ['buildstep/CoverityBuildStep'               : 'buildStep.json',
+                        'buildstep/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
+                        'buildstep/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
+                        'global/CoverityGlobalConfig'               : 'globalConfig.json',
+                        'wrap/CoverityEnvironmentWrapper'           : 'environmentWrapper.json',]
 }
 
 task generateHelp(type: GenerateHtml) {
     pathToExtensionResourcesPackage = 'src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/'
     pathToHelpJson = 'src/main/resources/templates/coverity/help/'
-    outputPathToJson = ['build/CoverityBuildStep'             : 'buildStep.json',
-                        'build/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
-                        'build/CommandArguments'              : 'commandArguments.json',
-                        'build/CheckForIssuesInView'          : 'checkForIssuesInView.json',
-                        'ConfigureChangeSetPatterns'          : 'configureChangeSetPatterns.json',
-                        'global/CoverityConnectInstance'      : 'coverityConnectInstance.json',
-                        'build/RepeatableCommand'             : 'repeatableCommand.json',
-                        'wrap/CoverityEnvironmentWrapper'     : 'environmentWrapper.json']
+    outputPathToJson = ['buildstep/CoverityBuildStep'             : 'buildStep.json',
+                        'buildstep/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
+                        'buildstep/CommandArguments'              : 'commandArguments.json',
+                        'buildstep/CheckForIssuesInView'          : 'checkForIssuesInView.json',
+                        'ConfigureChangeSetPatterns'              : 'configureChangeSetPatterns.json',
+                        'global/CoverityConnectInstance'          : 'coverityConnectInstance.json',
+                        'buildstep/RepeatableCommand'             : 'repeatableCommand.json',
+                        'wrap/CoverityEnvironmentWrapper'         : 'environmentWrapper.json']
 }
 
 compileJava.dependsOn generateHelp, generateJelly

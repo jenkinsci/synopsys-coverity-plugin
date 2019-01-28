@@ -29,7 +29,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.synopsys.integration.jenkins.coverity.extensions.build.CoverityBuildStep;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityBuildStep;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
 

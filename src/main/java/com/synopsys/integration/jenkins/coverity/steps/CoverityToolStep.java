@@ -36,11 +36,11 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVaria
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
-import com.synopsys.integration.jenkins.coverity.extensions.build.AdvancedCoverityRunConfiguration;
-import com.synopsys.integration.jenkins.coverity.extensions.build.CommandArguments;
-import com.synopsys.integration.jenkins.coverity.extensions.build.CoverityRunConfiguration;
-import com.synopsys.integration.jenkins.coverity.extensions.build.RepeatableCommand;
-import com.synopsys.integration.jenkins.coverity.extensions.build.SimpleCoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.AdvancedCoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArguments;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteToolRunner;
 
