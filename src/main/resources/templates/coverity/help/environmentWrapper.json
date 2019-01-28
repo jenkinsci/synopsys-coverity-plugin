@@ -10,11 +10,6 @@
         "Specify which Synopsys Coverity connect instance to run this job against."
       ]
     },
-    "coverityToolName": {
-      "overview": [
-        "Specify which Synopsys Coverity static analysis installation to use."
-      ]
-    },
     "projectName": {
       "overview": [
         "Specify the name of the Coverity project.",

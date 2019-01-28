@@ -7,7 +7,6 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
     script(src: '${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js')
     script(type: 'text/javascript', 'setRootURL("${app.rootUrl}");')
     entry(coverityInstanceUrlField, coverityInstanceUrlTitle, SELECT)
-    entry(coverityToolNameField, coverityToolNameTitle, SELECT)
     entry(projectNameField, projectNameTitle, SELECT)
     entry(streamNameField, streamNameTitle, SELECT)
     entry(viewNameField, viewNameTitle, SELECT)

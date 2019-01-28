@@ -3,8 +3,6 @@
   "model": {
     "coverityInstanceUrlField": "coverityInstanceUrl",
     "coverityInstanceUrlTitle": "Coverity instance",
-    "coverityToolNameField": "coverityToolName",
-    "coverityToolNameTitle": "Synopsys Coverity installation",
     "projectNameField": "projectName",
     "projectNameTitle": "Coverity project",
     "streamNameField": "streamName",
