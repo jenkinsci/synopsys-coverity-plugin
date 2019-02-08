@@ -12,14 +12,14 @@ task generateHelp {
         def engine = new MarkupTemplateEngine(config)
         def jsonSlurper = new JsonSlurper()
 
-        def helpModels = jsonSlurper.parse(file('src/main/resources/templates/helpModels.json'))
-        def destinations = ['src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep',
-                            'src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep']
+        def helpModels = jsonSlurper.parse(file("${projectDir}/src/main/resources/templates/helpModels.json"))
+        def destinations = ["${projectDir}/src/main/resources/com/synopsys/integration/coverity/freestyle/CoverityBuildStep",
+                            "${projectDir}/src/main/resources/com/synopsys/integration/coverity/pipeline/CoverityPipelineStep"]
 
         destinations.each { destination ->
             helpModels.entrySet().each { entry ->
                 String fieldName = entry.key
-                Template template = engine.createTemplate(file("src/main/resources/templates/${entry.value.template}").text)
+                Template template = engine.createTemplate(file("${projectDir}/src/main/resources/templates/${entry.value.template}").text)
                 Map model = entry.value.model
 
                 generateHelpHtml(destination, fieldName, template, model)
