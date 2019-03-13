@@ -130,7 +130,7 @@ public class CoverityBuildStep extends Builder {
         }
 
         final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, envVars, workingDirectory, build);
-        boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(build.getChangeSets(), coverityInstanceUrl, streamName, viewName, configureChangeSetPatterns);
+        boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(build.getChangeSets(), coverityInstanceUrl, projectName, streamName, viewName, configureChangeSetPatterns);
 
         if (prerequisiteStepSucceeded) {
             final CoverityToolStep coverityToolStep = new CoverityToolStep(node, listener, envVars, workingDirectory, build);

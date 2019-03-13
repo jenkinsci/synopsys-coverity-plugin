@@ -96,9 +96,10 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
 
     public CoverityServerConfig getCoverityServerConfig() {
         final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder()
-                                                        .url(getCoverityURL().map(URL::toString).orElse(null))
-                                                        .username(getCoverityUsername().orElse(null))
-                                                        .password(getCoverityPassword().orElse(null));
+                                                        .url(url);
+
+        getCoverityUsername().ifPresent(builder::username);
+        getCoverityPassword().ifPresent(builder::password);
 
         return builder.build();
     }

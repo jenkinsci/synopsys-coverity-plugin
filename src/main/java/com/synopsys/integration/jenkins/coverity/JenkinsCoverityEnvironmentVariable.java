@@ -29,6 +29,7 @@ public enum JenkinsCoverityEnvironmentVariable implements SynopsysEnvironmentVar
     CHANGE_SET("CHANGE_SET"),
     COVERITY_HOST("COV_HOST"),
     COVERITY_PORT("COV_PORT"),
+    COVERITY_PROJECT("COV_PROJECT"),
     COVERITY_STREAM("COV_STREAM"),
     COVERITY_VIEW("COV_VIEW"),
     COVERITY_TOOL_HOME("COVERITY_TOOL_HOME"),

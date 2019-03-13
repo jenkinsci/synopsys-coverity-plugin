@@ -141,7 +141,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build);
-        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSets, coverityInstanceUrl, streamName, viewName, configureChangeSetPatterns);
+        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSets, coverityInstanceUrl, projectName, streamName, viewName, configureChangeSetPatterns);
 
         if (!setUpSuccessful) {
             throw new AbortException("Could not successfully inject Coverity environment into build process.");

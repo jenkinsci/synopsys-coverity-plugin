@@ -68,8 +68,8 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean setUpCoverityEnvironment(final List<ChangeLogSet<?>> changeLogSets, final String coverityInstanceUrl, final String streamName, final String viewName, final ConfigureChangeSetPatterns configureChangeSetPatterns)
-        throws IOException {
+    public boolean setUpCoverityEnvironment(final List<ChangeLogSet<?>> changeLogSets, final String coverityInstanceUrl, final String projectName, final String streamName, final String viewName,
+        final ConfigureChangeSetPatterns configureChangeSetPatterns) throws IOException {
         this.initializeJenkinsCoverityLogger();
         final String pluginVersion = GlobalValueHelper.getPluginVersion();
         logger.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
@@ -113,6 +113,7 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         setEnvironmentVariable(CoverityToolEnvironmentVariable.PASSPHRASE, coverityInstance.getCoverityPassword().orElse(StringUtils.EMPTY));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_HOST, computeHost(coverityInstance));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PORT, computePort(coverityInstance));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, projectName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM, streamName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, viewName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, computeChangeSet(changeLogSets, configureChangeSetPatterns));
