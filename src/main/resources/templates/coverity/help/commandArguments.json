@@ -29,7 +29,8 @@
         "--host ${COVERITY_HOST}",
         "--port ${COVERITY_PORT}",
         "--stream ${COVERITY_STREAM}",
-        "--ssl (if COVERITY_HOST is an https address)"
+        "--ssl (if COVERITY_HOST is an https address)",
+        "${CHANGE_SET}"
       ]
     },
     "covCommitDefectsArguments": {
@@ -42,8 +43,7 @@
         "--host ${COVERITY_HOST}",
         "--port ${COVERITY_PORT}",
         "--stream ${COVERITY_STREAM}",
-        "--ssl (if COVERITY_HOST is an https address)",
-        "${CHANGE_SET}"
+        "--ssl (if COVERITY_HOST is an https address)"
       ]
     }
   }
