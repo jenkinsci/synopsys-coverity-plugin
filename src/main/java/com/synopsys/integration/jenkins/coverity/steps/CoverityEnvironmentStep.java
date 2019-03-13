@@ -92,12 +92,14 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         try {
             pathToCoverityToolHome = getNode().getChannel().call(coverityRemoteInstallationValidator);
         } catch (final InterruptedException e) {
-            logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
+            logger.error("[ERROR] Synopsys Coverity thread was interrupted.");
+            logger.debug("", e);
             setResult(Result.ABORTED);
             Thread.currentThread().interrupt();
             return false;
         } catch (final Exception e) {
-            logger.error("[ERROR] " + e.getMessage(), e);
+            logger.error("[ERROR] " + e.getMessage());
+            logger.debug("", e);
             setResult(Result.UNSTABLE);
             return false;
         }

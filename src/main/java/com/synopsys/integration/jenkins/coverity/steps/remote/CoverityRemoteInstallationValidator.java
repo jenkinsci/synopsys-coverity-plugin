@@ -50,6 +50,11 @@ public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<
 
     public String call() throws CoverityJenkinsException {
         final String coverityToolHome = envVars.get(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
+        if (StringUtils.isBlank(coverityToolHome)) {
+            logger.error(String.format("Cannot find Coverity installation, %s is not set.", JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()));
+            return StringUtils.EMPTY;
+        }
+
         final Path pathToCoverityToolHome = Paths.get(coverityToolHome);
 
         if (!Files.exists(pathToCoverityToolHome)) {
