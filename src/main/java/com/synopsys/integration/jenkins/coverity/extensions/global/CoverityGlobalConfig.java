@@ -47,6 +47,7 @@ public class CoverityGlobalConfig extends GlobalConfiguration {
     @DataBoundSetter
     public void setCoverityConnectInstances(final List<CoverityConnectInstance> coverityConnectInstances) {
         this.coverityConnectInstances = coverityConnectInstances;
+        save();
     }
 
 }
