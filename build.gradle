@@ -84,7 +84,7 @@ task generateHelp(type: GenerateHtml) {
     outputPathToJson = ['buildstep/CoverityBuildStep'             : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
                         'buildstep/CommandArguments'              : 'commandArguments.json',
-                        'buildstep/CheckForIssuesInView'          : 'checkForIssuesInView.json',
+                        'CheckForIssuesInView'                    : 'checkForIssuesInView.json',
                         'ConfigureChangeSetPatterns'              : 'configureChangeSetPatterns.json',
                         'global/CoverityConnectInstance'          : 'coverityConnectInstance.json',
                         'buildstep/RepeatableCommand'             : 'repeatableCommand.json',

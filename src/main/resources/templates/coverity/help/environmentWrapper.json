@@ -24,7 +24,8 @@
     },
     "viewName": {
       "overview": [
-        "Specify the name of the Coverity view that you would like to check for issues."
+        "Specify the name of the Coverity view that you would like to check for issues.",
+        "The resulting view name is stored in the $COV_VIEW environment variable, and affects checking for issues in both the full and incremental analysis, if configured."
       ]
     }
   }
