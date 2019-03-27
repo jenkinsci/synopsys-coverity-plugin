@@ -24,21 +24,22 @@
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.coverity.config.CoverityServerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.LogLevel;
-import com.synopsys.integration.log.PrintStreamIntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class ViewCacheData extends BaseCacheData<String> {
+    private final Logger logger = LoggerFactory.getLogger(ViewCacheData.class);
+
     @Override
     public String getDataType() {
         return "View";
@@ -46,19 +47,18 @@ public class ViewCacheData extends BaseCacheData<String> {
 
     @Override
     public List<String> retrieveData(final CoverityConnectInstance coverityInstance) {
-        final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
         List<String> data = Collections.emptyList();
         try {
             logger.info("Attempting retrieval of Coverity Views.");
-            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
-            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
+            final WebServiceFactory webServiceFactory = coverityInstance.getCoverityServerConfig().createWebServiceFactory(new Slf4jIntLogger(logger));
             webServiceFactory.connect();
 
             final ViewService viewService = webServiceFactory.createViewService();
             logger.info("Completed retrieval of Coverity Views.");
             data = new ArrayList<>(viewService.getViews().values());
-        } catch (IOException | IntegrationException | URISyntaxException e) {
-            logger.error(e);
+        } catch (IOException | IntegrationException e) {
+            logger.error(e.getMessage());
+            logger.trace("Stack trace:", e);
         }
         return data;
     }

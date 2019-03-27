@@ -29,8 +29,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -38,8 +39,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.executable.CoverityToolEnvironmentVariable;
+import com.synopsys.integration.coverity.ws.CoverityPhoneHomeHelper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
@@ -48,10 +49,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPa
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteInstallationValidator;
 import com.synopsys.integration.log.LogLevel;
-import com.synopsys.integration.phonehome.PhoneHomeCallable;
-import com.synopsys.integration.phonehome.PhoneHomeRequestBody;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
-import com.synopsys.integration.phonehome.PhoneHomeService;
 import com.synopsys.integration.rest.RestConstants;
 
 import hudson.EnvVars;
@@ -134,7 +132,7 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
 
         final PhoneHomeResponse phoneHomeResponse = phoneHome(coverityInstance, pluginVersion);
         if (null != phoneHomeResponse) {
-            phoneHomeResponse.endPhoneHome();
+            phoneHomeResponse.getImmediateResult();
         }
 
         return true;
@@ -219,26 +217,20 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
 
     private PhoneHomeResponse phoneHome(final CoverityConnectInstance coverityInstance, final String pluginVersion) {
         PhoneHomeResponse phoneHomeResponse = null;
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
 
         try {
-            final Optional<URL> coverityUrl = coverityInstance.getCoverityURL();
-            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
-            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
+            final WebServiceFactory webServiceFactory = coverityInstance.getCoverityServerConfig().createWebServiceFactory(logger);
             webServiceFactory.connect();
 
-            final ExecutorService executor = Executors.newSingleThreadExecutor();
-            try {
-                final PhoneHomeService phoneHomeService = webServiceFactory.createPhoneHomeService(executor);
-                //FIXME change to match the final artifact name
-                final PhoneHomeRequestBody.Builder phoneHomeRequestBuilder = new PhoneHomeRequestBody.Builder();
-                phoneHomeRequestBuilder.addToMetaData("jenkins.version", Jenkins.getVersion().toString());
-                final PhoneHomeCallable phoneHomeCallable = webServiceFactory.createCoverityPhoneHomeCallable(coverityUrl.orElse(null), "synopsys-coverity", pluginVersion, phoneHomeRequestBuilder);
-                phoneHomeResponse = phoneHomeService.startPhoneHome(phoneHomeCallable);
-            } finally {
-                executor.shutdownNow();
-            }
+            final Map<String, String> metaData = new HashMap<>();
+            final CoverityPhoneHomeHelper coverityPhoneHomeHelper = CoverityPhoneHomeHelper.createAsynchronousPhoneHomeHelper(webServiceFactory, webServiceFactory.createConfigurationService(), executor);
+            metaData.put("jenkins.version", Jenkins.getVersion().toString());
+            phoneHomeResponse = coverityPhoneHomeHelper.handlePhoneHome("synopsys-coverity", pluginVersion, metaData);
         } catch (final Exception e) {
             logger.debug(e.getMessage(), e);
+        } finally {
+            executor.shutdownNow();
         }
 
         return phoneHomeResponse;

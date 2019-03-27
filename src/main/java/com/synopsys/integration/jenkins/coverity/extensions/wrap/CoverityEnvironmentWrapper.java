@@ -44,7 +44,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
 import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
-import com.synopsys.integration.log.SilentLogger;
+import com.synopsys.integration.log.SilentIntLogger;
 
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -74,7 +74,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     @DataBoundConstructor
     public CoverityEnvironmentWrapper(final String coverityInstanceUrl) {
         this.coverityInstanceUrl = coverityInstanceUrl;
-        this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentLogger(), coverityInstanceUrl)
+        this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentIntLogger(), coverityInstanceUrl)
                                       .flatMap(CoverityConnectInstance::getCoverityPassword)
                                       .orElse(StringUtils.EMPTY);
     }

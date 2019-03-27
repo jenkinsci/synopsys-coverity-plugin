@@ -24,12 +24,12 @@
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
@@ -37,12 +37,12 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.CoveritySelectBoxEnum;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.log.SilentLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 import hudson.util.ListBoxModel;
 
 public class CommonFieldValueProvider {
-    private static final Logger logger = Logger.getLogger(CommonFieldValueProvider.class.getName());
+    private final Logger logger = LoggerFactory.getLogger(CommonFieldValueProvider.class);
 
     private final ProjectCacheData projectCacheData = new ProjectCacheData();
     private final ViewCacheData viewCacheData = new ViewCacheData();
@@ -137,13 +137,14 @@ public class CommonFieldValueProvider {
     }
 
     private boolean checkAndWaitForCacheData(final String jenkinsCoverityInstanceUrl, final Boolean updateNow, final BaseCacheData cacheData) {
-        final CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentLogger(), jenkinsCoverityInstanceUrl).orElse(null);
+        final CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrl(new Slf4jIntLogger(logger), jenkinsCoverityInstanceUrl).orElse(null);
         if (coverityConnectInstance != null) {
             try {
                 cacheData.checkAndWaitForData(coverityConnectInstance, updateNow);
                 return true;
             } catch (final IntegrationException | InterruptedException e) {
-                logger.log(Level.WARNING, "Unexpected exception encountered when checking or waiting for Coverity data", e);
+                logger.warn("Unexpected exception encountered when checking or waiting for Coverity data: " + e.getMessage());
+                logger.trace("Stack trace:", e);
             } catch (final IllegalStateException ignored) {
                 // Handled by form validation
             }

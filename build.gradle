@@ -49,7 +49,7 @@ jenkinsPlugin {
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
 
-    implementation 'com.synopsys.integration:coverity-common:0.1.6'
+    implementation 'com.synopsys.integration:coverity-common:0.2.0'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'

@@ -27,20 +27,20 @@ import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
 import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
-import com.synopsys.integration.exception.EncryptionException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.LogLevel;
-import com.synopsys.integration.log.PrintStreamIntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
+    private final Logger logger = LoggerFactory.getLogger(ProjectCacheData.class);
+
     @Override
     public String getDataType() {
         return "Project";
@@ -48,20 +48,18 @@ public class ProjectCacheData extends BaseCacheData<ProjectDataObj> {
 
     @Override
     public List<ProjectDataObj> retrieveData(final CoverityConnectInstance coverityInstance) {
-        final IntLogger logger = new PrintStreamIntLogger(System.out, LogLevel.DEBUG);
         List<ProjectDataObj> projects = Collections.emptyList();
         try {
             logger.info("Attempting retrieval of Coverity Projects.");
-            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
-            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger);
-            webServiceFactory.connect();
+            final WebServiceFactory webServiceFactory = coverityInstance.getCoverityServerConfig().createWebServiceFactory(new Slf4jIntLogger(logger));
 
             final ConfigurationService configurationService = webServiceFactory.createConfigurationService();
             final ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
             projects = configurationService.getProjects(projectFilterSpecDataObj);
             logger.info("Completed retrieval of Coverity Projects.");
-        } catch (EncryptionException | MalformedURLException | CoverityIntegrationException | CovRemoteServiceException_Exception e) {
-            logger.error(e);
+        } catch (MalformedURLException | CovRemoteServiceException_Exception e) {
+            logger.error(e.getMessage());
+            logger.trace("Stack trace:", e);
         }
         return projects;
     }

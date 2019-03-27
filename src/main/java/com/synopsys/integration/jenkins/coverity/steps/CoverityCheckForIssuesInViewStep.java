@@ -32,7 +32,6 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
@@ -94,8 +93,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
 
             logger.alwaysLog("Checking for issues in project and view.");
 
-            final CoverityServerConfig coverityServerConfig = coverityInstance.getCoverityServerConfig();
-            final WebServiceFactory webServiceFactory = new WebServiceFactory(coverityServerConfig, logger, createIntEnvironmentVariables());
+            final WebServiceFactory webServiceFactory = coverityInstance.getCoverityServerConfig().createWebServiceFactory(logger);
             webServiceFactory.connect();
 
             boolean errorWithProjectOrView = false;
@@ -220,7 +218,7 @@ public class CoverityCheckForIssuesInViewStep extends BaseCoverityStep {
                 defectSize = viewContents.totalRows.intValue();
             }
             return defectSize;
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             throw new CoverityIntegrationException(e.getMessage(), e);
         }
     }
