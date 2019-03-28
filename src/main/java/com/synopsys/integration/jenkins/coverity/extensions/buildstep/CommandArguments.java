@@ -88,13 +88,11 @@ public class CommandArguments extends AbstractDescribableImpl<CommandArguments> 
         }
 
         public FormValidation doCheckCovRunDesktopArguments(@QueryParameter("covRunDesktopArguments") final String covRunDesktopArguments) {
-            return checkForAlreadyProvidedArguments(covRunDesktopArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.HOST, RepeatableCommand.Argument.PORT, RepeatableCommand.Argument.STREAM,
-                RepeatableCommand.Argument.SSL);
+            return checkForAlreadyProvidedArguments(covRunDesktopArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.URL, RepeatableCommand.Argument.STREAM);
         }
 
         public FormValidation doCheckCovCommitDefectsArguments(@QueryParameter("covCommitDefectsArguments") final String covCommitDefectsArguments) {
-            return checkForAlreadyProvidedArguments(covCommitDefectsArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.HOST, RepeatableCommand.Argument.PORT, RepeatableCommand.Argument.STREAM,
-                RepeatableCommand.Argument.SSL);
+            return checkForAlreadyProvidedArguments(covCommitDefectsArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.URL, RepeatableCommand.Argument.STREAM);
         }
 
         private FormValidation checkForAlreadyProvidedArguments(final String command, final RepeatableCommand.Argument... providedArguments) {

@@ -24,7 +24,6 @@
 package com.synopsys.integration.jenkins.coverity.steps;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -111,8 +110,7 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         addCoverityToolBinToPath(pathToCoverityToolHome);
         setEnvironmentVariable(CoverityToolEnvironmentVariable.USER, coverityInstance.getCoverityUsername().orElse(StringUtils.EMPTY));
         setEnvironmentVariable(CoverityToolEnvironmentVariable.PASSPHRASE, coverityInstance.getCoverityPassword().orElse(StringUtils.EMPTY));
-        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_HOST, computeHost(coverityInstance));
-        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PORT, computePort(coverityInstance));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_URL, coverityInstance.getUrl());
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, projectName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM, streamName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, viewName);
@@ -143,30 +141,6 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         final Path workspacePath = Paths.get(workspace);
         final Path intermediateDirectoryPath = workspacePath.resolve("idir");
         return intermediateDirectoryPath.toString();
-    }
-
-    private String computeHost(final CoverityConnectInstance coverityConnectInstance) {
-        return coverityConnectInstance.getCoverityURL()
-                   .map(URL::getHost)
-                   .orElse(StringUtils.EMPTY);
-    }
-
-    private String computePort(final CoverityConnectInstance coverityConnectInstance) {
-        final URL coverityUrl = coverityConnectInstance.getCoverityURL().orElse(null);
-        final String computedPort;
-
-        if (null != coverityUrl) {
-            if (coverityUrl.getPort() == -1) {
-                // If the user passes a URL that has no port, we must supply the implicit URL port. Coverity uses tomcat defaults if it can't find any ports (8080/8443)
-                computedPort = String.valueOf(coverityUrl.getDefaultPort());
-            } else {
-                computedPort = String.valueOf(coverityUrl.getPort());
-            }
-        } else {
-            computedPort = StringUtils.EMPTY;
-        }
-
-        return computedPort;
     }
 
     private String computeChangeSet(final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {

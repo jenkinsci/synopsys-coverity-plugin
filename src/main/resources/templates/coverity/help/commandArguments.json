@@ -26,10 +26,8 @@
       "notes": [
         "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
         "--dir ${WORKSPACE}/idir",
-        "--host ${COVERITY_HOST}",
-        "--port ${COVERITY_PORT}",
-        "--stream ${COVERITY_STREAM}",
-        "--ssl (if COVERITY_HOST is an https address)",
+        "--url ${COV_URL}",
+        "--stream ${COV_STREAM}",
         "${CHANGE_SET}"
       ]
     },
@@ -40,10 +38,8 @@
       "notes": [
         "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
         "--dir ${WORKSPACE}/idir",
-        "--host ${COVERITY_HOST}",
-        "--port ${COVERITY_PORT}",
-        "--stream ${COVERITY_STREAM}",
-        "--ssl (if COVERITY_HOST is an https address)"
+        "--url ${COV_URL}",
+        "--stream ${COVERITY_STREAM}"
       ]
     }
   }

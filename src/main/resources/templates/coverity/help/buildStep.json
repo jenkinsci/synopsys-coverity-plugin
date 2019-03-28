@@ -7,7 +7,8 @@
     },
     "coverityInstanceUrl": {
       "overview": [
-        "Specify which Synopsys Coverity connect instance to run this job against."
+        "Specify which Synopsys Coverity connect instance to run this job against.",
+        "The resulting Synopsys Coverity connect instance URL is stored in the $COV_URL environment variable, and will affect both the full and incremental analysis."
       ]
     },
     "onCommandFailure": {
@@ -18,7 +19,7 @@
     "projectName": {
       "overview": [
         "Specify the name of the Coverity project.",
-        "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis"
+        "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis."
       ]
     },
     "streamName": {

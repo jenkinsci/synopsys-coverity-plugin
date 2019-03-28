@@ -10,11 +10,8 @@
       "commands": [
         "cov-build --dir ${WORKSPACE}/idir <em>build command</em>",
         "cov-analyze --dir ${WORKSPACE}/idir",
-        "cov-run-desktop --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --stream ${COV_STREAM} ${CHANGE_SET}",
-        "cov-commit-defects --dir ${WORKSPACE}/idir --host ${COVERITY_HOST} --port ${COVERITY_PORT} --stream ${COV_STREAM}"
-      ],
-      "notes": [
-        "If the configured COVERITY_HOST uses https, --ssl will be automatically applied to the end of the command."
+        "cov-run-desktop --dir ${WORKSPACE}/idir --url ${COV_URL} ${CHANGE_SET}",
+        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}"
       ]
     }
   }
