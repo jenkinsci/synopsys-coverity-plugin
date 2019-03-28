@@ -28,12 +28,15 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 
 public abstract class BaseCacheData<T> {
     public static final int CACHE_TIME_IN_MINUTES = 5;
     private boolean retrievingNow = false;
+    private String lastCoverityUrl = StringUtils.EMPTY;
     private Instant lastTimeRetrieved = null;
     private List<T> cachedData = null;
 
@@ -67,9 +70,11 @@ public abstract class BaseCacheData<T> {
             retrievingNow = true;
             try {
                 final Instant now = Instant.now();
-                if (null == cachedData || null == lastTimeRetrieved) {
+                final String coverityInstanceUrl = coverityInstance.getUrl();
+                if (null == cachedData || null == lastTimeRetrieved || !lastCoverityUrl.equals(coverityInstance.getUrl())) {
                     cachedData = retrieveData(coverityInstance);
                     lastTimeRetrieved = now;
+                    lastCoverityUrl = coverityInstanceUrl;
                 } else {
                     final Duration timeLapsed = Duration.between(lastTimeRetrieved, now);
                     // only update the cached views every 5 minutes
