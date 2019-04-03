@@ -27,6 +27,8 @@ import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -49,6 +51,10 @@ public class ConfigureChangeSetPatterns extends AbstractDescribableImpl<Configur
 
     public String getChangeSetExclusionPatterns() {
         return changeSetExclusionPatterns;
+    }
+
+    public ChangeSetFilter createChangeSetFilter() {
+        return new ChangeSetFilter(changeSetExclusionPatterns, changeSetInclusionPatterns);
     }
 
     @Override

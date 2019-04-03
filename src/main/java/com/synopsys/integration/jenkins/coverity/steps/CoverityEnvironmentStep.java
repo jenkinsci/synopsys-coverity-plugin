@@ -25,7 +25,6 @@ package com.synopsys.integration.jenkins.coverity.steps;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -143,27 +143,28 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
     }
 
     private String computeChangeSet(final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        final ChangeSetFilter changeSetFilter;
         if (configureChangeSetPatterns == null) {
-            return StringUtils.EMPTY;
+            changeSetFilter = ChangeSetFilter.createAcceptAllFilter();
+        } else {
+            changeSetFilter = configureChangeSetPatterns.createChangeSetFilter();
         }
-
-        final ChangeSetFilter changeSetFilter = new ChangeSetFilter(configureChangeSetPatterns);
 
         return changeLogSets.stream()
                    .filter(changeLogSet -> !changeLogSet.isEmptySet())
                    .flatMap(this::toEntries)
+                   .peek(this::logEntry)
                    .flatMap(this::toAffectedFiles)
-                   .filter(affectedFile -> shouldFilePathBeIncluded(affectedFile, changeSetFilter))
+                   .filter(changeSetFilter::shouldInclude)
                    .map(ChangeLogSet.AffectedFile::getPath)
                    .collect(Collectors.joining(" "));
     }
 
-    private Stream<ChangeLogSet.Entry> toEntries(final ChangeLogSet changeLogSet) {
-        return Arrays.stream((ChangeLogSet.Entry[]) changeLogSet.getItems());
+    private Stream<? extends ChangeLogSet.Entry> toEntries(final ChangeLogSet<? extends ChangeLogSet.Entry> changeLogSet) {
+        return StreamSupport.stream(changeLogSet.spliterator(), false);
     }
 
     private Stream<? extends ChangeLogSet.AffectedFile> toAffectedFiles(final ChangeLogSet.Entry entry) {
-        logEntry(entry);
         return entry.getAffectedFiles().stream();
     }
 
@@ -172,20 +173,6 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
             final Date date = new Date(entry.getTimestamp());
             logger.debug(String.format("Commit %s by %s on %s: %s", entry.getCommitId(), entry.getAuthor(), RestConstants.formatDate(date), entry.getMsg()));
         }
-    }
-
-    private boolean shouldFilePathBeIncluded(final ChangeLogSet.AffectedFile affectedFile, final ChangeSetFilter changeSetFilter) {
-        final String affectedFilePath = affectedFile.getPath();
-        final String affectedEditType = affectedFile.getEditType().getName();
-        final boolean shouldInclude = changeSetFilter.shouldInclude(affectedFilePath);
-
-        if (shouldInclude) {
-            logger.debug(String.format("Type: %s File Path: %s Included in change set", affectedEditType, affectedFilePath));
-        } else {
-            logger.debug(String.format("Type: %s File Path: %s Excluded from change set", affectedEditType, affectedFilePath));
-        }
-
-        return shouldInclude;
     }
 
     private PhoneHomeResponse phoneHome(final CoverityConnectInstance coverityInstance, final String pluginVersion) {
