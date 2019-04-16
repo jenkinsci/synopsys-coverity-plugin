@@ -43,6 +43,7 @@ jenkinsPlugin {
     url = 'https://wiki.jenkins.io/display/JENKINS/Synopsys+Coverity+Plugin'
     gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
 
+    compatibleSinceVersion = '2.0.0'
     pluginFirstClassLoader = false
 }
 
