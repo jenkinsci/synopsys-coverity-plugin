@@ -28,7 +28,6 @@ import java.util.Optional;
 
 import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
-import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
@@ -109,11 +108,11 @@ public abstract class BaseCoverityStep {
         return variables;
     }
 
-    protected String handleVariableReplacement(final Map<String, String> variables, final String variableToReplace) throws CoverityJenkinsException {
+    protected String handleVariableReplacement(final Map<String, String> variables, final String variableToReplace) {
         if (variableToReplace != null) {
             final String newValue = Util.replaceMacro(variableToReplace, variables);
             if (newValue.contains("$")) {
-                throw new CoverityJenkinsException("Variable was not properly replaced. Variable: " + variableToReplace + ", Result: " + newValue + ". Make sure the variable has been properly defined.");
+                logger.warn("Variable was not properly replaced. Variable: " + variableToReplace + ", Result: " + newValue + ". Make sure the variable has been properly defined.");
             }
             return newValue;
         }

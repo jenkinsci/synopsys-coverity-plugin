@@ -32,7 +32,6 @@ import org.apache.tools.ant.types.Commandline;
 
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.AdvancedCoverityRunConfiguration;
@@ -170,7 +169,7 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
-    private List<String> getCorrectedParameters(final String command) throws CoverityJenkinsException {
+    private List<String> getCorrectedParameters(final String command) {
         final String[] separatedParameters = Commandline.translateCommandline(command);
         final List<String> correctedParameters = new ArrayList<>();
         for (final String parameter : separatedParameters) {
