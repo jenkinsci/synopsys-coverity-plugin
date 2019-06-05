@@ -36,6 +36,18 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
     'f:dropdownDescriptorSelector'(field: coverityRunConfigurationField, title: coverityRunConfigurationTitle, default: "\${instance.$coverityRunConfigurationDefault}")
 
     entry(onCommandFailureField, onCommandFailureTitle, SELECT)
+
+    'f:entry'(title: createProjectAndStreamsTitle) {
+        'f:advanced'() {
+            'f:entry'(title: createProjectNameTitle, field: createProjectNameField) {
+                'f:textbox'(default: "\${it.name}")
+            }
+            'f:entry'(title: createStreamNameTitle, field: createStreamNameField) {
+                'f:textbox'(default: "\${it.name}_stream")
+            }
+            'f:validateButton'(method: submitButtonMethod, title: submitButtonTitle, progress: submitButtonProgress, with: "createProjectName,createStreamName")
+        }
+    }
 }
 
 def entry(def field, def title, def inputTag) {

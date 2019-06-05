@@ -27,6 +27,18 @@
         "Specify the name of the Coverity view that you would like to check for issues.",
         "The resulting view name is stored in the $COV_VIEW environment variable, and affects checking for issues in both the full and incremental analysis, if configured."
       ]
+    },
+    "createProjectName": {
+      "overview": [
+        "Specify the name of the Coverity project.",
+        "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis."
+      ]
+    },
+    "createStreamName": {
+      "overview": [
+        "Specify the name of the Coverity stream that you would like to use for the commands.",
+        "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis."
+      ]
     }
   }
 }

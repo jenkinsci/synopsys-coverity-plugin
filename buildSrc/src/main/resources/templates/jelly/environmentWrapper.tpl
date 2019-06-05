@@ -22,6 +22,16 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
     }
 
     refreshConnectionButton(refreshConnectionButtonValue)
+
+    'f:entry'(title: createProjectAndStreamsTitle) {
+        'f:entry'(title: createProjectNameTitle, field: createProjectNameField) {
+            'f:textbox'(default: "\${it.name}")
+        }
+        'f:entry'(title: createStreamNameTitle, field: createStreamNameField) {
+            'f:textbox'(default: "\${it.name}_stream")
+        }
+        'f:validateButton'(method: submitButtonMethod, title: submitButtonTitle, progress: submitButtonProgress, with: "createProjectName,createStreamName")
+    }
 }
 
 def entry(def field, def title, def inputTag) {

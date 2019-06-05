@@ -12,6 +12,10 @@
     "urlTitle": "URL",
     "testConnectionMethod": "testConnection",
     "testConnectionTitle": "Test Connection",
-    "testConnectionProgress": "Testing..."
+    "testConnectionProgress": "Testing...",
+    "desktopAnalysisTitle": "Desktop Analysis",
+    "desktopAnalysisField": "desktopAnalysis",
+    "covManagePathTitle": "Coverity Analysis Path",
+    "covManagePathField": "covManagePath"
   }
 }

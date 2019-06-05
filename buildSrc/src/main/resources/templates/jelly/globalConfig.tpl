@@ -11,6 +11,12 @@ package templates.jelly
                     'f:entry'(field: credentialsField, title: credentialsTitle) {
                         'c:select'()
                     }
+                    'f:entry'(field: desktopAnalysisField, title: desktopAnalysisTitle) {
+                        'f:select'()
+                    }
+                    'f:entry'(field: covManagePathField, title: covManagePathTitle) {
+                        'f:textbox'()
+                    }
                     'f:validateButton'(method: testConnectionMethod, title: testConnectionTitle, progress: testConnectionProgress, with: "${urlField},${credentialsField}")
                     'f:repeatableDeleteButton'(value: coverityConnectInstancesDeleteTitle)
                 }

@@ -2,6 +2,7 @@
  * synopsys-coverity
  *
  * Copyright (c) 2019 Synopsys, Inc.
+ * Portions Copyright 2019 Lexmark
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -52,126 +53,145 @@ import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> implements Serializable {
-    private static final long serialVersionUID = -7638734141012629078L;
-    private final String url;
-    private final String credentialId;
+	private static final long serialVersionUID = -7638734141012629078L;
+	private final String url;
+	private final String credentialId;
+	private final String desktopAnalysis;
+	private final String covManagePath;
 
-    @DataBoundConstructor
-    public CoverityConnectInstance(final String url, final String credentialId) {
-        this.url = url;
-        this.credentialId = credentialId;
-    }
+	@DataBoundConstructor
+	public CoverityConnectInstance(final String url, final String credentialId, final String desktopAnalysis, final String covManagePath) {
+		this.url = url;
+		this.credentialId = credentialId;
+		this.desktopAnalysis = desktopAnalysis;
+		this.covManagePath = covManagePath;
+	}
 
-    public String getUrl() {
-        return url;
-    }
+	public String getUrl() {
+		return url;
+	}
 
-    public String getCredentialId() {
-        return credentialId;
-    }
+	public String getCredentialId() {
+		return credentialId;
+	}
 
-    public Optional<URL> getCoverityURL() {
-        URL coverityUrl = null;
-        if (url != null) {
-            try {
-                coverityUrl = new URL(url);
-            } catch (final MalformedURLException ignored) {
-                // Handled by form validation in the global configuration
-            }
-        }
+	public String getDesktopAnalysis() {
+		return desktopAnalysis;
+	}
 
-        return Optional.ofNullable(coverityUrl);
-    }
+	public String getCovManagePath() {
+		return covManagePath;
+	}
 
-    public Optional<String> getCoverityUsername() {
-        return getCredentials().map(StandardUsernamePasswordCredentials::getUsername);
-    }
+	public Optional<URL> getCoverityURL() {
+		URL coverityUrl = null;
+		if (url != null) {
+			try {
+				coverityUrl = new URL(url);
+			} catch (final MalformedURLException ignored) {
+				// Handled by form validation in the global configuration
+			}
+		}
 
-    public Optional<String> getCoverityPassword() {
-        return getCredentials()
-                   .map(StandardUsernamePasswordCredentials::getPassword)
-                   .map(Secret::getPlainText);
-    }
+		return Optional.ofNullable(coverityUrl);
+	}
 
-    public CoverityServerConfig getCoverityServerConfig() {
-        final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder()
-                                                        .setUrl(url);
+	public Optional<String> getCoverityUsername() {
+		return getCredentials().map(StandardUsernamePasswordCredentials::getUsername);
+	}
 
-        getCoverityUsername().ifPresent(builder::setUsername);
-        getCoverityPassword().ifPresent(builder::setPassword);
+	public Optional<String> getCoverityPassword() {
+		return getCredentials()
+				.map(StandardUsernamePasswordCredentials::getPassword)
+				.map(Secret::getPlainText);
+	}
 
-        return builder.build();
-    }
+	public CoverityServerConfig getCoverityServerConfig() {
+		final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder()
+				.setUrl(url);
 
-    private Optional<StandardUsernamePasswordCredentials> getCredentials() {
-        if (StringUtils.isBlank(credentialId)) {
-            return Optional.empty();
-        }
+		getCoverityUsername().ifPresent(builder::setUsername);
+		getCoverityPassword().ifPresent(builder::setPassword);
 
-        final IdMatcher idMatcher = new IdMatcher(credentialId);
+		return builder.build();
+	}
 
-        return CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()).stream()
-                   .filter(idMatcher::matches)
-                   .findAny();
-    }
+	private Optional<StandardUsernamePasswordCredentials> getCredentials() {
+		if (StringUtils.isBlank(credentialId)) {
+			return Optional.empty();
+		}
 
-    public boolean isEmpty() {
-        return null == url && null == credentialId;
-    }
+		final IdMatcher idMatcher = new IdMatcher(credentialId);
 
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) super.getDescriptor();
-    }
+		return CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, Jenkins.getInstance(), ACL.SYSTEM, Collections.emptyList()).stream()
+				.filter(idMatcher::matches)
+				.findAny();
+	}
 
-    @Extension
-    public static class DescriptorImpl extends Descriptor<CoverityConnectInstance> {
-        private final CommonFieldValidator commonFieldValidator;
+	public boolean isEmpty() {
+		return null == url && null == credentialId;
+	}
 
-        public DescriptorImpl() {
-            super(CoverityConnectInstance.class);
-            load();
-            commonFieldValidator = new CommonFieldValidator();
-        }
+	@Override
+	public DescriptorImpl getDescriptor() {
+		return (DescriptorImpl) super.getDescriptor();
+	}
 
-        public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-            if (StringUtils.isBlank(url)) {
-                return FormValidation.error("Please provide a URL for the Coverity Connect instance.");
-            }
-            try {
-                new URL(url);
-            } catch (final MalformedURLException e) {
-                return FormValidation.error(e, String.format("The provided URL for the Coverity Connect instance is not a valid URL. Error: %s", e.getMessage()));
-            }
-            return FormValidation.ok();
-        }
+	@Extension
+	public static class DescriptorImpl extends Descriptor<CoverityConnectInstance> {
+		private final CommonFieldValidator commonFieldValidator;
 
-        public ListBoxModel doFillCredentialIdItems() {
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-            return new StandardListBoxModel()
-                       .includeEmptyValue()
-                       .includeMatchingAs(ACL.SYSTEM, Jenkins.getInstance(), StandardUsernamePasswordCredentials.class, Collections.emptyList(), CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
+		public DescriptorImpl() {
+			super(CoverityConnectInstance.class);
+			load();
+			commonFieldValidator = new CommonFieldValidator();
+		}
 
-            // There was classloader logic here that has been removed for brevity. -- rotte 11-16-2018 (with advice from jrichard)
-            // Previous code can be found at 6c4432a8347d80a6fa01e3f28846c612862b61a6
-        }
+		public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
+			Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+			if (StringUtils.isBlank(url)) {
+				return FormValidation.error("Please provide a URL for the Coverity Connect instance.");
+			}
+			try {
+				new URL(url);
+			} catch (final MalformedURLException e) {
+				return FormValidation.error(e, String.format("The provided URL for the Coverity Connect instance is not a valid URL. Error: %s", e.getMessage()));
+			}
+			return FormValidation.ok();
+		}
 
-        @POST
-        public FormValidation doTestConnection(@QueryParameter("url") final String url, @QueryParameter("credentialId") final String credentialId) {
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-            final FormValidation urlValidation = doCheckUrl(url);
-            if (!FormValidation.Kind.OK.equals(urlValidation.kind)) {
-                return urlValidation;
-            }
+		public ListBoxModel doFillCredentialIdItems() {
+			Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+			return new StandardListBoxModel()
+					.includeEmptyValue()
+					.includeMatchingAs(ACL.SYSTEM, Jenkins.getInstance(), StandardUsernamePasswordCredentials.class, Collections.emptyList(), CredentialsMatchers.instanceOf(StandardUsernamePasswordCredentials.class));
 
-            if (StringUtils.isBlank(credentialId)) {
-                return FormValidation.error("Please specify the credentials for the Coverity Connect instance.");
-            }
+			// There was classloader logic here that has been removed for brevity. -- rotte 11-16-2018 (with advice from jrichard)
+			// Previous code can be found at 6c4432a8347d80a6fa01e3f28846c612862b61a6
+		}
 
-            final CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId);
-            return commonFieldValidator.testConnectionToCoverityInstance(coverityConnectInstance);
-        }
-    }
+		public ListBoxModel doFillDesktopAnalysisItems() {
+			ListBoxModel items = new ListBoxModel();      
+			items.add("disabled");
+			items.add("enabled");
+			return items;
+		}
+
+		@POST
+		public FormValidation doTestConnection(@QueryParameter("url") final String url, @QueryParameter("credentialId") final String credentialId, @QueryParameter("desktopAnalysis") final String desktopAnalysis, @QueryParameter("covManagePath") final String covManagePath) {
+			Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+			final FormValidation urlValidation = doCheckUrl(url);
+			if (!FormValidation.Kind.OK.equals(urlValidation.kind)) {
+				return urlValidation;
+			}
+
+			if (StringUtils.isBlank(credentialId)) {
+				return FormValidation.error("Please specify the credentials for the Coverity Connect instance.");
+			}
+
+			final CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId, desktopAnalysis, covManagePath);
+			return commonFieldValidator.testConnectionToCoverityInstance(coverityConnectInstance);
+		}
+	}
 
 }

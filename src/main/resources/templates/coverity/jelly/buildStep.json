@@ -24,6 +24,14 @@
     "coverityRunConfigurationTitle": "Coverity run configuration",
     "coverityRunConfigurationDefault": "defaultCoverityRunConfiguration",
     "onCommandFailureField": "onCommandFailure",
-    "onCommandFailureTitle": "On command failure"
+    "onCommandFailureTitle": "On command failure",
+    "createProjectAndStreamsTitle": "Create Coverity Connect Project and Streams",
+    "createProjectNameTitle": "Project Name",
+    "createProjectNameField": "createProjectName",
+    "createStreamNameTitle": "Stream Name",
+    "createStreamNameField": "createStreamName",
+    "submitButtonMethod": "createProject",
+    "submitButtonTitle": "Submit Project/Stream names",
+    "submitButtonProgress": "Please wait..."
   }
 }
