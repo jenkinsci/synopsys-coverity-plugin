@@ -40,7 +40,7 @@ public abstract class CoverityRunConfiguration extends AbstractDescribableImpl<C
     }
 
     public enum RunConfigurationType implements CoveritySelectBoxEnum {
-        SIMPLE("Run Coverity build, analyze, and commit defects"),
+        SIMPLE("Run default Coverity workflow"),
         ADVANCED("Run custom Coverity commands");
 
         private final String displayName;

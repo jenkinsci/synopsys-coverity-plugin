@@ -34,6 +34,7 @@ import org.kohsuke.stapler.QueryParameter;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
@@ -105,7 +106,7 @@ public class CoverityBuildStep extends Builder {
     }
 
     public CoverityRunConfiguration getDefaultCoverityRunConfiguration() {
-        return new SimpleCoverityRunConfiguration(CoverityAnalysisType.COV_ANALYZE, "", null);
+        return new SimpleCoverityRunConfiguration(CoverityCaptureType.COV_BUILD, CoverityAnalysisType.COV_ANALYZE, null);
     }
 
     @Override
@@ -133,7 +134,7 @@ public class CoverityBuildStep extends Builder {
 
         if (prerequisiteStepSucceeded) {
             final CoverityToolStep coverityToolStep = new CoverityToolStep(node, listener, envVars, workingDirectory, build);
-            prerequisiteStepSucceeded = coverityToolStep.runCoverityToolStep(coverityInstanceUrl, coverityRunConfiguration, onCommandFailure);
+            prerequisiteStepSucceeded = coverityToolStep.runCoverityToolStep(coverityRunConfiguration, onCommandFailure);
         }
 
         if (prerequisiteStepSucceeded && checkForIssuesInView != null) {
@@ -187,8 +188,7 @@ public class CoverityBuildStep extends Builder {
             return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName,
-            final @QueryParameter("updateNow") boolean updateNow) {
+        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
             return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);
         }
 

@@ -24,6 +24,8 @@ package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import javax.xml.ws.WebServiceException;
 
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -63,6 +66,18 @@ public class CommonFieldValidator {
         return GlobalValueHelper.getCoverityInstanceWithUrl(new SilentIntLogger(), jenkinsCoverityInstanceUrl)
                    .map(this::testConnectionIgnoreSuccessMessage)
                    .orElse(FormValidation.error("There are no Coverity instances configured with the name %s", jenkinsCoverityInstanceUrl));
+    }
+
+    public FormValidation checkForAlreadyProvidedArguments(final String command, final RepeatableCommand.Argument... providedArguments) {
+        final String alreadyProvidedArguments = Arrays.stream(providedArguments)
+                                                    .map(RepeatableCommand.Argument::toString)
+                                                    .filter(command::contains)
+                                                    .collect(Collectors.joining(", "));
+
+        if (StringUtils.isNotBlank(alreadyProvidedArguments)) {
+            return FormValidation.error(String.format("The argument(s) %s are automatically provided in this mode. If you wish to override, configure the 'Run custom Coverity commands' section instead.", alreadyProvidedArguments));
+        }
+        return FormValidation.ok();
     }
 
     public FormValidation testConnectionToCoverityInstance(final CoverityConnectInstance coverityConnectInstance) {
