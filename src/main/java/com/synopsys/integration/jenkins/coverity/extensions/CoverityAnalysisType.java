@@ -22,13 +22,13 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-public enum CoverityAnalysisType implements CoveritySelectBoxEnum {
-    COV_ANALYZE("Full Analysis"),
-    COV_RUN_DESKTOP("Incremental Analysis");
+public enum CoverityAnalysisWorkflow implements CoveritySelectBoxEnum {
+    COV_ANALYZE("Build with Full Analysis"),
+    COV_RUN_DESKTOP("Build with Incremental Analysis");
 
     private String displayName;
 
-    CoverityAnalysisType(final String displayName) {
+    CoverityAnalysisWorkflow(final String displayName) {
         this.displayName = displayName;
     }
 
