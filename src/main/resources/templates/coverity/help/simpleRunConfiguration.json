@@ -1,37 +1,41 @@
 {
   "helpHtml.tpl": {
+    "coverityCaptureType": {
+      "overview": [
+        "",
+        "Specify the way you wish to capture your source for Coverity analysis.",
+        "Each capture type runs a specific Coverity command  with some default arguments. Additional command-specific arguments can be provided below.",
+        "",
+        "<strong>Build</strong>",
+        "cov-build --dir ${WORKSPACE}/idir <em>Source Argument (build command)</em>",
+        "",
+        "<strong>Buildless Capture (Project)</strong>",
+        "cov-capture --project-dir <em>Source Argument (project directory)</em>",
+        "",
+        "<strong>Buildless Capture (SCM)</strong>",
+        "cov-capture --scm-url <em>Source Argument (scm url)</em>"
+      ]
+    },
     "coverityAnalysisType": {
       "overview": [
-        "Specify the default Coverity workflow you would like to run.",
-        "Each workflow runs a set of Coverity commands with some default arguments. Additional command-specific arguments can be provided below.",
+        "Specify the way you wish to perform your Coverity analysis.",
+        "Each analysis type runs a specific Coverity command with some default arguments, followed by cov-commit-defects with some default arguments. Additional command-specific arguments can be provided below.",
         "",
-        "<strong>Full Analysis</strong> workflow commands:",
-        "cov-build --dir ${WORKSPACE}/idir <em>Source Argument (build command)</em>",
+        "<strong>Full Analysis</strong>:",
         "cov-analyze --dir ${WORKSPACE}/idir",
         "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}",
         "",
-        "<strong>Incremental Analysis</strong> workflow commands:",
-        "cov-build --dir ${WORKSPACE}/idir <em>Source Argument (build command)</em>",
+        "<strong>Incremental Analysis</strong>:",
         "cov-run-desktop --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM} ${CHANGE_SET}",
-        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}",
-        "",
-        "<strong>Buildless Capture (Project)</strong> workflow commands:",
-        "cov-capture --project-dir <em>Source Argument (project directory)</em>",
-        "cov-analyze --dir ${WORKSPACE}/idir",
-        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}",
-        "",
-        "<strong>Buildless Capture (SCM)</strong> workflow commands:",
-        "cov-capture --scm-url <em>Source Argument (scm url)</em>",
-        "cov-analyze --dir ${WORKSPACE}/idir",
         "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}"
       ]
     },
     "sourceArgument": {
       "overview": [
-        "The argument that specifies the source for the given workflow.",
-        "For <strong>Full Analysis</strong> and <strong>Incremental Analysis</strong>, this is the build command to pass to cov-build.",
-        "For <strong>Buildless Capture (Project)</strong> this is the project directory.",
-        "For <strong>Buildless Capture (SCM)</strong> this is the scm url."
+        "The argument that specifies the source for the given capture type.",
+        "For <strong>Build</strong>, this is the build command to pass to cov-build.",
+        "For <strong>Buildless Capture (Project)</strong> this is the project directory to pass to cov-capture.",
+        "For <strong>Buildless Capture (SCM)</strong> this is the scm url to pass to cov-capture."
       ]
     }
   }

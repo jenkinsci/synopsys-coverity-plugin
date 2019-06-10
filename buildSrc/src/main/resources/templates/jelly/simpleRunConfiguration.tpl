@@ -4,9 +4,12 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.SELECT
 import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
 
 'j:jelly'('xmlns:j': 'jelly:core', 'xmlns:f': '/lib/form') {
-    entry(coverityCaptureTypeField, coverityCaptureTypeTitle, SELECT)
+    entry(coverityCaptureTypeField, coverityCaptureTypeTitle, coverityCaptureTypeDefault, SELECT)
     entry(sourceArgumentField, sourceArgumentTitle, TEXTBOX)
-    entry(coverityAnalysisTypeField, coverityAnalysisTypeTitle, SELECT)
+    entry(coverityAnalysisTypeField, coverityAnalysisTypeTitle, coverityAnalysisTypeDefault, SELECT)
+    'f:entry'(field: changeSetThresholdField, title: changeSetThresholdTitle) {
+        'f:textbox'(clazz: 'required number', checkmethod: 'post')
+    }
     'f:optionalBlock'(checked: "\${instance.$commandArgumentsField != null}", field: commandArgumentsField, title: commandArgumentsTitle) {
         'j:scope' {
             'j:set'(var: 'descriptor', value: "\${descriptor.getPropertyType(instance,'${commandArgumentsField}').getApplicableDescriptors().get(0)}")
@@ -24,5 +27,11 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
 def entry(def field, def title, def inputTag) {
     'f:entry'(field: field, title: title) {
         "$inputTag"()
+    }
+}
+
+def entry(def field, def title, def defaultValueMethod, def inputTag) {
+    'f:entry'(field: field, title: title) {
+        "$inputTag"(default: "\${instance.$defaultValueMethod}")
     }
 }
