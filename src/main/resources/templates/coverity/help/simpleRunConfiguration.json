@@ -42,7 +42,7 @@
     },
     "changeSetAnalysisThreshold": {
       "overview": [
-        "For use with the Coveirty Analysis Type <strong>Determined by change set threshold</strong>. Specifies the number of files that triggers a <strong>Full Analysis</strong>.",
+        "For use with the Coverity Analysis Type <strong>Determined by change set threshold</strong>. Specifies the number of files that triggers a <strong>Full Analysis</strong>.",
         "",
         "<strong>Determined by change set threshold</strong> will run an <strong>Incremental Analysis</strong> unless the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field.",
         "If the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field, <strong>Determined by change set threshold</strong> will run a <strong>Full Analysis</strong>"
