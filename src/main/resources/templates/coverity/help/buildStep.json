@@ -1,10 +1,5 @@
 {
   "helpHtml.tpl": {
-    "buildCommand": {
-      "overview": [
-        "Specify the build command for Coverity to run to build your project."
-      ]
-    },
     "coverityInstanceUrl": {
       "overview": [
         "Specify which Synopsys Coverity connect instance to run this job against.",

@@ -43,6 +43,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
 import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
+import com.synopsys.integration.jenkins.coverity.steps.ProcessChangeSet;
 import com.synopsys.integration.log.SilentIntLogger;
 
 import hudson.AbortException;
@@ -139,8 +140,11 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new IOException(e);
         }
 
+        final ProcessChangeSet processChangeSet = new ProcessChangeSet(node, listener, initialEnvironment, workspace, build);
+        final List<String> changeSet = processChangeSet.computeChangeSet(changeSets, configureChangeSetPatterns);
+
         final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build);
-        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSets, coverityInstanceUrl, projectName, streamName, viewName, configureChangeSetPatterns);
+        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSet, coverityInstanceUrl, projectName, streamName, viewName);
 
         if (!setUpSuccessful) {
             throw new AbortException("Could not successfully inject Coverity environment into build process.");

@@ -24,6 +24,7 @@ package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -41,6 +42,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldVal
 import com.synopsys.integration.jenkins.coverity.steps.CoverityCheckForIssuesInViewStep;
 import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
 import com.synopsys.integration.jenkins.coverity.steps.CoverityToolStep;
+import com.synopsys.integration.jenkins.coverity.steps.ProcessChangeSet;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -106,7 +108,7 @@ public class CoverityBuildStep extends Builder {
     }
 
     public CoverityRunConfiguration getDefaultCoverityRunConfiguration() {
-        return new SimpleCoverityRunConfiguration(CoverityCaptureType.COV_BUILD, CoverityAnalysisType.COV_ANALYZE, null);
+        return new SimpleCoverityRunConfiguration(CoverityCaptureType.COV_BUILD, CoverityAnalysisType.COV_ANALYZE, 100, null);
     }
 
     @Override
@@ -129,12 +131,15 @@ public class CoverityBuildStep extends Builder {
             viewName = checkForIssuesInView.getViewName();
         }
 
+        final ProcessChangeSet processChangeSet = new ProcessChangeSet(node, listener, envVars, workingDirectory, build);
+        final List<String> changeSet = processChangeSet.computeChangeSet(build.getChangeSets(), configureChangeSetPatterns);
+
         final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, envVars, workingDirectory, build);
-        boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(build.getChangeSets(), coverityInstanceUrl, projectName, streamName, viewName, configureChangeSetPatterns);
+        boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(changeSet, coverityInstanceUrl, projectName, streamName, viewName);
 
         if (prerequisiteStepSucceeded) {
             final CoverityToolStep coverityToolStep = new CoverityToolStep(node, listener, envVars, workingDirectory, build);
-            prerequisiteStepSucceeded = coverityToolStep.runCoverityToolStep(coverityRunConfiguration, onCommandFailure);
+            prerequisiteStepSucceeded = coverityToolStep.runCoverityToolStep(coverityRunConfiguration, changeSet.size(), onCommandFailure);
         }
 
         if (prerequisiteStepSucceeded && checkForIssuesInView != null) {

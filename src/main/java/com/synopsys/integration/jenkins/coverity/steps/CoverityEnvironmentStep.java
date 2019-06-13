@@ -25,30 +25,22 @@ package com.synopsys.integration.jenkins.coverity.steps;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.executable.CoverityToolEnvironmentVariable;
 import com.synopsys.integration.coverity.ws.CoverityPhoneHomeHelper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteInstallationValidator;
-import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
-import com.synopsys.integration.rest.RestConstants;
 
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -56,7 +48,6 @@ import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.scm.ChangeLogSet;
 import jenkins.model.Jenkins;
 
 public class CoverityEnvironmentStep extends BaseCoverityStep {
@@ -64,8 +55,7 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean setUpCoverityEnvironment(final List<ChangeLogSet<?>> changeLogSets, final String coverityInstanceUrl, final String projectName, final String streamName, final String viewName,
-        final ConfigureChangeSetPatterns configureChangeSetPatterns) throws IOException {
+    public boolean setUpCoverityEnvironment(final List<String> changeSet, final String coverityInstanceUrl, final String projectName, final String streamName, final String viewName) throws IOException {
         this.initializeJenkinsCoverityLogger();
         final String pluginVersion = GlobalValueHelper.getPluginVersion();
         logger.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
@@ -113,19 +103,13 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, projectName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM, streamName);
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, viewName);
-        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, computeChangeSet(changeLogSets, configureChangeSetPatterns));
+        setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.CHANGE_SET, String.join(" ", changeSet));
         setEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY, computeIntermediateDirectory(getEnvVars()));
 
         logger.alwaysLog("Synopsys Coverity Environment:");
         logger.alwaysLog("-- Synopsys Coverity static analysis tool home: " + pathToCoverityToolHome);
         logger.alwaysLog("-- Synopsys Coverity static analysis intermediate directory: " + getEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY));
         logger.alwaysLog("-- Synopsys stream: " + streamName);
-        if (configureChangeSetPatterns != null) {
-            logger.alwaysLog("-- Change set inclusion patterns: " + configureChangeSetPatterns.getChangeSetInclusionPatterns());
-            logger.alwaysLog("-- Change set exclusion patterns: " + configureChangeSetPatterns.getChangeSetExclusionPatterns());
-        } else {
-            logger.alwaysLog("-- No change set inclusion or exclusion patterns set");
-        }
 
         final PhoneHomeResponse phoneHomeResponse = phoneHome(coverityInstance, pluginVersion);
         if (null != phoneHomeResponse) {
@@ -140,39 +124,6 @@ public class CoverityEnvironmentStep extends BaseCoverityStep {
         final Path workspacePath = Paths.get(workspace);
         final Path intermediateDirectoryPath = workspacePath.resolve("idir");
         return intermediateDirectoryPath.toString();
-    }
-
-    private String computeChangeSet(final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
-        final ChangeSetFilter changeSetFilter;
-        if (configureChangeSetPatterns == null) {
-            changeSetFilter = ChangeSetFilter.createAcceptAllFilter();
-        } else {
-            changeSetFilter = configureChangeSetPatterns.createChangeSetFilter();
-        }
-
-        return changeLogSets.stream()
-                   .filter(changeLogSet -> !changeLogSet.isEmptySet())
-                   .flatMap(this::toEntries)
-                   .peek(this::logEntry)
-                   .flatMap(this::toAffectedFiles)
-                   .filter(changeSetFilter::shouldInclude)
-                   .map(ChangeLogSet.AffectedFile::getPath)
-                   .collect(Collectors.joining(" "));
-    }
-
-    private Stream<? extends ChangeLogSet.Entry> toEntries(final ChangeLogSet<? extends ChangeLogSet.Entry> changeLogSet) {
-        return StreamSupport.stream(changeLogSet.spliterator(), false);
-    }
-
-    private Stream<? extends ChangeLogSet.AffectedFile> toAffectedFiles(final ChangeLogSet.Entry entry) {
-        return entry.getAffectedFiles().stream();
-    }
-
-    private void logEntry(final ChangeLogSet.Entry entry) {
-        if (logger.getLogLevel().isLoggable(LogLevel.DEBUG)) {
-            final Date date = new Date(entry.getTimestamp());
-            logger.debug(String.format("Commit %s by %s on %s: %s", entry.getCommitId(), entry.getAuthor(), RestConstants.formatDate(date), entry.getMsg()));
-        }
     }
 
     private PhoneHomeResponse phoneHome(final CoverityConnectInstance coverityInstance, final String pluginVersion) {

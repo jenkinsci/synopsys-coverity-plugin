@@ -2,7 +2,6 @@
   "helpHtml.tpl": {
     "coverityCaptureType": {
       "overview": [
-        "",
         "Specify the way you wish to capture your source for Coverity analysis.",
         "Each capture type runs a specific Coverity command  with some default arguments. Additional command-specific arguments can be provided below.",
         "",
@@ -27,7 +26,10 @@
         "",
         "<strong>Incremental Analysis</strong>:",
         "cov-run-desktop --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM} ${CHANGE_SET}",
-        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}"
+        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}",
+        "",
+        "<strong>Determined by change set threshold</strong>",
+        "Will run the commands specified by <strong>Full Analysis</strong> if the number of files listed in the CHANGE_SET environment variable meets or exceeds the specified threshold, otherwise will run the commands specified by <strong>Incremental Analysis</strong>."
       ]
     },
     "sourceArgument": {
@@ -36,6 +38,14 @@
         "For <strong>Build</strong>, this is the build command to pass to cov-build.",
         "For <strong>Buildless Capture (Project)</strong> this is the project directory to pass to cov-capture.",
         "For <strong>Buildless Capture (SCM)</strong> this is the scm url to pass to cov-capture."
+      ]
+    },
+    "changeSetAnalysisThreshold": {
+      "overview": [
+        "For use with the Coveirty Analysis Type <strong>Determined by change set threshold</strong>. Specifies the number of files that triggers a <strong>Full Analysis</strong>.",
+        "",
+        "<strong>Determined by change set threshold</strong> will run an <strong>Incremental Analysis</strong> unless the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field.",
+        "If the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field, <strong>Determined by change set threshold</strong> will run a <strong>Full Analysis</strong>"
       ]
     }
   }

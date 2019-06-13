@@ -54,7 +54,7 @@ public class CoverityToolStep extends BaseCoverityStep {
         super(node, listener, envVars, workspace, run);
     }
 
-    public boolean runCoverityToolStep(final CoverityRunConfiguration coverityRunConfiguration, final OnCommandFailure onCommandFailure) {
+    public boolean runCoverityToolStep(final CoverityRunConfiguration coverityRunConfiguration, final int changeSetSize, final OnCommandFailure onCommandFailure) {
         initializeJenkinsCoverityLogger();
         final RepeatableCommand[] commands;
 
@@ -62,7 +62,7 @@ public class CoverityToolStep extends BaseCoverityStep {
             if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
                 commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
             } else {
-                commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration);
+                commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration, changeSetSize);
             }
 
             if (Result.ABORTED == getResult()) {
@@ -111,7 +111,7 @@ public class CoverityToolStep extends BaseCoverityStep {
         return true;
     }
 
-    private RepeatableCommand[] getSimpleModeCommands(final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration) throws CoverityJenkinsException {
+    private RepeatableCommand[] getSimpleModeCommands(final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, final int changeSetSize) throws CoverityJenkinsException {
         final RepeatableCommand[] repeatableCommands = new RepeatableCommand[3];
 
         final CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();
@@ -131,14 +131,14 @@ public class CoverityToolStep extends BaseCoverityStep {
         } else if (coverityCaptureType == CoverityCaptureType.COV_BUILD) {
             repeatableCommands[0] = RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getSourceArgument(), covBuildArguments);
         } else {
-            throw new CoverityJenkinsException("No valid Coverity capture type specified.");
+            throw new CoverityJenkinsException("No valid Coverity capture type specified");
         }
 
         final CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
 
-        if (coverityAnalysisType == CoverityAnalysisType.COV_ANALYZE) {
+        if (coverityAnalysisType == CoverityAnalysisType.COV_ANALYZE || (coverityAnalysisType == CoverityAnalysisType.THRESHOLD && changeSetSize >= simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold())) {
             repeatableCommands[1] = RepeatableCommand.COV_ANALYZE(covAnalyzeArguments);
-        } else if (coverityAnalysisType == CoverityAnalysisType.COV_RUN_DESKTOP) {
+        } else if (coverityAnalysisType == CoverityAnalysisType.COV_RUN_DESKTOP || coverityAnalysisType == CoverityAnalysisType.THRESHOLD) {
             repeatableCommands[1] = RepeatableCommand.COV_RUN_DESKTOP(covRunDesktopArguments, String.format("${%s}", JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString()));
         } else {
             throw new CoverityJenkinsException("No valid Coverity analysis type specified");

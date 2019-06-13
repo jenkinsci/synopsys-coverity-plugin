@@ -50,16 +50,22 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
     private final CoverityAnalysisType coverityAnalysisType;
     private final CommandArguments commandArguments;
     private String sourceArgument;
+    private int changeSetAnalysisThreshold;
 
     @DataBoundConstructor
-    public SimpleCoverityRunConfiguration(final CoverityCaptureType coverityCaptureType, final CoverityAnalysisType coverityAnalysisType, final CommandArguments commandArguments) {
+    public SimpleCoverityRunConfiguration(final CoverityCaptureType coverityCaptureType, final CoverityAnalysisType coverityAnalysisType, final Integer changeSetAnalysisThreshold, final CommandArguments commandArguments) {
         this.coverityCaptureType = coverityCaptureType;
         this.coverityAnalysisType = coverityAnalysisType;
         this.commandArguments = commandArguments;
+        this.changeSetAnalysisThreshold = changeSetAnalysisThreshold;
     }
 
     public CoverityCaptureType getCoverityCaptureType() {
         return coverityCaptureType;
+    }
+
+    public CoverityCaptureType getDefaultCoverityCaptureType() {
+        return CoverityCaptureType.COV_BUILD;
     }
 
     public String getSourceArgument() {
@@ -71,8 +77,16 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
         this.sourceArgument = sourceArgument;
     }
 
+    public int getChangeSetAnalysisThreshold() {
+        return changeSetAnalysisThreshold;
+    }
+
     public CoverityAnalysisType getCoverityAnalysisType() {
         return coverityAnalysisType;
+    }
+
+    public CoverityAnalysisType getDefaultCoverityAnalysisType() {
+        return CoverityAnalysisType.COV_ANALYZE;
     }
 
     public CommandArguments getCommandArguments() {
