@@ -102,7 +102,7 @@ for (item in items) {
                         commands.add(new com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand(it.command.text()))
                     }
 
-                    def commandArray = commands.toArray(new com.synopsys.integration.jenkins.coverity.extensions.buildStep.RepeatableCommand[0])
+                    def commandArray = commands.toArray(new com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand[0])
 
                     coverityRunConfigurationObj = new com.synopsys.integration.jenkins.coverity.extensions.buildstep.AdvancedCoverityRunConfiguration(commandArray)
                 } else {
