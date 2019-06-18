@@ -185,29 +185,28 @@ public class CoverityBuildStep extends Builder {
             return true;
         }
 
-        public ListBoxModel doFillCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
-            return commonFieldValueProvider.doFillCoverityInstanceUrlItems(coverityInstanceUrl);
+        public ListBoxModel doFillCoverityInstanceUrlItems() {
+            return commonFieldValueProvider.doFillCoverityInstanceUrlItems();
         }
 
-        public FormValidation doCheckCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
             return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);
+        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
+            return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, updateNow);
         }
 
         public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName,
-            final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, streamName, updateNow);
+        public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
+            return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, updateNow);
         }
 
         public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillOnCommandFailureItems() {

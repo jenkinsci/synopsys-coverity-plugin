@@ -56,10 +56,17 @@ public class CommonFieldValidator {
             return FormValidation.error("Please choose one of the Coverity instances");
         }
 
-        if (GlobalValueHelper.getCoverityInstanceWithUrl(new SilentIntLogger(), coverityInstance).isPresent()) {
+        return testConnectionIgnoreSuccessMessage(coverityInstance);
+    }
+
+    public FormValidation doCheckCoverityInstanceUrlIgnoreMessage(final String coverityInstance) {
+        final FormValidation formValidation = doCheckCoverityInstanceUrl(coverityInstance);
+
+        if (formValidation.kind.equals(FormValidation.Kind.ERROR)) {
+            return FormValidation.error("Selected Coverity instance is invalid.");
+        } else {
             return FormValidation.ok();
         }
-        return FormValidation.error("There are no Coverity instances configured with the name %s", coverityInstance);
     }
 
     public FormValidation testConnectionIgnoreSuccessMessage(final String jenkinsCoverityInstanceUrl) {

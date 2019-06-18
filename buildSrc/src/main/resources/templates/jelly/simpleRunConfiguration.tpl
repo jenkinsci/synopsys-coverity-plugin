@@ -8,7 +8,7 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
     entry(sourceArgumentField, sourceArgumentTitle, TEXTBOX)
     entry(coverityAnalysisTypeField, coverityAnalysisTypeTitle, coverityAnalysisTypeDefault, SELECT)
     'f:entry'(field: changeSetAnalysisThresholdField, title: changeSetAnalysisThresholdTitle) {
-        'f:textbox'(clazz: 'required number', checkmethod: 'post')
+        'f:textbox'(clazz: 'number', checkmethod: 'post')
     }
     'f:optionalBlock'(checked: "\${instance.$commandArgumentsField != null}", field: commandArgumentsField, title: commandArgumentsTitle) {
         'j:scope' {

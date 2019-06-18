@@ -77,9 +77,8 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
             this.commonFieldValidator = new CommonFieldValidator();
         }
 
-        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName,
-            final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
+        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) {
+            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, updateNow);
         }
 
         public FormValidation doCheckViewName(final @AncestorInPath Project<? extends Project, ? extends Build> project, final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
@@ -94,7 +93,7 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
                                .map(CoverityBuildStep.class::cast)
                                .findFirst()
                                .map(CoverityBuildStep::getCoverityInstanceUrl)
-                               .map(commonFieldValidator::testConnectionIgnoreSuccessMessage)
+                               .map(commonFieldValidator::doCheckCoverityInstanceUrlIgnoreMessage)
                                .orElseGet(() -> FormValidation.warning("There was a failure validating this field"));
                 } else {
                     // If the project is null, we're likely in the snippet generator which has no previous state to get the URL from.
@@ -104,7 +103,7 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
                     return FormValidation.ok();
                 }
             }
-            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillBuildStatusForIssuesItems() {
