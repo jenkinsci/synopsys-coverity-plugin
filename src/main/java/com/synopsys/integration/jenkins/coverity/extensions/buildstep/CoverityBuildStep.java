@@ -33,6 +33,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
+import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
@@ -66,17 +67,23 @@ public class CoverityBuildStep extends Builder {
     private final CheckForIssuesInView checkForIssuesInView;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
     private final String coverityInstanceUrl;
+    private final CleanUpAction cleanUpAction;
 
     @DataBoundConstructor
-    public CoverityBuildStep(final String coverityInstanceUrl, final String onCommandFailure, final String projectName, final String streamName, final CheckForIssuesInView checkForIssuesInView,
-        final ConfigureChangeSetPatterns configureChangeSetPatterns, final CoverityRunConfiguration coverityRunConfiguration) {
+    public CoverityBuildStep(final String coverityInstanceUrl, final OnCommandFailure onCommandFailure, final String projectName, final String streamName, final CheckForIssuesInView checkForIssuesInView,
+        final ConfigureChangeSetPatterns configureChangeSetPatterns, final CoverityRunConfiguration coverityRunConfiguration, final CleanUpAction cleanUpAction) {
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.projectName = projectName;
         this.streamName = streamName;
         this.checkForIssuesInView = checkForIssuesInView;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
         this.coverityRunConfiguration = coverityRunConfiguration;
-        this.onCommandFailure = OnCommandFailure.valueOf(onCommandFailure);
+        this.onCommandFailure = onCommandFailure;
+        this.cleanUpAction = cleanUpAction;
+    }
+
+    public CleanUpAction getCleanUpAction() {
+        return cleanUpAction;
     }
 
     public String getCoverityInstanceUrl() {
@@ -144,7 +151,12 @@ public class CoverityBuildStep extends Builder {
 
         if (prerequisiteStepSucceeded && checkForIssuesInView != null) {
             final CoverityCheckForIssuesInViewStep coverityCheckForIssuesInViewStep = new CoverityCheckForIssuesInViewStep(node, listener, envVars, workingDirectory, build);
-            coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(coverityInstanceUrl, checkForIssuesInView, projectName);
+            prerequisiteStepSucceeded = coverityCheckForIssuesInViewStep.runCoverityCheckForIssuesInViewStep(coverityInstanceUrl, checkForIssuesInView, projectName);
+        }
+
+        if (prerequisiteStepSucceeded && CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY.equals(cleanUpAction)) {
+            final FilePath intermediateDirectory = new FilePath(workingDirectory, "idir");
+            intermediateDirectory.deleteRecursive();
         }
 
         return true;
@@ -211,6 +223,10 @@ public class CoverityBuildStep extends Builder {
 
         public ListBoxModel doFillOnCommandFailureItems() {
             return CommonFieldValueProvider.getListBoxModelOf(OnCommandFailure.values());
+        }
+
+        public ListBoxModel doFillCleanUpActionItems() {
+            return CommonFieldValueProvider.getListBoxModelOf(CleanUpAction.values());
         }
 
     }

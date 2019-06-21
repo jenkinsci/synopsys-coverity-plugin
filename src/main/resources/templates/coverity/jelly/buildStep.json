@@ -24,6 +24,8 @@
     "coverityRunConfigurationTitle": "Coverity run configuration",
     "coverityRunConfigurationDefault": "defaultCoverityRunConfiguration",
     "onCommandFailureField": "onCommandFailure",
-    "onCommandFailureTitle": "On command failure"
+    "onCommandFailureTitle": "On command failure",
+    "cleanUpActionField": "cleanUpAction",
+    "cleanUpActionTitle": "On successful execution"
   }
 }

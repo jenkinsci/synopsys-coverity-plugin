@@ -7,19 +7,21 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
     entry(coverityCaptureTypeField, coverityCaptureTypeTitle, coverityCaptureTypeDefault, SELECT)
     entry(sourceArgumentField, sourceArgumentTitle, TEXTBOX)
     entry(coverityAnalysisTypeField, coverityAnalysisTypeTitle, coverityAnalysisTypeDefault, SELECT)
-    'f:entry'(field: changeSetAnalysisThresholdField, title: changeSetAnalysisThresholdTitle) {
-        'f:textbox'(clazz: 'number', checkmethod: 'post')
-    }
-    'f:optionalBlock'(checked: "\${instance.$commandArgumentsField != null}", field: commandArgumentsField, title: commandArgumentsTitle) {
-        'j:scope' {
-            'j:set'(var: 'descriptor', value: "\${descriptor.getPropertyType(instance,'${commandArgumentsField}').getApplicableDescriptors().get(0)}")
-            'j:set'(var: 'instance', value: "\${instance.$commandArgumentsField}")
-            'j:set'(var: 'it', value: "\${it.$commandArgumentsField}")
-            entry(covBuildArgumentsField, covBuildArgumentsTitle, TEXTBOX)
-            entry(covCaptureArgumentsField, covCaptureArgumentsTitle, TEXTBOX)
-            entry(covAnalyzeArgumentsField, covAnalyzeArgumentsTitle, TEXTBOX)
-            entry(covRunDesktopArgumentsField, covRunDesktopArgumentsTitle, TEXTBOX)
-            entry(covCommitDefectsArgumentsField, covCommitDefectsArgumentsTitle, TEXTBOX)
+    'f:advanced'() {
+        'f:entry'(field: changeSetAnalysisThresholdField, title: changeSetAnalysisThresholdTitle) {
+            'f:textbox'(clazz: 'number', checkmethod: 'post')
+        }
+        'f:optionalBlock'(checked: "\${instance.$commandArgumentsField != null}", field: commandArgumentsField, title: commandArgumentsTitle) {
+            'j:scope' {
+                'j:set'(var: 'descriptor', value: "\${descriptor.getPropertyType(instance,'${commandArgumentsField}').getApplicableDescriptors().get(0)}")
+                'j:set'(var: 'instance', value: "\${instance.$commandArgumentsField}")
+                'j:set'(var: 'it', value: "\${it.$commandArgumentsField}")
+                entry(covBuildArgumentsField, covBuildArgumentsTitle, TEXTBOX)
+                entry(covCaptureArgumentsField, covCaptureArgumentsTitle, TEXTBOX)
+                entry(covAnalyzeArgumentsField, covAnalyzeArgumentsTitle, TEXTBOX)
+                entry(covRunDesktopArgumentsField, covRunDesktopArgumentsTitle, TEXTBOX)
+                entry(covCommitDefectsArgumentsField, covCommitDefectsArgumentsTitle, TEXTBOX)
+            }
         }
     }
 }

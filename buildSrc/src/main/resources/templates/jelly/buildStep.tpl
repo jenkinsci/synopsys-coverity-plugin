@@ -36,6 +36,7 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
     'f:dropdownDescriptorSelector'(field: coverityRunConfigurationField, title: coverityRunConfigurationTitle, default: "\${instance.$coverityRunConfigurationDefault}")
 
     entry(onCommandFailureField, onCommandFailureTitle, SELECT)
+    entry(cleanUpActionField, cleanUpActionTitle, SELECT)
 }
 
 def entry(def field, def title, def inputTag) {
