@@ -38,13 +38,15 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
 import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
-import com.synopsys.integration.jenkins.coverity.steps.ProcessChangeSet;
+import com.synopsys.integration.jenkins.coverity.steps.ProcessChangeLogSetsSubStep;
 import com.synopsys.integration.log.SilentIntLogger;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -121,6 +123,11 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException {
+        final JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
+        final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
+        intEnvironmentVariables.putAll(initialEnvironment);
+        logger.setLogLevel(intEnvironmentVariables);
+
         final RunWrapper runWrapper = new RunWrapper(build, true);
 
         final Computer computer = workspace.toComputer();
@@ -136,12 +143,12 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
         try {
             changeSets = runWrapper.getChangeSets();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IOException(e);
         }
 
-        final ProcessChangeSet processChangeSet = new ProcessChangeSet(node, listener, initialEnvironment, workspace, build);
-        final List<String> changeSet = processChangeSet.computeChangeSet(changeSets, configureChangeSetPatterns);
+        final ProcessChangeLogSetsSubStep processChangeLogSetsSubStep = new ProcessChangeLogSetsSubStep(logger, changeSets, configureChangeSetPatterns);
+        final List<String> changeSet = processChangeLogSetsSubStep.computeChangeSet();
 
         final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build);
         final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSet, coverityInstanceUrl, projectName, streamName, viewName);

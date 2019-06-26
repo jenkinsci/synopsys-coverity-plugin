@@ -36,12 +36,12 @@ import com.synopsys.integration.rest.RestConstants;
 
 import hudson.scm.ChangeLogSet;
 
-public class ProcessChangeLogSets {
+public class ProcessChangeLogSetsSubStep {
     private final JenkinsCoverityLogger logger;
     private final List<ChangeLogSet<?>> changeLogSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
-    public ProcessChangeLogSets(final JenkinsCoverityLogger logger, final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public ProcessChangeLogSetsSubStep(final JenkinsCoverityLogger logger, final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         this.logger = logger;
         this.changeLogSets = changeLogSets;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
