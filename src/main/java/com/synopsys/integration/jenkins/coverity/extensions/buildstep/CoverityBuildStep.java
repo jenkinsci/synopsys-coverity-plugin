@@ -32,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
@@ -43,7 +44,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldVal
 import com.synopsys.integration.jenkins.coverity.steps.CoverityCheckForIssuesInViewStep;
 import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
 import com.synopsys.integration.jenkins.coverity.steps.CoverityToolStep;
-import com.synopsys.integration.jenkins.coverity.steps.ProcessChangeSet;
+import com.synopsys.integration.jenkins.coverity.steps.ProcessChangeLogSetsSubStep;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -134,12 +135,13 @@ public class CoverityBuildStep extends Builder {
         final FilePath workingDirectory = getWorkingDirectory(build);
         final Node node = build.getBuiltOn();
         String viewName = StringUtils.EMPTY;
+        JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
         if (checkForIssuesInView != null && checkForIssuesInView.getViewName() != null) {
             viewName = checkForIssuesInView.getViewName();
         }
 
-        final ProcessChangeSet processChangeSet = new ProcessChangeSet(node, listener, envVars, workingDirectory, build);
-        final List<String> changeSet = processChangeSet.computeChangeSet(build.getChangeSets(), configureChangeSetPatterns);
+        final ProcessChangeLogSetsSubStep processChangeLogSetsSubStep = new ProcessChangeLogSetsSubStep(logger, build.getChangeSets(), configureChangeSetPatterns);
+        final List<String> changeSet = processChangeLogSetsSubStep.computeChangeSet();
 
         final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, envVars, workingDirectory, build);
         boolean prerequisiteStepSucceeded = coverityEnvironmentStep.setUpCoverityEnvironment(changeSet, coverityInstanceUrl, projectName, streamName, viewName);
