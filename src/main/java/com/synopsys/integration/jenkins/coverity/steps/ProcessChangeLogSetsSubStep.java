@@ -29,25 +29,25 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.rest.RestConstants;
 
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.model.Node;
-import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.scm.ChangeLogSet;
 
-public class ProcessChangeSet extends BaseCoverityStep {
-    public ProcessChangeSet(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
-        super(node, listener, envVars, workspace, run);
+public class ProcessChangeLogSets {
+    private final JenkinsCoverityLogger logger;
+    private final List<ChangeLogSet<?>> changeLogSets;
+    private final ConfigureChangeSetPatterns configureChangeSetPatterns;
+
+    public ProcessChangeLogSets(final JenkinsCoverityLogger logger, final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        this.logger = logger;
+        this.changeLogSets = changeLogSets;
+        this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
-    public List<String> computeChangeSet(final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
-        this.initializeJenkinsCoverityLogger();
-
+    public List<String> computeChangeSet() {
         final ChangeSetFilter changeSetFilter;
         if (configureChangeSetPatterns == null) {
             changeSetFilter = ChangeSetFilter.createAcceptAllFilter();

@@ -1,0 +1,33 @@
+{
+  "helpHtml.tpl": {
+    "coverityInstanceUrl": {
+      "overview": [
+        "Specify which Synopsys Coverity connect instance to run this job against.",
+        "The resulting Synopsys Coverity connect instance URL is stored in the $COV_URL environment variable, and will affect both the full and incremental analysis."
+      ]
+    },
+    "onCommandFailure": {
+      "overview": [
+        "Specify the action to take if a Coverity static analysis command fails."
+      ]
+    },
+    "projectName": {
+      "overview": [
+        "Specify the name of the Coverity project.",
+        "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis."
+      ]
+    },
+    "streamName": {
+      "overview": [
+        "Specify the name of the Coverity stream that you would like to use for the commands.",
+        "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis."
+      ]
+    },
+    "cleanUpAction": {
+      "overview": [
+        "Specify the clean up action to perform on a successful execution.",
+        "Will either persist or delete the intermediate directory created by the specified capture type."
+      ]
+    }
+  }
+}
