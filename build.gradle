@@ -76,6 +76,7 @@ task generateJelly(type: GenerateJelly) {
                         'buildstep/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
                         'buildstep/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
                         'global/CoverityGlobalConfig'               : 'globalConfig.json',
+                        'pipeline/CheckForIssuesStep'               : 'checkForIssuesStep.json',
                         'wrap/CoverityEnvironmentWrapper'           : 'environmentWrapper.json',]
 }
 
@@ -89,6 +90,7 @@ task generateHelp(type: GenerateHtml) {
                         'ConfigureChangeSetPatterns'              : 'configureChangeSetPatterns.json',
                         'global/CoverityConnectInstance'          : 'coverityConnectInstance.json',
                         'buildstep/RepeatableCommand'             : 'repeatableCommand.json',
+                        'pipeline/CheckForIssuesStep'             : 'checkForIssuesStep.json',
                         'wrap/CoverityEnvironmentWrapper'         : 'environmentWrapper.json']
 }
 
