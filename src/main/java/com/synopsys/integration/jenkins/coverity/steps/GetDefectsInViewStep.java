@@ -37,26 +37,26 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.Util;
 
-public class CoverityCheckForIssuesInViewStep2 {
+public class GetDefectsInViewStep {
     private final JenkinsCoverityLogger logger;
     private final WebServiceFactory webServiceFactory;
     private final String projectNameOverride;
     private final String viewNameOverride;
-    private final Map<String, String> environmentVariables;
+    private final IntEnvironmentVariables intEnvironmentVariables;
 
-    public CoverityCheckForIssuesInViewStep2(final JenkinsCoverityLogger logger, final Map<String, String> environmentVariables, final WebServiceFactory webServiceFactory, final String projectNameOverride,
-        final String viewNameOverride) {
+    public GetDefectsInViewStep(final JenkinsCoverityLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final WebServiceFactory webServiceFactory, final String projectNameOverride, final String viewNameOverride) {
         this.logger = logger;
-        this.environmentVariables = environmentVariables;
+        this.intEnvironmentVariables = intEnvironmentVariables;
         this.webServiceFactory = webServiceFactory;
         this.projectNameOverride = projectNameOverride;
         this.viewNameOverride = viewNameOverride;
     }
 
-    public Integer getNumberOfDefectsInView() throws IOException, IntegrationException, CovRemoteServiceException_Exception {
+    public Integer getTotalDefectsInView() throws IOException, IntegrationException, CovRemoteServiceException_Exception {
         final String projectName = getEnvironmentVariableOrOverride(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, projectNameOverride);
         final String viewName = getEnvironmentVariableOrOverride(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, viewNameOverride);
 
@@ -85,12 +85,12 @@ public class CoverityCheckForIssuesInViewStep2 {
     private String getEnvironmentVariableOrOverride(final JenkinsCoverityEnvironmentVariable environmentVariable, final String override) {
         final String value;
         if (override == null) {
-            value = environmentVariables.get(environmentVariable.toString());
+            value = intEnvironmentVariables.getValue(environmentVariable.toString());
         } else {
             value = override;
         }
 
-        return Util.replaceMacro(value, environmentVariables);
+        return Util.replaceMacro(value, intEnvironmentVariables.getVariables());
     }
 
     private String getProjectIdFromName(final String projectName, final ConfigurationService configurationService) throws CovRemoteServiceException_Exception, CoverityJenkinsException {

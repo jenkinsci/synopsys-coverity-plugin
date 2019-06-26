@@ -1,31 +1,14 @@
 {
-  "template": "buildStep.tpl",
+  "template": "checkForIssuesStep.tpl",
   "model": {
     "coverityInstanceUrlField": "coverityInstanceUrl",
     "coverityInstanceUrlTitle": "Coverity instance",
     "projectNameField": "projectName",
     "projectNameTitle": "Coverity project",
-    "streamNameField": "streamName",
-    "streamNameTitle": "Coverity stream",
-    "checkForIssuesInViewField": "checkForIssuesInView",
-    "checkForIssuesInViewTitle": "Check for issues",
     "viewNameField": "viewName",
     "viewNameTitle": "Coverity view",
-    "buildStatusForIssuesField": "buildStatusForIssues",
-    "buildStatusForIssuesTitle": "Build status if issues are present",
-    "configureChangeSetPatternsField": "configureChangeSetPatterns",
-    "configureChangeSetPatternsTitle": "Customize change set",
-    "changeSetInclusionPatternsField": "changeSetInclusionPatterns",
-    "changeSetInclusionPatternsTitle": "Change set inclusion patterns",
-    "changeSetExclusionPatternsField": "changeSetExclusionPatterns",
-    "changeSetExclusionPatternsTitle": "Change set exclusion patterns",
-    "refreshConnectionButtonValue": "Refresh Coverity projects, streams, and views",
-    "coverityRunConfigurationField": "coverityRunConfiguration",
-    "coverityRunConfigurationTitle": "Coverity run configuration",
-    "coverityRunConfigurationDefault": "defaultCoverityRunConfiguration",
-    "onCommandFailureField": "onCommandFailure",
-    "onCommandFailureTitle": "On command failure",
-    "cleanUpActionField": "cleanUpAction",
-    "cleanUpActionTitle": "On successful execution"
+    "returnDefectCountField": "returnDefectCount",
+    "returnDefectCountTitle": "Return defect count",
+    "refreshConnectionButtonValue": "Refresh Coverity projects and views"
   }
 }

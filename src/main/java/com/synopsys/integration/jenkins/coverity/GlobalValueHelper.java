@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.log.IntLogger;
@@ -55,6 +56,10 @@ public class GlobalValueHelper {
         return pluginVersion;
     }
 
+    public static String getJenkinsVersion() {
+        return Jenkins.getVersion().toString();
+    }
+
     public static Optional<CoverityConnectInstance> getCoverityInstanceWithUrl(final IntLogger logger, final String coverityInstanceUrl) {
         final List<CoverityConnectInstance> coverityInstances = getCoverityGlobalConfig().getCoverityConnectInstances();
         if (null == coverityInstances || coverityInstances.isEmpty()) {
@@ -66,6 +71,12 @@ public class GlobalValueHelper {
         }
 
         return Optional.empty();
+    }
+
+    public static Optional<WebServiceFactory> createWebServiceFactoryFromUrl(final IntLogger logger, final String coverityInstanceUrl) throws IllegalArgumentException {
+        return getCoverityInstanceWithUrl(logger, coverityInstanceUrl)
+                   .map(CoverityConnectInstance::getCoverityServerConfig)
+                   .map(coverityServerConfig -> coverityServerConfig.createWebServiceFactory(logger));
     }
 
     public static List<CoverityConnectInstance> getGlobalCoverityConnectInstances() {
