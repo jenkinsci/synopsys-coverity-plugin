@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.steps;
+package com.synopsys.integration.jenkins.coverity.substeps;
 
 import java.util.Date;
 import java.util.List;
@@ -36,18 +36,19 @@ import com.synopsys.integration.rest.RestConstants;
 
 import hudson.scm.ChangeLogSet;
 
-public class ProcessChangeLogSetsSubStep {
+public class ProcessChangeLogSets {
     private final JenkinsCoverityLogger logger;
     private final List<ChangeLogSet<?>> changeLogSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
-    public ProcessChangeLogSetsSubStep(final JenkinsCoverityLogger logger, final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public ProcessChangeLogSets(final JenkinsCoverityLogger logger, final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         this.logger = logger;
         this.changeLogSets = changeLogSets;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
     public List<String> computeChangeSet() {
+        logger.debug("Computing $CHANGE_SET");
         final ChangeSetFilter changeSetFilter;
         if (configureChangeSetPatterns == null) {
             changeSetFilter = ChangeSetFilter.createAcceptAllFilter();
@@ -66,7 +67,8 @@ public class ProcessChangeLogSetsSubStep {
                                            .filter(changeSetFilter::shouldInclude)
                                            .map(ChangeLogSet.AffectedFile::getPath)
                                            .collect(Collectors.toList());
-        logger.alwaysLog("Added " + changeSet.size() + " files to $CHANGE_SET");
+
+        logger.alwaysLog("Computed a $CHANGE_SET of " + changeSet.size() + " files");
 
         return changeSet;
     }

@@ -29,6 +29,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -44,7 +45,8 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
-import com.synopsys.integration.jenkins.coverity.steps.GetDefectsInViewStep;
+import com.synopsys.integration.jenkins.coverity.substeps.GetIssuesInView;
+import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
@@ -55,26 +57,32 @@ import hudson.util.ListBoxModel;
 
 public class CheckForIssuesStep extends Step {
     public static final String DISPLAY_NAME = "Check for Issues in Coverity View";
-    public static final String PIPELINE_NAME = "checkCoverityViewForDefects";
+    public static final String PIPELINE_NAME = "coverityIssueCheck";
 
     private String coverityInstanceUrl;
     private String projectName;
     private String viewName;
-    private Boolean returnDefectCount;
+    private Boolean returnIssueCount;
 
     @DataBoundConstructor
     public CheckForIssuesStep() {}
 
-    public Boolean getReturnDefectCount() {
-        return returnDefectCount;
+    public Boolean getReturnIssueCount() {
+        if (Boolean.FALSE.equals(returnIssueCount)) {
+            return null;
+        }
+        return returnIssueCount;
     }
 
     @DataBoundSetter
-    public void setReturnDefectCount(final Boolean returnDefectCount) {
-        this.returnDefectCount = returnDefectCount;
+    public void setReturnIssueCount(final Boolean returnIssueCount) {
+        this.returnIssueCount = returnIssueCount;
     }
 
     public String getCoverityInstanceUrl() {
+        if (StringUtils.isBlank(coverityInstanceUrl)) {
+            return null;
+        }
         return coverityInstanceUrl;
     }
 
@@ -84,6 +92,9 @@ public class CheckForIssuesStep extends Step {
     }
 
     public String getProjectName() {
+        if (StringUtils.isBlank(projectName)) {
+            return null;
+        }
         return projectName;
     }
 
@@ -93,6 +104,9 @@ public class CheckForIssuesStep extends Step {
     }
 
     public String getViewName() {
+        if (StringUtils.isBlank(viewName)) {
+            return null;
+        }
         return viewName;
     }
 
@@ -171,31 +185,32 @@ public class CheckForIssuesStep extends Step {
 
         @Override
         protected Integer run() throws Exception {
-            final JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
             final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
             intEnvironmentVariables.putAll(envVars);
+            final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
+            final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
 
-            final WebServiceFactory webServiceFactory;
             try {
-                webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl).orElseThrow(() -> new CoverityJenkinsException("Could not create WebServiceFactory from url " + coverityInstanceUrl));
-            } catch (final IllegalArgumentException e) {
-                throw new CoverityJenkinsException("There was an error connecting to the Coverity Connect instance at url " + coverityInstanceUrl, e);
-            }
+                final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
+                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, intEnvironmentVariables, webServiceFactory, projectName, viewName);
 
-            final GetDefectsInViewStep getDefectsInViewStep = new GetDefectsInViewStep(logger, intEnvironmentVariables, webServiceFactory, projectName, viewName);
+                final int defectCount = getIssuesInView.getTotalIssuesInView();
 
-            final int defectCount = getDefectsInViewStep.getTotalDefectsInView();
+                if (defectCount > 0) {
+                    final String defectMessage = String.format("[Coverity] Found %s issues in view.", defectCount);
+                    if (null != getReturnIssueCount() && getReturnIssueCount()) {
+                        logger.error(defectMessage);
+                    } else {
+                        throw new CoverityJenkinsException(defectMessage);
+                    }
+                }
 
-            if (defectCount > 0) {
-                final String defectMessage = String.format("[Coverity] Found %s defects in view.", defectCount);
-                if (null != getReturnDefectCount() && getReturnDefectCount()) {
-                    logger.error(defectMessage);
-                } else {
-                    throw new CoverityJenkinsException(defectMessage);
+                return defectCount;
+            } finally {
+                if (null != phoneHomeResponse) {
+                    phoneHomeResponse.getImmediateResult();
                 }
             }
-
-            return defectCount;
         }
 
     }

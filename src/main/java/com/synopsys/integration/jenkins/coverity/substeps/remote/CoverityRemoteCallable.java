@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.steps.remote;
+package com.synopsys.integration.jenkins.coverity.substeps.remote;
 
 import java.io.Serializable;
 

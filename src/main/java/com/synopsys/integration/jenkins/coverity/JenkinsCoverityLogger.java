@@ -28,17 +28,28 @@ import java.io.StringWriter;
 
 import com.synopsys.integration.coverity.CoverityIntLogger;
 import com.synopsys.integration.log.LogLevel;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.model.TaskListener;
 
 public class JenkinsCoverityLogger extends CoverityIntLogger implements Serializable {
     private static final long serialVersionUID = -3861734697709150463L;
+
     private final TaskListener jenkinsLogger;
 
-    private LogLevel level = LogLevel.INFO;
+    private LogLevel level;
 
-    public JenkinsCoverityLogger(final TaskListener jenkinsLogger) {
+    public JenkinsCoverityLogger(final TaskListener jenkinsLogger, final LogLevel logLevel, final String pluginVersion) {
         this.jenkinsLogger = jenkinsLogger;
+        this.level = logLevel;
+        this.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
+    }
+
+    public static JenkinsCoverityLogger initializeLogger(final TaskListener jenkinsLogger, final IntEnvironmentVariables intEnvironmentVariables) {
+        final String logLevelString = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.LOG_LEVEL.toString());
+        final LogLevel logLevel = LogLevel.fromString(logLevelString);
+        final String pluginVersion = GlobalValueHelper.getPluginVersion();
+        return new JenkinsCoverityLogger(jenkinsLogger, logLevel, pluginVersion);
     }
 
     public TaskListener getJenkinsListener() {

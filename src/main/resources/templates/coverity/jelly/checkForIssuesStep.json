@@ -7,8 +7,8 @@
     "projectNameTitle": "Coverity project",
     "viewNameField": "viewName",
     "viewNameTitle": "Coverity view",
-    "returnDefectCountField": "returnDefectCount",
-    "returnDefectCountTitle": "Return defect count",
+    "returnIssueCountField": "returnIssueCount",
+    "returnIssueCountTitle": "Return issue count",
     "refreshConnectionButtonValue": "Refresh Coverity projects and views"
   }
 }

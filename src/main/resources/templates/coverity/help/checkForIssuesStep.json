@@ -15,9 +15,9 @@
         "Specify the name of the Coverity view that you would like to check for issues."
       ]
     },
-    "returnDefectCount": {
+    "returnIssueCount": {
       "overview": [
-        "If checked, will return the number of defects disocvered in the specified Coverity connect view instead of throwing an exception."
+        "If checked, will return the number of issues discovered in the specified Coverity view instead of throwing an exception."
       ]
     }
   }

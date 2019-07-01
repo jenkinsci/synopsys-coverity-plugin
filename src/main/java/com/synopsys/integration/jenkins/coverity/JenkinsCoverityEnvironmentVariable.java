@@ -25,7 +25,9 @@ package com.synopsys.integration.jenkins.coverity;
 import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
 
 public enum JenkinsCoverityEnvironmentVariable implements SynopsysEnvironmentVariable {
+    LOG_LEVEL("COVERITY_LOG_LEVEL"),
     CHANGE_SET("CHANGE_SET"),
+    CHANGE_SET_SIZE("CHANGE_SET_SIZE"),
     COVERITY_URL("COV_URL"),
     COVERITY_PROJECT("COV_PROJECT"),
     COVERITY_STREAM("COV_STREAM"),

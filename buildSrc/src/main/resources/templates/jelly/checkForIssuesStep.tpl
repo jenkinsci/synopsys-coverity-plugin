@@ -8,7 +8,7 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.SELECT
     entry(coverityInstanceUrlField, coverityInstanceUrlTitle, SELECT)
     entry(projectNameField, projectNameTitle, SELECT)
     entry(viewNameField, viewNameTitle, SELECT)
-    entry(returnDefectCountField, returnDefectCountTitle, 'f:checkbox')
+    entry(returnIssueCountField, returnIssueCountTitle, 'f:checkbox')
 
     refreshConnectionButton(refreshConnectionButtonValue)
 }

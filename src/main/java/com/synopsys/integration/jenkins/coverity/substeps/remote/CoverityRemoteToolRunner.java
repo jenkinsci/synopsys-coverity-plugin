@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.steps.remote;
+package com.synopsys.integration.jenkins.coverity.substeps.remote;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -29,7 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.synopsys.integration.coverity.exception.ExecutableException;
 import com.synopsys.integration.coverity.exception.ExecutableRunnerException;
@@ -38,19 +37,17 @@ import com.synopsys.integration.coverity.executable.ExecutableManager;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 
-import hudson.EnvVars;
-
 public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
     private static final long serialVersionUID = -1777043273065180425L;
     private final String coverityToolHome;
     private final List<String> arguments;
-    private final EnvVars envVars;
+    private final HashMap<String, String> environmentVariables;
 
     private final String workspacePath;
 
-    public CoverityRemoteToolRunner(final JenkinsCoverityLogger logger, final String coverityToolHome, final List<String> arguments, final String workspacePath, final EnvVars envVars) {
+    public CoverityRemoteToolRunner(final JenkinsCoverityLogger logger, final String coverityToolHome, final List<String> arguments, final String workspacePath, final HashMap<String, String> environmentVariables) {
         super(logger);
-        this.envVars = envVars;
+        this.environmentVariables = environmentVariables;
         this.coverityToolHome = coverityToolHome;
         this.arguments = arguments;
         this.workspacePath = workspacePath;
@@ -58,8 +55,7 @@ public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
 
     public Integer call() throws CoverityJenkinsException {
         final File workspace = new File(workspacePath);
-        final Map<String, String> environment = new HashMap<>(envVars);
-        final Executable executable = new Executable(arguments, workspace, environment);
+        final Executable executable = new Executable(arguments, workspace, environmentVariables);
         final ExecutableManager executableManager = new ExecutableManager(new File(coverityToolHome));
         final Integer exitCode;
         final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();

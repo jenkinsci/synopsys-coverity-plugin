@@ -25,6 +25,7 @@ package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -36,6 +37,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
@@ -43,9 +45,11 @@ import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPa
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
-import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
-import com.synopsys.integration.jenkins.coverity.steps.ProcessChangeLogSetsSubStep;
+import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
+import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
+import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteInstallationValidator;
 import com.synopsys.integration.log.SilentIntLogger;
+import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;
@@ -57,8 +61,10 @@ import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Node;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.FormValidation;
@@ -66,6 +72,8 @@ import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
+    public static String FAILURE_MESSAGE = "Unable to inject Coverity Environment: ";
+
     private final String coverityInstanceUrl;
     private final String coverityPassphrase;
     private String projectName;
@@ -122,42 +130,58 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @Override
-    public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException {
-        final JenkinsCoverityLogger logger = new JenkinsCoverityLogger(listener);
+    public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
         intEnvironmentVariables.putAll(initialEnvironment);
-        logger.setLogLevel(intEnvironmentVariables);
+        final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
+        final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
 
         final RunWrapper runWrapper = new RunWrapper(build, true);
 
         final Computer computer = workspace.toComputer();
         if (computer == null) {
-            throw new AbortException("Could not access workspace's computer to inject Coverity environment.");
+            throw new AbortException(FAILURE_MESSAGE + "This workspace does not represent a FilePath on a particular Computer.");
         }
 
         final Node node = computer.getNode();
         if (node == null) {
-            throw new AbortException("Could not access workspace's node to inject Coverity environment.");
+            throw new AbortException(FAILURE_MESSAGE + "Could not access workspace's node to inject Coverity environment.");
         }
 
-        final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
+        if (Result.ABORTED.equals(build.getResult())) {
+            throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
+        }
+
+        final VirtualChannel virtualChannel = node.getChannel();
+        if (virtualChannel == null) {
+            throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
+        }
+
         try {
+            final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
             changeSets = runWrapper.getChangeSets();
+
+            final ProcessChangeLogSets processChangeLogSets = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
+            final List<String> changeSet = processChangeLogSets.computeChangeSet();
+
+            final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, (HashMap<String, String>) intEnvironmentVariables.getVariables());
+            final String pathToCoverityToolHome = node.getChannel().call(coverityRemoteInstallationValidator);
+
+            final SetUpCoverityEnvironment coverityEnvironmentStep = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
+            coverityEnvironmentStep.setUpCoverityEnvironment();
+            intEnvironmentVariables.getVariables().forEach(context::env);
+        } catch (final InterruptedException e) {
+            throw e;
+        } catch (final IntegrationException e) {
+            logger.debug(null, e);
+            throw new AbortException(FAILURE_MESSAGE + e.getMessage());
         } catch (final Exception e) {
-            throw new IOException(e);
+            throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
+        } finally {
+            if (phoneHomeResponse != null) {
+                phoneHomeResponse.getImmediateResult();
+            }
         }
-
-        final ProcessChangeLogSetsSubStep processChangeLogSetsSubStep = new ProcessChangeLogSetsSubStep(logger, changeSets, configureChangeSetPatterns);
-        final List<String> changeSet = processChangeLogSetsSubStep.computeChangeSet();
-
-        final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build);
-        final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSet, coverityInstanceUrl, projectName, streamName, viewName);
-
-        if (!setUpSuccessful) {
-            throw new AbortException("Could not successfully inject Coverity environment into build process.");
-        }
-
-        initialEnvironment.forEach(context::env);
     }
 
     @Override

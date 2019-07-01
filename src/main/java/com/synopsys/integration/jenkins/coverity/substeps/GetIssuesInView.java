@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.steps;
+package com.synopsys.integration.jenkins.coverity.substeps;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,14 +41,14 @@ import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.Util;
 
-public class GetDefectsInViewStep {
-    private final JenkinsCoverityLogger logger;
+public class GetIssuesInView {
     private final WebServiceFactory webServiceFactory;
     private final String projectNameOverride;
     private final String viewNameOverride;
+    private final JenkinsCoverityLogger logger;
     private final IntEnvironmentVariables intEnvironmentVariables;
 
-    public GetDefectsInViewStep(final JenkinsCoverityLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final WebServiceFactory webServiceFactory, final String projectNameOverride, final String viewNameOverride) {
+    public GetIssuesInView(final JenkinsCoverityLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final WebServiceFactory webServiceFactory, final String projectNameOverride, final String viewNameOverride) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.webServiceFactory = webServiceFactory;
@@ -56,11 +56,11 @@ public class GetDefectsInViewStep {
         this.viewNameOverride = viewNameOverride;
     }
 
-    public Integer getTotalDefectsInView() throws IOException, IntegrationException, CovRemoteServiceException_Exception {
+    public Integer getTotalIssuesInView() throws IOException, IntegrationException, CovRemoteServiceException_Exception {
         final String projectName = getEnvironmentVariableOrOverride(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, projectNameOverride);
         final String viewName = getEnvironmentVariableOrOverride(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, viewNameOverride);
 
-        logger.alwaysLog(String.format("Checking for issues in project \'%s\' and view \'%s\'.", projectName, viewName));
+        logger.alwaysLog(String.format("Checking for issues in project \"%s\", view \"%s\".", projectName, viewName));
 
         webServiceFactory.connect();
 
@@ -82,7 +82,7 @@ public class GetDefectsInViewStep {
         return defectCount;
     }
 
-    private String getEnvironmentVariableOrOverride(final JenkinsCoverityEnvironmentVariable environmentVariable, final String override) {
+    private String getEnvironmentVariableOrOverride(final JenkinsCoverityEnvironmentVariable environmentVariable, final String override) throws CoverityJenkinsException {
         final String value;
         if (override == null) {
             value = intEnvironmentVariables.getValue(environmentVariable.toString());
@@ -101,7 +101,7 @@ public class GetDefectsInViewStep {
                    .findFirst()
                    .map(ProjectDataObj::getProjectKey)
                    .map(String::valueOf)
-                   .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for project \"%s\". It no longer exists or the current user does not have access to it.", projectName)));
+                   .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for project \"%s\". It either does not exist or the current user does not have access to it.", projectName)));
     }
 
     private boolean projectDataObjHasName(final ProjectDataObj projectDataObj, final String name) {
@@ -115,7 +115,7 @@ public class GetDefectsInViewStep {
                    .findFirst()
                    .map(Map.Entry::getKey)
                    .map(String::valueOf)
-                   .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for view \"%s\". It no longer exists or the current user does not have access to it.", viewName)));
+                   .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for view \"%s\". It either does not exist or the current user does not have access to it.", viewName)));
     }
 
 }

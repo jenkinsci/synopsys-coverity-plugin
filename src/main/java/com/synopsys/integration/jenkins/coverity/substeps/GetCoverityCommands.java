@@ -20,95 +20,61 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.steps;
+package com.synopsys.integration.jenkins.coverity.substeps;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
-import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.AdvancedCoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArguments;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
-import com.synopsys.integration.jenkins.coverity.steps.remote.CoverityRemoteToolRunner;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 
-import hudson.EnvVars;
-import hudson.FilePath;
-import hudson.model.Node;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.Util;
 
-public class CoverityToolStep extends BaseCoverityStep {
-    public CoverityToolStep(final Node node, final TaskListener listener, final EnvVars envVars, final FilePath workspace, final Run run) {
-        super(node, listener, envVars, workspace, run);
+public class GetCoverityCommands {
+    private final JenkinsCoverityLogger logger;
+    private final IntEnvironmentVariables intEnvironmentVariables;
+    private final CoverityRunConfiguration coverityRunConfiguration;
+
+    public GetCoverityCommands(final JenkinsCoverityLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final CoverityRunConfiguration coverityRunConfiguration) {
+        this.logger = logger;
+        this.intEnvironmentVariables = intEnvironmentVariables;
+        this.coverityRunConfiguration = coverityRunConfiguration;
     }
 
-    public boolean runCoverityToolStep(final CoverityRunConfiguration coverityRunConfiguration, final int changeSetSize, final OnCommandFailure onCommandFailure) {
-        initializeJenkinsCoverityLogger();
+    public List<List<String>> getCoverityCommands() throws CoverityJenkinsException {
+        logger.debug("Preparing Coverity commands");
         final RepeatableCommand[] commands;
+        final int changeSetSize = Integer.valueOf(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString()));
 
-        try {
-            if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
-                commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
-            } else {
-                commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration, changeSetSize);
-            }
-
-            if (Result.ABORTED == getResult()) {
-                logger.alwaysLog("Skipping the Synopsys Coverity step because the build was aborted.");
-                return false;
-            }
-
-            if (!verifyCoverityCommands(commands)) {
-                setResult(Result.FAILURE);
-                return false;
-            }
-
-            for (final RepeatableCommand repeatableCommand : commands) {
-                final String command = repeatableCommand.getCommand();
-                if (StringUtils.isBlank(command)) {
-                    continue;
-                }
-
-                final List<String> arguments = getCorrectedParameters(command);
-
-                final CoverityRemoteToolRunner coverityRemoteToolRunner = new CoverityRemoteToolRunner(logger, getEnvironmentVariable(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME), arguments, getWorkspace().getRemote(),
-                    getEnvVars());
-                final Integer exitCode = getNode().getChannel().call(coverityRemoteToolRunner);
-                boolean shouldStop = false;
-                if (exitCode != null && exitCode != 0) {
-                    logger.error("[ERROR] Coverity failed with exit code: " + exitCode);
-                    setResult(Result.FAILURE);
-                    shouldStop = true;
-                }
-                if (OnCommandFailure.SKIP_REMAINING_COMMANDS.equals(onCommandFailure) && shouldStop) {
-                    break;
-                }
-            }
-        } catch (final InterruptedException e) {
-            logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
-            setResult(Result.ABORTED);
-            Thread.currentThread().interrupt();
-            return false;
-
-        } catch (final Exception e) {
-            logger.error("[ERROR] " + e.getMessage());
-            logger.debug(null, e);
-            setResult(Result.UNSTABLE);
-            return false;
+        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+            commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
+        } else {
+            commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration, changeSetSize);
         }
-        return true;
+
+        if (Arrays.stream(commands).map(RepeatableCommand::getCommand).allMatch(StringUtils::isBlank)) {
+            throw new CoverityJenkinsException("[ERROR] The are no non-empty Coverity commands configured.");
+        }
+
+        return Arrays.stream(commands)
+                   .map(RepeatableCommand::getCommand)
+                   .filter(StringUtils::isNotBlank)
+                   .map(this::toParameters)
+                   .collect(Collectors.toList());
     }
 
     private RepeatableCommand[] getSimpleModeCommands(final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, final int changeSetSize) throws CoverityJenkinsException {
@@ -157,28 +123,10 @@ public class CoverityToolStep extends BaseCoverityStep {
         }
     }
 
-    private boolean verifyCoverityCommands(final RepeatableCommand[] commands) {
-        if (commands.length == 0) {
-            logger.error("[ERROR] There are no Coverity commands configured to run.");
-            return false;
-        }
-
-        if (Arrays.stream(commands).map(RepeatableCommand::getCommand).allMatch(StringUtils::isBlank)) {
-            logger.error("[ERROR] The are no non-empty Coverity commands configured.");
-            return false;
-        }
-
-        return true;
-    }
-
-    private List<String> getCorrectedParameters(final String command) {
-        final String[] separatedParameters = Commandline.translateCommandline(command);
-        final List<String> correctedParameters = new ArrayList<>();
-        for (final String parameter : separatedParameters) {
-            correctedParameters.add(handleVariableReplacement(getEnvVars(), parameter));
-        }
-
-        return correctedParameters;
+    private List<String> toParameters(final String command) {
+        return Arrays.stream(Commandline.translateCommandline(command))
+                   .map(parameter -> Util.replaceMacro(parameter, intEnvironmentVariables.getVariables()))
+                   .collect(Collectors.toList());
     }
 
 }

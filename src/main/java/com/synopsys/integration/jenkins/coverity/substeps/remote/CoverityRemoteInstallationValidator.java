@@ -20,12 +20,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.steps.remote;
+package com.synopsys.integration.jenkins.coverity.substeps.remote;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Optional;
 
 import org.apache.commons.lang.StringUtils;
@@ -35,55 +36,48 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVaria
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 
-import hudson.EnvVars;
-
 public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<String> {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
     private static final long serialVersionUID = -460886461718309214L;
-    private final EnvVars envVars;
+    private final HashMap<String, String> environmentVariables;
 
-    public CoverityRemoteInstallationValidator(final JenkinsCoverityLogger logger, final EnvVars envVars) {
+    public CoverityRemoteInstallationValidator(final JenkinsCoverityLogger logger, final HashMap<String, String> environmentVariables) {
         super(logger);
-        this.envVars = envVars;
+        this.environmentVariables = environmentVariables;
     }
 
     public String call() throws CoverityJenkinsException {
-        final String coverityToolHome = envVars.get(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
+        final String coverityToolHome = environmentVariables.get(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
+
         if (StringUtils.isBlank(coverityToolHome)) {
-            logger.error(String.format("Cannot find Coverity installation, %s is not set.", JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()));
-            return StringUtils.EMPTY;
+            throw new CoverityJenkinsException(String.format("Cannot find Coverity installation, %s is not set.", JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()));
         }
 
         final Path pathToCoverityToolHome = Paths.get(coverityToolHome);
 
         if (!Files.exists(pathToCoverityToolHome)) {
-            logger.error("The specified Analysis installation directory doesn't exist.");
-            return StringUtils.EMPTY;
+            throw new CoverityJenkinsException("The specified Analysis installation directory doesn't exist.");
         }
 
         final Path pathToAnalysisVersionFile = pathToCoverityToolHome.resolve("VERSION");
         final Path pathToAnalysisVersionXml = pathToCoverityToolHome.resolve("VERSION.xml");
         if (!Files.exists(pathToAnalysisVersionXml) || !Files.exists(pathToAnalysisVersionFile)) {
-            logger.error(String.format("%s and %s were not found.", pathToAnalysisVersionFile.toString(), pathToAnalysisVersionXml.toString()));
-            return StringUtils.EMPTY;
+            throw new CoverityJenkinsException(String.format("%s and %s were not found.", pathToAnalysisVersionFile.toString(), pathToAnalysisVersionXml.toString()));
         }
 
         // check the version file value and validate it is greater than minimum version
         final CoverityVersion coverityVersion = getVersion(pathToAnalysisVersionFile).orElse(null);
         if (coverityVersion == null) {
-            logger.error("Could not determine the version of the Coverity analysis tool.");
-            return StringUtils.EMPTY;
+            throw new CoverityJenkinsException("Could not determine the version of the Coverity analysis tool.");
         }
 
         if (coverityVersion.compareTo(MINIMUM_SUPPORTED_VERSION) < 0) {
-            logger.error(String.format("Analysis version %s detected. The minimum supported version is %s", coverityVersion.toString(), MINIMUM_SUPPORTED_VERSION.toString()));
-            return StringUtils.EMPTY;
+            throw new CoverityJenkinsException(String.format("Analysis version %s detected. The minimum supported version is %s", coverityVersion.toString(), MINIMUM_SUPPORTED_VERSION.toString()));
         }
 
         final Path pathToBinDirectory = pathToCoverityToolHome.resolve("bin");
         if (!Files.isDirectory(pathToBinDirectory)) {
-            logger.error(String.format("%s was not found", pathToBinDirectory.toString()));
-            return StringUtils.EMPTY;
+            throw new CoverityJenkinsException(String.format("%s was not found", pathToBinDirectory.toString()));
         }
 
         return pathToBinDirectory.toString();

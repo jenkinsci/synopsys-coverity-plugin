@@ -93,7 +93,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
                    .map(Secret::getPlainText);
     }
 
-    public CoverityServerConfig getCoverityServerConfig() {
+    public CoverityServerConfig getCoverityServerConfig() throws IllegalArgumentException, IllegalStateException {
         final CoverityServerConfigBuilder builder = new CoverityServerConfigBuilder()
                                                         .setUrl(url);
 

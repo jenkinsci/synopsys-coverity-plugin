@@ -23,13 +23,21 @@
 package com.synopsys.integration.jenkins.coverity;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
+import com.synopsys.integration.coverity.ws.CoverityPhoneHomeHelper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.phonehome.PhoneHomeResponse;
 
 import hudson.Plugin;
 import hudson.PluginWrapper;
@@ -38,6 +46,10 @@ import jenkins.model.Jenkins;
 
 public class GlobalValueHelper {
     public static final String UNKNOWN_VERSION = "<unknown>";
+
+    public static Supplier<CoverityJenkinsException> COULD_NOT_FIND_INSTANCE(final String coverityInstanceUrl) {
+        return () -> new CoverityJenkinsException("No Coverity Connect instance with the URL \"" + coverityInstanceUrl + "\" could be found in the Jenkins System config.");
+    }
 
     public static String getPluginVersion() {
         String pluginVersion = UNKNOWN_VERSION;
@@ -73,10 +85,16 @@ public class GlobalValueHelper {
         return Optional.empty();
     }
 
-    public static Optional<WebServiceFactory> createWebServiceFactoryFromUrl(final IntLogger logger, final String coverityInstanceUrl) throws IllegalArgumentException {
-        return getCoverityInstanceWithUrl(logger, coverityInstanceUrl)
-                   .map(CoverityConnectInstance::getCoverityServerConfig)
-                   .map(coverityServerConfig -> coverityServerConfig.createWebServiceFactory(logger));
+    public static WebServiceFactory createWebServiceFactoryFromUrl(final IntLogger logger, final String coverityInstanceUrl) throws CoverityJenkinsException {
+        try {
+            return getCoverityInstanceWithUrl(logger, coverityInstanceUrl)
+                       .map(CoverityConnectInstance::getCoverityServerConfig)
+                       .map(coverityServerConfig -> coverityServerConfig.createWebServiceFactory(logger))
+                       .orElseThrow(
+                           () -> new CoverityJenkinsException("Could not connect to Coverity Connect instance with the URL \"" + coverityInstanceUrl + "\". Please validate your connection to this server in the Jenkins System config."));
+        } catch (final RuntimeException e) {
+            throw new CoverityJenkinsException("There was an error connecting to the Coverity Connect instance with the URL \"" + coverityInstanceUrl + "\"", e);
+        }
     }
 
     public static List<CoverityConnectInstance> getGlobalCoverityConnectInstances() {
@@ -89,4 +107,24 @@ public class GlobalValueHelper {
         return GlobalConfiguration.all().get(CoverityGlobalConfig.class);
     }
 
+    public static PhoneHomeResponse phoneHome(final IntLogger logger, final String coverityInstanceUrl) {
+        PhoneHomeResponse phoneHomeResponse = null;
+        final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        try {
+            final WebServiceFactory webServiceFactory = createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
+            webServiceFactory.connect();
+
+            final Map<String, String> metaData = new HashMap<>();
+            final CoverityPhoneHomeHelper coverityPhoneHomeHelper = CoverityPhoneHomeHelper.createAsynchronousPhoneHomeHelper(webServiceFactory, webServiceFactory.createConfigurationService(), executor);
+            metaData.put("jenkins.version", getJenkinsVersion());
+            phoneHomeResponse = coverityPhoneHomeHelper.handlePhoneHome("synopsys-coverity", getPluginVersion(), metaData);
+        } catch (final Exception e) {
+            logger.debug(e.getMessage(), e);
+        } finally {
+            executor.shutdownNow();
+        }
+
+        return phoneHomeResponse;
+    }
 }
