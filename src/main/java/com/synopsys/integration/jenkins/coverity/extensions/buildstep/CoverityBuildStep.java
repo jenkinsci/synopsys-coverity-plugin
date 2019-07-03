@@ -173,7 +173,8 @@ public class CoverityBuildStep extends Builder {
             final ProcessChangeLogSets processChangeLogSets = new ProcessChangeLogSets(logger, build.getChangeSets(), configureChangeSetPatterns);
             final List<String> changeSet = processChangeLogSets.computeChangeSet();
 
-            final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, (HashMap<String, String>) intEnvironmentVariables.getVariables());
+            final Boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
+            final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, isSimpleMode, (HashMap<String, String>) intEnvironmentVariables.getVariables());
             final String pathToCoverityToolHome = virtualChannel.call(coverityRemoteInstallationValidator);
 
             final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);

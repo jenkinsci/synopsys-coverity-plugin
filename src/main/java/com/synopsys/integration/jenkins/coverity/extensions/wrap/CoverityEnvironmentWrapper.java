@@ -164,7 +164,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             final ProcessChangeLogSets processChangeLogSets = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
             final List<String> changeSet = processChangeLogSets.computeChangeSet();
 
-            final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, (HashMap<String, String>) intEnvironmentVariables.getVariables());
+            final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, false, (HashMap<String, String>) intEnvironmentVariables.getVariables());
             final String pathToCoverityToolHome = node.getChannel().call(coverityRemoteInstallationValidator);
 
             final SetUpCoverityEnvironment coverityEnvironmentStep = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
