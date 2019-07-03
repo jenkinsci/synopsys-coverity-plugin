@@ -37,13 +37,15 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 
 public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<String> {
-    public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_JASPER;
+    public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_PACIFIC;
     private static final long serialVersionUID = -460886461718309214L;
     private final HashMap<String, String> environmentVariables;
+    private final Boolean validateVersion;
 
-    public CoverityRemoteInstallationValidator(final JenkinsCoverityLogger logger, final HashMap<String, String> environmentVariables) {
+    public CoverityRemoteInstallationValidator(final JenkinsCoverityLogger logger, final Boolean validateVersion, final HashMap<String, String> environmentVariables) {
         super(logger);
         this.environmentVariables = environmentVariables;
+        this.validateVersion = validateVersion;
     }
 
     public String call() throws CoverityJenkinsException {
@@ -59,20 +61,22 @@ public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<
             throw new CoverityJenkinsException("The specified Analysis installation directory doesn't exist.");
         }
 
-        final Path pathToAnalysisVersionFile = pathToCoverityToolHome.resolve("VERSION");
-        final Path pathToAnalysisVersionXml = pathToCoverityToolHome.resolve("VERSION.xml");
-        if (!Files.exists(pathToAnalysisVersionXml) || !Files.exists(pathToAnalysisVersionFile)) {
-            throw new CoverityJenkinsException(String.format("%s and %s were not found.", pathToAnalysisVersionFile.toString(), pathToAnalysisVersionXml.toString()));
-        }
+        if (validateVersion) {
+            final Path pathToAnalysisVersionFile = pathToCoverityToolHome.resolve("VERSION");
+            final Path pathToAnalysisVersionXml = pathToCoverityToolHome.resolve("VERSION.xml");
+            if (!Files.exists(pathToAnalysisVersionXml) || !Files.exists(pathToAnalysisVersionFile)) {
+                throw new CoverityJenkinsException(String.format("%s and %s were not found.", pathToAnalysisVersionFile.toString(), pathToAnalysisVersionXml.toString()));
+            }
 
-        // check the version file value and validate it is greater than minimum version
-        final CoverityVersion coverityVersion = getVersion(pathToAnalysisVersionFile).orElse(null);
-        if (coverityVersion == null) {
-            throw new CoverityJenkinsException("Could not determine the version of the Coverity analysis tool.");
-        }
+            // check the version file value and validate it is greater than minimum version
+            final CoverityVersion coverityVersion = getVersion(pathToAnalysisVersionFile).orElse(null);
+            if (coverityVersion == null) {
+                throw new CoverityJenkinsException("Could not determine the version of the Coverity analysis tool.");
+            }
 
-        if (coverityVersion.compareTo(MINIMUM_SUPPORTED_VERSION) < 0) {
-            throw new CoverityJenkinsException(String.format("Analysis version %s detected. The minimum supported version is %s", coverityVersion.toString(), MINIMUM_SUPPORTED_VERSION.toString()));
+            if (coverityVersion.compareTo(MINIMUM_SUPPORTED_VERSION) < 0) {
+                throw new CoverityJenkinsException(String.format("Analysis version %s detected. The minimum supported version is %s", coverityVersion.toString(), MINIMUM_SUPPORTED_VERSION.toString()));
+            }
         }
 
         final Path pathToBinDirectory = pathToCoverityToolHome.resolve("bin");
