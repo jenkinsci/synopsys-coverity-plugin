@@ -23,6 +23,7 @@
 package com.synopsys.integration.jenkins.coverity.extensions.pipeline;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,6 +42,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
@@ -51,13 +53,15 @@ import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
-public class CheckForIssuesStep extends Step {
+public class CheckForIssuesStep extends Step implements Serializable {
     public static final String DISPLAY_NAME = "Check for Issues in Coverity View";
     public static final String PIPELINE_NAME = "coverityIssueCheck";
+    private static final long serialVersionUID = 3602102048550370960L;
 
     private String coverityInstanceUrl;
     private String projectName;
@@ -188,11 +192,35 @@ public class CheckForIssuesStep extends Step {
             final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
             intEnvironmentVariables.putAll(envVars);
             final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
-            final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
 
+            final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
             try {
-                final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
-                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, intEnvironmentVariables, webServiceFactory, projectName, viewName);
+                final String unresolvedCoverityInstanceUrl;
+                if (StringUtils.isBlank(coverityInstanceUrl)) {
+                    unresolvedCoverityInstanceUrl = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_URL.toString());
+                } else {
+                    unresolvedCoverityInstanceUrl = coverityInstanceUrl;
+                }
+                final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
+
+                final String unresolvedProjectName;
+                if (StringUtils.isBlank(projectName)) {
+                    unresolvedProjectName = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT.toString());
+                } else {
+                    unresolvedProjectName = projectName;
+                }
+                final String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
+
+                final String unresolvedViewName;
+                if (StringUtils.isBlank(viewName)) {
+                    unresolvedViewName = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW.toString());
+                } else {
+                    unresolvedViewName = viewName;
+                }
+                final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
+
+                final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, resolvedCoverityInstanceUrl);
+                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, webServiceFactory, resolvedProjectName, resolvedViewName);
 
                 final int defectCount = getIssuesInView.getTotalIssuesInView();
 

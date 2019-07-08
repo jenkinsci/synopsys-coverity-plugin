@@ -191,7 +191,7 @@ public class CoverityBuildStep extends Builder {
                     throw new AbortException("Skipping the Synopsys Coverity Check for Issues in View step because the build was not successful.");
                 }
                 final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
-                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, intEnvironmentVariables, webServiceFactory, projectName, viewName);
+                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, webServiceFactory, projectName, viewName);
 
                 logger.alwaysLog("Checking for issues in view");
                 logger.alwaysLog("-- Build state for issues in the view: " + checkForIssuesInView.getBuildStatusForIssues().getDisplayName());
