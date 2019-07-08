@@ -31,6 +31,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -124,6 +125,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         return new Execution(context);
     }
 
+    @Symbol(PIPELINE_NAME)
     @Extension(optional = true)
     public static final class DescriptorImpl extends StepDescriptor {
         private CommonFieldValueProvider commonFieldValueProvider;
