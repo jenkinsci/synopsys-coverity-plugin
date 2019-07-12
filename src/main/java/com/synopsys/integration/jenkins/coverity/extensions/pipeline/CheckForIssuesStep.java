@@ -70,7 +70,8 @@ public class CheckForIssuesStep extends Step implements Serializable {
     private Boolean returnIssueCount;
 
     @DataBoundConstructor
-    public CheckForIssuesStep() {}
+    public CheckForIssuesStep() {
+    }
 
     public Boolean getReturnIssueCount() {
         if (Boolean.FALSE.equals(returnIssueCount)) {

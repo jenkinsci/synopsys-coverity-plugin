@@ -7,25 +7,31 @@ sudo: false
 install: true
 
 jdk:
-- oraclejdk8
+  - oraclejdk8
+
+addons:
+  sonarcloud:
+    organization: "black-duck-software"
+    token:
+      secure: "dFffkUSxqf8LumOijHGtp6tESETgCALUzgmf+8eqdV0JBJ6lgUo43yFzal3/2B7gBRMZz6kzexzs8qg9CQcEJPns6nwwTXo5BPvHIlEGb97NPdw7uRxGjMEpBJQ2KfGThc9YcMpZMLibOVa4jFcNRXfd6FkOEKXxRNSa5ZVdsrM1nTWlMVK9OJSkndP6qOZ6fRQHFPjn5h/YlaIXChDqVDbtBBx2kvC9OpL3MSeH+knJEVkCZlrzhELZnHpwWZaJw2kbS6/UJ+xI8wf3q1SYW1i5CBSWsMqagzz683aQI+rRPoZdrOJl7jCvL9n/RLUbuNjj9gkR5OhcjNKGuMw1rKNRvF5dBV6ArAwrdWNiLEXDTtnHV8UAYFmWPBoLTCqi56qmdbHfHQ0rjP+E9Kp8kyEQEFAmnNXL/DjCXtBWwCYiOjDv37UsJeQir+08TEGhZuMd7iWrpFAEZONVMa9ig3N9GjRhmr3NVnCP9no0gUgaNd4AHBpAsjNLEb/m3JqKdgFEjFm6nHrC4FjEGoNtqFi7aLG5xdNnAb3z/0k684UF3sAB91vX4OyCUxu/gSJgeZhlzpqGWCH/VR62FP3pFOs7SdJawgB7mVTvcvCKWza15T3orV+GPWZBGbc6DyHb603AA5CxiPDRXQQt5F7KCDGenJQP1wootxwe+UKdze0="
 
 notifications:
   email:
     recipients:
-    - bdsoss@blackducksoftware.com
+      - bdsoss@blackducksoftware.com
 
 script:
-- "./gradlew clean build jacocoTestReport coveralls"
+  - "./gradlew clean build jacocoTestReport coveralls sonarqube"
 
 env:
-- DETECT_GRADLE_INCLUDED_CONFIGURATIONS=compile
+  - DETECT_GRADLE_INCLUDED_CONFIGURATIONS=compile
 
 after_success:
-- bash <(curl -s https://copilot.blackducksoftware.com/ci/travis/scripts/upload)
+  - bash <(curl -s https://copilot.blackducksoftware.com/ci/travis/scripts/upload)
 
 cache:
   directories:
-  - "$HOME/.m2/repository"
-  - "$HOME/.sonar/cache"
-  - "$HOME/.gradle"
-  - ".gradle"
+    - "$HOME/.m2/repository"
+    - "$HOME/.sonar/cache"
+    - "$HOME/.gradle"
+    - ".gradle"
