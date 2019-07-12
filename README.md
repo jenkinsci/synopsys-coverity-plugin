@@ -12,6 +12,6 @@ Allows users to run Coverity commands in their Jenkins builds.
 You can download the latest artifact from releases: https://updates.jenkins-ci.org/download/plugins/synopsys-coverity/
 
 ## Documentation ##
-All documentation for synopsys-coverity can be found at:  https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/314015745/Synopsys+Coverity+Jenkins
+All documentation for synopsys-coverity can be found at: https://synopsys.atlassian.net/wiki/x/qoEJ
 
-Examples of commands, as well as variables that can be used, can be found here: https://blackducksoftware.atlassian.net/wiki/spaces/INTDOCS/pages/314081286/Coverity+Command+Examples
+Examples of commands, as well as variables that can be used, can be found here: https://synopsys.atlassian.net/wiki/x/sIEJ
