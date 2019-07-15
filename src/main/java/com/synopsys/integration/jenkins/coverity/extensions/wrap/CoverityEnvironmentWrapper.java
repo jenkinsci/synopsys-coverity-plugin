@@ -72,7 +72,7 @@ import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
-    public static String FAILURE_MESSAGE = "Unable to inject Coverity Environment: ";
+    public static final String FAILURE_MESSAGE = "Unable to inject Coverity Environment: ";
 
     private final String coverityInstanceUrl;
     private final String coverityPassphrase;
@@ -165,7 +165,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             final List<String> changeSet = processChangeLogSets.computeChangeSet();
 
             final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, false, (HashMap<String, String>) intEnvironmentVariables.getVariables());
-            final String pathToCoverityToolHome = node.getChannel().call(coverityRemoteInstallationValidator);
+            final String pathToCoverityToolHome = virtualChannel.call(coverityRemoteInstallationValidator);
 
             final SetUpCoverityEnvironment coverityEnvironmentStep = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
             coverityEnvironmentStep.setUpCoverityEnvironment();

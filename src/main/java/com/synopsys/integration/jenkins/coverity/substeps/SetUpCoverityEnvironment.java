@@ -60,7 +60,9 @@ public class SetUpCoverityEnvironment {
     }
 
     public void setUpCoverityEnvironment() throws CoverityJenkinsException {
-        final CoverityConnectInstance coverityInstance = GlobalValueHelper.getCoverityInstanceWithUrl(logger, coverityInstanceUrl).orElseThrow(GlobalValueHelper.COULD_NOT_FIND_INSTANCE(coverityInstanceUrl));
+        final CoverityConnectInstance coverityInstance = GlobalValueHelper.getCoverityInstanceWithUrl(logger, coverityInstanceUrl).orElseThrow(
+            () -> new CoverityJenkinsException("No Coverity Connect instance with the URL \"" + coverityInstanceUrl + "\" could be found in the Jenkins System config.")
+        );
 
         if (StringUtils.isBlank(pathToCoverityToolHome)) {
             throw new CoverityJenkinsException("Could not get path to Coverity tool home or the path provided is invalid.");

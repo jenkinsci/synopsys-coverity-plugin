@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Supplier;
 
 import com.synopsys.integration.coverity.ws.CoverityPhoneHomeHelper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
@@ -41,15 +40,12 @@ import com.synopsys.integration.phonehome.PhoneHomeResponse;
 
 import hudson.Plugin;
 import hudson.PluginWrapper;
+import hudson.util.VersionNumber;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 
 public class GlobalValueHelper {
-    public static final String UNKNOWN_VERSION = "<unknown>";
-
-    public static Supplier<CoverityJenkinsException> COULD_NOT_FIND_INSTANCE(final String coverityInstanceUrl) {
-        return () -> new CoverityJenkinsException("No Coverity Connect instance with the URL \"" + coverityInstanceUrl + "\" could be found in the Jenkins System config.");
-    }
+    public static final String UNKNOWN_VERSION = "UNKNOWN_VERSION";
 
     public static String getPluginVersion() {
         String pluginVersion = UNKNOWN_VERSION;
@@ -69,7 +65,12 @@ public class GlobalValueHelper {
     }
 
     public static String getJenkinsVersion() {
-        return Jenkins.getVersion().toString();
+        final VersionNumber versionNumber = Jenkins.getVersion();
+        if (versionNumber == null) {
+            return UNKNOWN_VERSION;
+        } else {
+            return versionNumber.toString();
+        }
     }
 
     public static Optional<CoverityConnectInstance> getCoverityInstanceWithUrl(final IntLogger logger, final String coverityInstanceUrl) {

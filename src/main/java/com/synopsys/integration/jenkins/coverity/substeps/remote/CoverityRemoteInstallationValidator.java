@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -93,9 +94,8 @@ public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<
      */
     private Optional<CoverityVersion> getVersion(final Path versionFile) throws CoverityJenkinsException {
         final String versionPrefix = "externalVersion=";
-        try {
-            return Files.lines(versionFile)
-                       .filter(str -> str.startsWith(versionPrefix))
+        try (final Stream<String> lines = Files.lines(versionFile)) {
+            return lines.filter(str -> str.startsWith(versionPrefix))
                        .map(str -> str.substring(versionPrefix.length()))
                        .map(CoverityVersion::parse)
                        .filter(Optional::isPresent)

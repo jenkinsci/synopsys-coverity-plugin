@@ -71,7 +71,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 public class CoverityBuildStep extends Builder {
-    public static String FAILURE_MESSAGE = "Unable to perform Synopsys Coverity static analysis: ";
+    public static final String FAILURE_MESSAGE = "Unable to perform Synopsys Coverity static analysis: ";
 
     private final OnCommandFailure onCommandFailure;
     private final CoverityRunConfiguration coverityRunConfiguration;
@@ -236,11 +236,16 @@ public class CoverityBuildStep extends Builder {
         return true;
     }
 
-    private FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) {
+    private FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) throws AbortException {
         final FilePath workingDirectory;
         if (build.getWorkspace() == null) {
             // might be using custom workspace
-            workingDirectory = new FilePath(build.getBuiltOn().getChannel(), build.getProject().getCustomWorkspace());
+            final Node node = build.getBuiltOn();
+            if (node != null) {
+                workingDirectory = new FilePath(node.getChannel(), build.getProject().getCustomWorkspace());
+            } else {
+                throw new AbortException(FAILURE_MESSAGE + "Could not determine working directory");
+            }
         } else {
             workingDirectory = build.getWorkspace();
         }

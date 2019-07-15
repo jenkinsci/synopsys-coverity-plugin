@@ -21,7 +21,7 @@ notifications:
       - bdsoss@blackducksoftware.com
 
 script:
-  - "./gradlew clean build jpi jacocoTestReport coveralls sonarqube"
+  - "./gradlew clean build jpi jacocoTestReport coveralls sonarqube -Dsonar.projectName='Synopsys Coverity for Jenkins'"
 
 env:
   - DETECT_GRADLE_INCLUDED_CONFIGURATIONS=compile
