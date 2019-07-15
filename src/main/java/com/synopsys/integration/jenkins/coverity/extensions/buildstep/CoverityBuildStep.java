@@ -84,7 +84,7 @@ public class CoverityBuildStep extends Builder {
     private CleanUpAction cleanUpAction;
 
     @DataBoundConstructor
-    public CoverityBuildStep(final String coverityInstanceUrl, final OnCommandFailure onCommandFailure, final String projectName, final String streamName, final CheckForIssuesInView checkForIssuesInView,
+    public CoverityBuildStep(final String coverityInstanceUrl, final String onCommandFailure, final String projectName, final String streamName, final CheckForIssuesInView checkForIssuesInView,
         final ConfigureChangeSetPatterns configureChangeSetPatterns, final CoverityRunConfiguration coverityRunConfiguration) {
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.projectName = projectName;
@@ -92,13 +92,16 @@ public class CoverityBuildStep extends Builder {
         this.checkForIssuesInView = checkForIssuesInView;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
         this.coverityRunConfiguration = coverityRunConfiguration;
-        this.onCommandFailure = onCommandFailure;
+
+        //TODO: Replace constructor string value with enum in 3.0.0
+        this.onCommandFailure = OnCommandFailure.valueOf(onCommandFailure);
     }
 
     public CleanUpAction getCleanUpAction() {
         return cleanUpAction;
     }
 
+    // TODO: Add to constructor in 3.0.0
     @DataBoundSetter
     public void setCleanUpAction(final CleanUpAction cleanUpAction) {
         this.cleanUpAction = cleanUpAction;
@@ -133,7 +136,12 @@ public class CoverityBuildStep extends Builder {
     }
 
     public CoverityRunConfiguration getDefaultCoverityRunConfiguration() {
-        return new SimpleCoverityRunConfiguration(CoverityCaptureType.COV_BUILD, CoverityAnalysisType.COV_ANALYZE, 100, null);
+        final SimpleCoverityRunConfiguration defaultCoverityRunConfiguration = new SimpleCoverityRunConfiguration(CoverityAnalysisType.COV_ANALYZE, "", null);
+        defaultCoverityRunConfiguration.setCoverityCaptureType(CoverityCaptureType.COV_BUILD);
+        defaultCoverityRunConfiguration.setChangeSetAnalysisThreshold(100);
+        return defaultCoverityRunConfiguration;
+        // TODO: Uncomment the following in 3.0.0
+        // return new SimpleCoverityRunConfiguration(CoverityCaptureType.COV_BUILD, CoverityAnalysisType.COV_ANALYZE, 100, null);
     }
 
     @Override

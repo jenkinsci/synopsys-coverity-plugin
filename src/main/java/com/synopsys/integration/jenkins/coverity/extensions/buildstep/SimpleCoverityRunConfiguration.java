@@ -46,22 +46,27 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
         SerializationHelper.migrateFieldFrom("buildCommand", SimpleCoverityRunConfiguration.class, "sourceArgument");
     }
 
-    private final CoverityCaptureType coverityCaptureType;
     private final CoverityAnalysisType coverityAnalysisType;
     private final CommandArguments commandArguments;
-    private String sourceArgument;
+    private final String sourceArgument;
+    private CoverityCaptureType coverityCaptureType;
     private int changeSetAnalysisThreshold;
 
     @DataBoundConstructor
-    public SimpleCoverityRunConfiguration(final CoverityCaptureType coverityCaptureType, final CoverityAnalysisType coverityAnalysisType, final Integer changeSetAnalysisThreshold, final CommandArguments commandArguments) {
-        this.coverityCaptureType = coverityCaptureType;
+    public SimpleCoverityRunConfiguration(final CoverityAnalysisType coverityAnalysisType, final String sourceArgument, final CommandArguments commandArguments) {
         this.coverityAnalysisType = coverityAnalysisType;
+        this.sourceArgument = sourceArgument;
         this.commandArguments = commandArguments;
-        this.changeSetAnalysisThreshold = changeSetAnalysisThreshold;
     }
 
     public CoverityCaptureType getCoverityCaptureType() {
         return coverityCaptureType;
+    }
+
+    // TODO: Add to constructor in 3.0.0
+    @DataBoundSetter
+    public void setCoverityCaptureType(final CoverityCaptureType coverityCaptureType) {
+        this.coverityCaptureType = coverityCaptureType;
     }
 
     public CoverityCaptureType getDefaultCoverityCaptureType() {
@@ -72,13 +77,13 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
         return sourceArgument;
     }
 
-    @DataBoundSetter
-    public void setSourceArgument(final String sourceArgument) {
-        this.sourceArgument = sourceArgument;
-    }
-
     public int getChangeSetAnalysisThreshold() {
         return changeSetAnalysisThreshold;
+    }
+
+    @DataBoundSetter
+    public void setChangeSetAnalysisThreshold(final Integer changeSetAnalysisThreshold) {
+        this.changeSetAnalysisThreshold = changeSetAnalysisThreshold;
     }
 
     public CoverityAnalysisType getCoverityAnalysisType() {
