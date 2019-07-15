@@ -31,6 +31,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
@@ -80,11 +81,11 @@ public class CoverityBuildStep extends Builder {
     private final CheckForIssuesInView checkForIssuesInView;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
     private final String coverityInstanceUrl;
-    private final CleanUpAction cleanUpAction;
+    private CleanUpAction cleanUpAction;
 
     @DataBoundConstructor
     public CoverityBuildStep(final String coverityInstanceUrl, final OnCommandFailure onCommandFailure, final String projectName, final String streamName, final CheckForIssuesInView checkForIssuesInView,
-        final ConfigureChangeSetPatterns configureChangeSetPatterns, final CoverityRunConfiguration coverityRunConfiguration, final CleanUpAction cleanUpAction) {
+        final ConfigureChangeSetPatterns configureChangeSetPatterns, final CoverityRunConfiguration coverityRunConfiguration) {
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.projectName = projectName;
         this.streamName = streamName;
@@ -92,11 +93,15 @@ public class CoverityBuildStep extends Builder {
         this.configureChangeSetPatterns = configureChangeSetPatterns;
         this.coverityRunConfiguration = coverityRunConfiguration;
         this.onCommandFailure = onCommandFailure;
-        this.cleanUpAction = cleanUpAction;
     }
 
     public CleanUpAction getCleanUpAction() {
         return cleanUpAction;
+    }
+
+    @DataBoundSetter
+    public void setCleanUpAction(final CleanUpAction cleanUpAction) {
+        this.cleanUpAction = cleanUpAction;
     }
 
     public String getCoverityInstanceUrl() {
