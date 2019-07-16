@@ -94,10 +94,9 @@ public class GetCoverityCommands {
             repeatableCommands[0] = RepeatableCommand.COV_CAPTURE_PROJECT(sourceArgument, covCaptureArguments);
         } else if (coverityCaptureType == CoverityCaptureType.COV_CAPTURE_SCM) {
             repeatableCommands[0] = RepeatableCommand.COV_CAPTURE_SCM(sourceArgument, covCaptureArguments);
-        } else if (coverityCaptureType == CoverityCaptureType.COV_BUILD) {
-            repeatableCommands[0] = RepeatableCommand.COV_BUILD(simpleCoverityRunConfiguration.getSourceArgument(), covBuildArguments);
         } else {
-            throw new CoverityJenkinsException("No valid Coverity capture type specified");
+            logger.warn("No Coverity Capture Type specified. Assuming Capture type of 'Build.' If you're upgrading from a previous version, this warning will persist until you re-save your job config.");
+            repeatableCommands[0] = RepeatableCommand.COV_BUILD(sourceArgument, covBuildArguments);
         }
 
         final CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
