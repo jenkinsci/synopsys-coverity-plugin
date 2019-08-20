@@ -82,13 +82,6 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
         return covManagePath;
     }
 
-    public ListBoxModel doFillDesktopAnalysisItems() {
-    	ListBoxModel items = new ListBoxModel();      
-    	items.add("disabled");
-    	items.add("enabled");
-    	return items;
-    }
-
     public Optional<URL> getCoverityURL() {
         URL coverityUrl = null;
         if (url != null) {
@@ -175,6 +168,13 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
             // There was classloader logic here that has been removed for brevity. -- rotte 11-16-2018 (with advice from jrichard)
             // Previous code can be found at 6c4432a8347d80a6fa01e3f28846c612862b61a6
         }
+        
+        public ListBoxModel doFillDesktopAnalysisItems() {
+    		ListBoxModel items = new ListBoxModel();      
+    		items.add("disabled");
+    		items.add("enabled");
+    		return items;
+    	}
 
         @POST
         public FormValidation doTestConnection(@QueryParameter("url") final String url, @QueryParameter("credentialId") final String credentialId, @QueryParameter("desktopAnalysis") final String desktopAnalysis, @QueryParameter("covManagePath") final String covManagePath) {
