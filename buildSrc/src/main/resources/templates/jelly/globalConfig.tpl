@@ -12,12 +12,12 @@ package templates.jelly
                         'c:select'()
                     }
                     'f:entry'(field: desktopAnalysisField, title: desktopAnalysisTitle) {
-                        'f:select'()
-                    }
-                    'f:entry'(field: covManagePathField, title: covManagePathTitle) {
-                        'f:textbox'()
-                    }
-                    'f:validateButton'(method: testConnectionMethod, title: testConnectionTitle, progress: testConnectionProgress, with: "${urlField},${credentialsField}")
+						'f:select'()
+					}
+					'f:entry'(field: covManagePathField, title: covManagePathTitle) {
+						'f:textbox'()
+					}
+                    'f:validateButton'(method: testConnectionMethod, title: testConnectionTitle, progress: testConnectionProgress, with: "${urlField},${credentialsField},${desktopAnalysisField},${covManagePathField}")
                     'f:repeatableDeleteButton'(value: coverityConnectInstancesDeleteTitle)
                 }
             }

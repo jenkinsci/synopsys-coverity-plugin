@@ -29,16 +29,16 @@
       ]
     },
     "createProjectName": {
-      "overview": [
-        "Specify the name of the Coverity project.",
-        "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis."
-      ]
-    },
-    "createStreamName": {
-      "overview": [
-        "Specify the name of the Coverity stream that you would like to use for the commands.",
-        "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis."
-      ]
-    }
+	  "overview": [
+	    "Specify the name of the Coverity project.",
+	    "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis."
+	  ]
+	},
+	"createStreamName": {
+	  "overview": [
+	    "Specify the name of the Coverity stream that you would like to use for the commands.",
+	    "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis."
+	  ]
+	}
   }
 }

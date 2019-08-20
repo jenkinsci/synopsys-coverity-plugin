@@ -2,7 +2,6 @@
  * synopsys-coverity
  *
  * Copyright (c) 2019 Synopsys, Inc.
- * Portions Copyright 2019 Lexmark
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,17 +22,18 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.io.Serializable;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.List;
+import java.io.Reader;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.util.logging.Logger;
+import java.util.HashMap;
+import java.util.List;
 
 import javax.annotation.Nonnull;
 
@@ -44,15 +44,21 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
-import com.synopsys.integration.jenkins.coverity.steps.CoverityEnvironmentStep;
+import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
+import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
+import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteInstallationValidator;
 import com.synopsys.integration.log.SilentIntLogger;
+import com.synopsys.integration.phonehome.PhoneHomeResponse;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -63,8 +69,10 @@ import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Node;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.FormValidation;
@@ -72,6 +80,8 @@ import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
+	public static final String FAILURE_MESSAGE = "Unable to inject Coverity Environment: ";
+
 	private final String coverityInstanceUrl;
 	private final String coverityPassphrase;
 	private String projectName;
@@ -130,34 +140,58 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 	}
 
 	@Override
-	public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException {
+	public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
+		final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
+		intEnvironmentVariables.putAll(initialEnvironment);
+		final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
+		final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
+
 		final RunWrapper runWrapper = new RunWrapper(build, true);
 
 		final Computer computer = workspace.toComputer();
 		if (computer == null) {
-			throw new AbortException("Could not access workspace's computer to inject Coverity environment.");
+			throw new AbortException(FAILURE_MESSAGE + "This workspace does not represent a FilePath on a particular Computer.");
 		}
 
 		final Node node = computer.getNode();
 		if (node == null) {
-			throw new AbortException("Could not access workspace's node to inject Coverity environment.");
+			throw new AbortException(FAILURE_MESSAGE + "Could not access workspace's node to inject Coverity environment.");
 		}
 
-		final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
+		if (Result.ABORTED.equals(build.getResult())) {
+			throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
+		}
+
+		final VirtualChannel virtualChannel = node.getChannel();
+		if (virtualChannel == null) {
+			throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
+		}
+
 		try {
+			final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
 			changeSets = runWrapper.getChangeSets();
-		} catch (Exception e) {
-			throw new IOException(e);
+
+			final ProcessChangeLogSets processChangeLogSets = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
+			final List<String> changeSet = processChangeLogSets.computeChangeSet();
+
+			final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, false, (HashMap<String, String>) intEnvironmentVariables.getVariables());
+			final String pathToCoverityToolHome = virtualChannel.call(coverityRemoteInstallationValidator);
+
+			final SetUpCoverityEnvironment coverityEnvironmentStep = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
+			coverityEnvironmentStep.setUpCoverityEnvironment();
+			intEnvironmentVariables.getVariables().forEach(context::env);
+		} catch (final InterruptedException e) {
+			throw e;
+		} catch (final IntegrationException e) {
+			logger.debug(null, e);
+			throw new AbortException(FAILURE_MESSAGE + e.getMessage());
+		} catch (final Exception e) {
+			throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
+		} finally {
+			if (phoneHomeResponse != null) {
+				phoneHomeResponse.getImmediateResult();
+			}
 		}
-
-		final CoverityEnvironmentStep coverityEnvironmentStep = new CoverityEnvironmentStep(node, listener, initialEnvironment, workspace, build);
-		final boolean setUpSuccessful = coverityEnvironmentStep.setUpCoverityEnvironment(changeSets, coverityInstanceUrl, projectName, streamName, viewName, configureChangeSetPatterns);
-
-		if (!setUpSuccessful) {
-			throw new AbortException("Could not successfully inject Coverity environment into build process.");
-		}
-
-		initialEnvironment.forEach(context::env);
 	}
 
 	@Override
@@ -183,37 +217,36 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 			commonFieldValueProvider = new CommonFieldValueProvider();
 		}
 
-		public ListBoxModel doFillCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
-			return commonFieldValueProvider.doFillCoverityInstanceUrlItems(coverityInstanceUrl);
+		public ListBoxModel doFillCoverityInstanceUrlItems() {
+			return commonFieldValueProvider.doFillCoverityInstanceUrlItems();
 		}
 
-		public FormValidation doCheckCoverityInstanceUrlItems(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+		public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
 			return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
 		}
 
-		public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
-			return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, projectName, updateNow);
+		public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
+			return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, updateNow);
 		}
 
 		public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-			return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+			return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
 		}
 
-		public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName,
-				final @QueryParameter("updateNow") boolean updateNow) {
-			return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, streamName, updateNow);
+		public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
+			return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, updateNow);
 		}
 
 		public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-			return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+			return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
 		}
 
-		public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName, final @QueryParameter("updateNow") boolean updateNow) {
-			return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
+		public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
+			return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, updateNow);
 		}
 
 		public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-			return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+			return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
 		}
 
 		@Override
@@ -228,7 +261,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
 		// A do function launched from config.jelly via a validation button to run commands to create the project and the
 		// stream and to associate them together in the Coverity Platform server: 
-		public FormValidation doCreateProject(@QueryParameter String createProjectName, @QueryParameter String createStreamName) throws IOException {           
+		public FormValidation doCreateProject(@QueryParameter String createProjectName, @QueryParameter String createStreamName) throws IOException {    		
 			// Validate input values:
 			if (createProjectName == null || createProjectName.equals("")) {
 				return FormValidation.error("The Project Name value is missing. Please enter a value and try again.");
@@ -237,7 +270,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 			}
 
 			String project = createProjectName.replace(" ", "_");
-			String stream = createStreamName.replace(" ", "_");     
+			String stream = createStreamName.replace(" ", "_");		
 
 			CoverityGlobalConfig coverityGlobalConfig = new CoverityGlobalConfig();
 			CoverityConnectInstance coverityConnectInstance = coverityGlobalConfig.getCoverityConnectInstances().get(0);
@@ -260,7 +293,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 			// Evaluate exit status from the runCommand and return the appropriate message to the jenkins build config form.
 			// The Status from the three commands are combined and returned as a combined status:
 			String errorLevel = "0";
-			String returnMessage = "";  
+			String returnMessage = "";	
 
 			// Run command 1 of 4 - Get list of Coverity projects:
 			String projectShowCmd = covManagePath + "cov-manage-im --host " + host + " --ssl --port " + port + " --user " + user + " --password " + password + " --mode projects --show";
@@ -335,13 +368,13 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 					return FormValidation.error(returnMessage);
 				} 
 				logger.info("[INFO] Coverity Stream created: " + createStreamRet[0]);
-				returnMessage = returnMessage + "\n\n" + createStreamRet[0] + " - " + stream;   
+				returnMessage = returnMessage + "\n\n" + createStreamRet[0] + " - " + stream;	
 			}
 
 			// Run command 4 of 4 - Associate the Stream to the Project:
-			String associateCmd = covManagePath + "cov-manage-im --host " + host + " --ssl --port " + port + " --mode projects --update --name " + project + " --insert stream:" + stream + " --user " + user + " --password " + password;          
+			String associateCmd = covManagePath + "cov-manage-im --host " + host + " --ssl --port " + port + " --mode projects --update --name " + project + " --insert stream:" + stream + " --user " + user + " --password " + password; 			
 			String[] associateRet = null;
-			associateRet = runCommand(associateCmd);    
+			associateRet = runCommand(associateCmd);	
 
 			if (!associateRet[1].equals(errorLevel)) {
 				returnMessage = returnMessage + "\n\nAn error occurred during the association of the project-" + project + " and Stream-" + stream + "\n" + associateRet[0];

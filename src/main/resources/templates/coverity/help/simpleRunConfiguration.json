@@ -1,17 +1,51 @@
 {
-  "coverityAnalysisType.tpl": {
+  "helpHtml.tpl": {
+    "coverityCaptureType": {
+      "overview": [
+        "Specify the way you wish to capture your source for Coverity analysis.",
+        "Each capture type runs a specific Coverity command  with some default arguments. Additional command-specific arguments can be provided below.",
+        "",
+        "<strong>Build</strong>",
+        "cov-build --dir ${WORKSPACE}/idir <em>Source Argument (build command)</em>",
+        "",
+        "<strong>Buildless Capture (Project)</strong>",
+        "cov-capture --project-dir <em>Source Argument (project directory)</em>",
+        "",
+        "<strong>Buildless Capture (SCM)</strong>",
+        "cov-capture --scm-url <em>Source Argument (scm url)</em>"
+      ]
+    },
     "coverityAnalysisType": {
       "overview": [
-        "Specify the type of analysis you would like to run.",
-        "<strong>Full Analysis</strong> will run the cov-build, cov-analyze, and cov-commit-defects commands (in that order)",
-        "<strong>Incremental Analysis</strong> will run the cov-build, cov-run-desktop, and cov-commit-defects commands (in that order)",
-        "Specifically, the commands will be invoked with the following parameters:"
-      ],
-      "commands": [
-        "cov-build --dir ${WORKSPACE}/idir <em>build command</em>",
+        "Specify the way you wish to perform your Coverity analysis.",
+        "Each analysis type runs a specific Coverity command with some default arguments, followed by cov-commit-defects with some default arguments. Additional command-specific arguments can be provided below.",
+        "",
+        "<strong>Full Analysis</strong>:",
         "cov-analyze --dir ${WORKSPACE}/idir",
-        "cov-run-desktop --dir ${WORKSPACE}/idir --url ${COV_URL} ${CHANGE_SET}",
-        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}"
+        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}",
+        "",
+        "<strong>Incremental Analysis</strong>:",
+        "cov-run-desktop --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM} ${CHANGE_SET}",
+        "cov-commit-defects --dir ${WORKSPACE}/idir --url ${COV_URL} --stream ${COV_STREAM}",
+        "",
+        "<strong>Determined by change set threshold</strong>",
+        "Will run the commands specified by <strong>Full Analysis</strong> if the number of files listed in the CHANGE_SET environment variable meets or exceeds the specified threshold, otherwise will run the commands specified by <strong>Incremental Analysis</strong>."
+      ]
+    },
+    "sourceArgument": {
+      "overview": [
+        "The argument that specifies the source for the given capture type.",
+        "For <strong>Build</strong>, this is the build command to pass to cov-build.",
+        "For <strong>Buildless Capture (Project)</strong> this is the project directory to pass to cov-capture.",
+        "For <strong>Buildless Capture (SCM)</strong> this is the scm url to pass to cov-capture."
+      ]
+    },
+    "changeSetAnalysisThreshold": {
+      "overview": [
+        "For use with the Coverity Analysis Type <strong>Determined by change set threshold</strong>. Specifies the number of files that triggers a <strong>Full Analysis</strong>.",
+        "",
+        "<strong>Determined by change set threshold</strong> will run an <strong>Incremental Analysis</strong> unless the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field.",
+        "If the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field, <strong>Determined by change set threshold</strong> will run a <strong>Full Analysis</strong>"
       ]
     }
   }

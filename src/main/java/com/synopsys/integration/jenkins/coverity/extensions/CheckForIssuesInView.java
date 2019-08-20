@@ -24,21 +24,15 @@ package com.synopsys.integration.jenkins.coverity.extensions;
 
 import java.io.Serializable;
 
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityBuildStep;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
 
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
-import hudson.model.Build;
 import hudson.model.Descriptor;
-import hudson.model.Project;
-import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssuesInView> implements Serializable {
@@ -68,43 +62,15 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
     @Extension
     public static class DescriptorImpl extends Descriptor<CheckForIssuesInView> {
         private transient final CommonFieldValueProvider commonFieldValueProvider;
-        private transient final CommonFieldValidator commonFieldValidator;
 
         public DescriptorImpl() {
             super(CheckForIssuesInView.class);
             load();
             this.commonFieldValueProvider = new CommonFieldValueProvider();
-            this.commonFieldValidator = new CommonFieldValidator();
         }
 
-        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("viewName") String viewName,
-            final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, viewName, updateNow);
-        }
-
-        public FormValidation doCheckViewName(final @AncestorInPath Project<? extends Project, ? extends Build> project, final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            if (coverityInstanceUrl == null) {
-                // For whatever reason, sometimes when the configuration page for a job is first loaded the form validation will fail to get the coverityInstanceUrl.
-                // This is a hack to get around that by looking up all the builders for the project, finding our describable, and getting the value from that instead.
-                // --rotte (12/20/2018)
-
-                if (project != null) {
-                    return project.getBuilders().stream()
-                               .filter(CoverityBuildStep.class::isInstance)
-                               .map(CoverityBuildStep.class::cast)
-                               .findFirst()
-                               .map(CoverityBuildStep::getCoverityInstanceUrl)
-                               .map(commonFieldValidator::testConnectionIgnoreSuccessMessage)
-                               .orElseGet(() -> FormValidation.warning("There was a failure validating this field"));
-                } else {
-                    // If the project is null, we're likely in the snippet generator which has no previous state to get the URL from.
-                    // However, the form validation on Coverity project and Coverity stream should be enough to cover our bases, so we can just skip validation here.
-                    // --rotte (01/02/2019)
-
-                    return FormValidation.ok();
-                }
-            }
-            return commonFieldValidator.testConnectionIgnoreSuccessMessage(coverityInstanceUrl);
+        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) {
+            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, updateNow);
         }
 
         public ListBoxModel doFillBuildStatusForIssuesItems() {

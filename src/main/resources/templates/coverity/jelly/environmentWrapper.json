@@ -17,12 +17,12 @@
     "changeSetExclusionPatternsTitle": "Change set exclusion patterns",
     "refreshConnectionButtonValue": "Refresh Coverity projects, streams, and views",
     "createProjectAndStreamsTitle": "Create Coverity Connect Project and Streams",
-    "createProjectNameTitle": "Project Name",
-    "createProjectNameField": "createProjectName",
-    "createStreamNameTitle": "Stream Name",
-    "createStreamNameField": "createStreamName",
-    "submitButtonMethod": "createProject",
-    "submitButtonTitle": "Submit Project/Stream names",
-    "submitButtonProgress": "Please wait..."
+	"createProjectNameTitle": "Project Name",
+	"createProjectNameField": "createProjectName",
+	"createStreamNameTitle": "Stream Name",
+	"createStreamNameField": "createStreamName",
+	"submitButtonMethod": "createProject",
+	"submitButtonTitle": "Submit Project/Stream names",
+	"submitButtonProgress": "Please wait..."
   }
 }

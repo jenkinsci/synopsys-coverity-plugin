@@ -15,15 +15,15 @@
       ]
     },
     "desktopAnalysis": {
-      "overview": [
-        "Select to Enable or Disable Desktop Analysis for the Coverity.",
-        "Populates the $COV_HOST and $COV_PORT environment variables"
-      ]
-    },
-    "covManagePath": {
-      "overview": [
-        "Specify the path to the Coverity Manage Path."
-      ]
-    }
+	  "overview": [
+	    "Select to Enable or Disable Desktop Analysis for the Coverity.",
+	    "Populates the $COV_HOST and $COV_PORT environment variables"
+	  ]
+	},
+	"covManagePath": {
+	  "overview": [
+	    "Specify the path to the Coverity Manage Path."
+	  ]
+	}
   }
 }

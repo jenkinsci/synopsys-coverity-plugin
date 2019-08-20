@@ -65,7 +65,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         return constructCommand(commandPieces);
     }
 
-    public static RepeatableCommand COV_RUN_DESKTOP(final boolean isHttps, final String arguments, final String filePaths) {
+    public static RepeatableCommand COV_RUN_DESKTOP(final String arguments, final String filePaths) {
         final List<String> commandPieces = Arrays.asList("cov-run-desktop",
             Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
             Argument.URL.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_URL),
@@ -76,7 +76,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         return constructCommand(commandPieces);
     }
 
-    public static RepeatableCommand COV_COMMIT_DEFECTS(final boolean isHttps, final String arguments) {
+    public static RepeatableCommand COV_COMMIT_DEFECTS(final String arguments) {
         final List<String> commandPieces = Arrays.asList("cov-commit-defects",
             Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
             Argument.URL.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_URL),
@@ -86,10 +86,30 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
         return constructCommand(commandPieces);
     }
 
+    public static RepeatableCommand COV_CAPTURE_PROJECT(final String projectDir, final String arguments) {
+        final List<String> commandPieces = Arrays.asList("cov-capture",
+            Argument.PROJECT_DIR.toString(), projectDir,
+            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            arguments
+        );
+
+        return constructCommand(commandPieces);
+    }
+
+    public static RepeatableCommand COV_CAPTURE_SCM(final String scmUrl, final String arguments) {
+        final List<String> commandPieces = Arrays.asList("cov-capture",
+            Argument.SCM_URL.toString(), scmUrl,
+            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            arguments
+        );
+
+        return constructCommand(commandPieces);
+    }
+
     private static RepeatableCommand constructCommand(final List<String> commandPieces) {
         return new RepeatableCommand(String.join(" ", commandPieces));
     }
-    
+
     private static String generateExpansionString(final SynopsysEnvironmentVariable environmentVariable) {
         return String.format("${%s}", environmentVariable.toString());
     }
@@ -105,7 +125,9 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
 
     public enum Argument {
         DIR("--dir"),
+        PROJECT_DIR("--project-dir"),
         URL("--url"),
+        SCM_URL("--scm-url"),
         STREAM("--stream");
 
         private final String text;

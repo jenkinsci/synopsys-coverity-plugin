@@ -24,7 +24,8 @@ package com.synopsys.integration.jenkins.coverity.extensions;
 
 public enum CoverityAnalysisType implements CoveritySelectBoxEnum {
     COV_ANALYZE("Full Analysis"),
-    COV_RUN_DESKTOP("Incremental Analysis");
+    COV_RUN_DESKTOP("Incremental Analysis"),
+    THRESHOLD("Determined by change set threshold");
 
     private String displayName;
 

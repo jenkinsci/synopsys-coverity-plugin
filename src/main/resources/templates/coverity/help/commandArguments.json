@@ -2,29 +2,45 @@
   "helpHtml.tpl": {
     "covBuildArguments": {
       "overview": [
-        "Specify additional arguments to apply to the invocation of the cov-build command. Affects full and incremental analysis."
+        "Specify additional arguments to apply to the invocation of the cov-build command. Affects the <strong>Build</strong> capture type."
       ],
       "notes": [
-        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.",
         "--dir ${WORKSPACE}/idir",
-        "<em>build command</em>"
+        "<em>Source Argument (build command)</em>"
+      ]
+    },
+    "covCaptureArguments": {
+      "overview": [
+        "Specify additional arguments to apply to the invocation of the cov-capture command. Affects the <strong>Buildless Capture (Project)</strong> and <strong>Buildless Capture (SCM)</strong> capture types."
+      ],
+      "notes": [
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.",
+        "",
+        "With the <strong>Buildless Capture (Project)</strong> capture type, the following arguments are automatically provided:",
+        "--project-dir <em>Source Argument (project directory)</em>",
+        "--dir ${WORKSPACE}/idir",
+        "",
+        "With the <strong>Buildless Capture (SCM)</strong> capture type, the following arguments are automatically provided:",
+        "--scm-url <em>Source Argument (scm url)</em>",
+        "--dir ${WORKSPACE}/idir"
       ]
     },
     "covAnalyzeArguments": {
       "overview": [
-        "Specify additional arguments to apply to the invocation of the cov-analyze command. Affects full analysis."
+        "Specify additional arguments to apply to the invocation of the cov-analyze command. Affects the <strong>Full Analysis</strong> analysis type."
       ],
       "notes": [
-        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.",
         "--dir ${WORKSPACE}/idir"
       ]
     },
     "covRunDesktopArguments": {
       "overview": [
-        "Specify additional arguments to apply to the invocation of the cov-run-desktop command. Affects incremental analysis."
+        "Specify additional arguments to apply to the invocation of the cov-run-desktop command. Affects the <strong>Incremental Analysis</strong> analysis type."
       ],
       "notes": [
-        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.",
         "--dir ${WORKSPACE}/idir",
         "--url ${COV_URL}",
         "--stream ${COV_STREAM}",
@@ -33,10 +49,10 @@
     },
     "covCommitDefectsArguments": {
       "overview": [
-        "Specify additional arguments to apply to the invocation of the cov-commit-defects command. Affects both full and incremental analysis."
+        "Specify additional arguments to apply to the invocation of the cov-commit-defects command. Affects <strong>all</strong> analysis types."
       ],
       "notes": [
-        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, configure the 'Run custom Coverity commands' section below.",
+        "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.",
         "--dir ${WORKSPACE}/idir",
         "--url ${COV_URL}",
         "--stream ${COVERITY_STREAM}"

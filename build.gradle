@@ -15,7 +15,7 @@ plugins {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '2.0.2-SNAPSHOT'
+version = '2.1.2-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
@@ -37,6 +37,11 @@ project.afterEvaluate {
     }
 }
 
+repositories {
+    maven { url 'https://repo.blackducksoftware.com/artifactory/bds-integrations-release' }
+}
+
+
 jenkinsPlugin {
     coreVersion = '2.60.1'
     displayName = 'Synopsys Coverity Plugin'
@@ -50,7 +55,7 @@ jenkinsPlugin {
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
 
-    implementation 'com.synopsys.integration:coverity-common:0.2.1'
+    implementation 'com.synopsys.integration:coverity-common:0.2.2'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
@@ -70,18 +75,19 @@ task renameFile {
 }
 
 task generateJelly(type: GenerateJelly) {
-    pathToExtensionResourcesPackage = 'src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/'
-    pathToJellyJson = 'src/main/resources/templates/coverity/jelly/'
+    pathToExtensionResourcesPackage = "${projectDir}/src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/"
+    pathToJellyJson = "${projectDir}/src/main/resources/templates/coverity/jelly/"
     outputPathToJson = ['buildstep/CoverityBuildStep'               : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
                         'buildstep/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
                         'global/CoverityGlobalConfig'               : 'globalConfig.json',
+                        'pipeline/CheckForIssuesStep'               : 'checkForIssuesStep.json',
                         'wrap/CoverityEnvironmentWrapper'           : 'environmentWrapper.json',]
 }
 
 task generateHelp(type: GenerateHtml) {
-    pathToExtensionResourcesPackage = 'src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/'
-    pathToHelpJson = 'src/main/resources/templates/coverity/help/'
+    pathToExtensionResourcesPackage = "${projectDir}/src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/"
+    pathToHelpJson = "${projectDir}/src/main/resources/templates/coverity/help/"
     outputPathToJson = ['buildstep/CoverityBuildStep'             : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
                         'buildstep/CommandArguments'              : 'commandArguments.json',
@@ -89,6 +95,7 @@ task generateHelp(type: GenerateHtml) {
                         'ConfigureChangeSetPatterns'              : 'configureChangeSetPatterns.json',
                         'global/CoverityConnectInstance'          : 'coverityConnectInstance.json',
                         'buildstep/RepeatableCommand'             : 'repeatableCommand.json',
+                        'pipeline/CheckForIssuesStep'             : 'checkForIssuesStep.json',
                         'wrap/CoverityEnvironmentWrapper'         : 'environmentWrapper.json']
 }
 

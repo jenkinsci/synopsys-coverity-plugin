@@ -14,8 +14,8 @@
     "testConnectionTitle": "Test Connection",
     "testConnectionProgress": "Testing...",
     "desktopAnalysisTitle": "Desktop Analysis",
-    "desktopAnalysisField": "desktopAnalysis",
-    "covManagePathTitle": "Coverity Analysis Path",
-    "covManagePathField": "covManagePath"
+	"desktopAnalysisField": "desktopAnalysis",
+	"covManagePathTitle": "Coverity Analysis Path",
+	"covManagePathField": "covManagePath"
   }
 }

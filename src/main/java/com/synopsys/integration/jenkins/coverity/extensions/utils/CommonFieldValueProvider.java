@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
-import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.CoveritySelectBoxEnum;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
@@ -51,46 +50,46 @@ public class CommonFieldValueProvider {
                    .collect(ListBoxModel::new, (model, value) -> model.add(value.getDisplayName(), value.name()), ListBoxModel::addAll);
     }
 
-    public ListBoxModel doFillCoverityInstanceUrlItems(final String selectedCoverityInstanceUrl) {
+    public ListBoxModel doFillCoverityInstanceUrlItems() {
         final ListBoxModel listBoxModel = GlobalValueHelper.getGlobalCoverityConnectInstances().stream()
                                               .map(CoverityConnectInstance::getUrl)
-                                              .map(dataObject -> wrapAsListBoxModelOption(dataObject, selectedCoverityInstanceUrl))
+                                              .map(this::wrapAsListBoxModelOption)
                                               .collect(ListBoxModel::new, ListBoxModel::add, ListBoxModel::addAll);
         listBoxModel.add("- none -", "");
         return listBoxModel;
     }
 
-    public ListBoxModel doFillProjectNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final Boolean updateNow) {
+    public ListBoxModel doFillProjectNameItems(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
         if (checkAndWaitForProjectCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
             return projectCacheData.getCachedData().stream()
                        .map(this::toProjectName)
                        .filter(StringUtils::isNotBlank)
-                       .map(projectName -> wrapAsListBoxModelOption(projectName, selectedProjectName))
+                       .map(this::wrapAsListBoxModelOption)
                        .collect(Collectors.toCollection(ListBoxModel::new));
         }
 
         return new ListBoxModel();
     }
 
-    public ListBoxModel doFillStreamNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final String selectedStreamName, final Boolean updateNow) {
+    public ListBoxModel doFillStreamNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final Boolean updateNow) {
         if (checkAndWaitForProjectCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
             return projectCacheData.getCachedData().stream()
                        .filter(projectDataObj -> isMatchingProject(projectDataObj, selectedProjectName))
                        .flatMap(this::toProjectStreams)
                        .map(this::toStreamName)
                        .filter(StringUtils::isNotBlank)
-                       .map(streamName -> wrapAsListBoxModelOption(streamName, selectedStreamName))
+                       .map(this::wrapAsListBoxModelOption)
                        .collect(Collectors.toCollection(ListBoxModel::new));
         }
 
         return new ListBoxModel();
     }
 
-    public ListBoxModel doFillViewNameItems(final String jenkinsCoverityInstanceUrl, final String selectedViewName, final Boolean updateNow) {
+    public ListBoxModel doFillViewNameItems(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
         if (checkAndWaitForViewCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
             return viewCacheData.getCachedData().stream()
                        .filter(StringUtils::isNotBlank)
-                       .map(viewName -> wrapAsListBoxModelOption(viewName, selectedViewName))
+                       .map(this::wrapAsListBoxModelOption)
                        .collect(Collectors.toCollection(ListBoxModel::new));
         }
 
@@ -123,8 +122,8 @@ public class CommonFieldValueProvider {
                    && projectDataObj.getId().getName().equals(selectedProjectName);
     }
 
-    private ListBoxModel.Option wrapAsListBoxModelOption(final String nameValue, final String selectedNameValue) {
-        return new ListBoxModel.Option(nameValue, nameValue, nameValue.equals(selectedNameValue));
+    private ListBoxModel.Option wrapAsListBoxModelOption(final String nameValue) {
+        return new ListBoxModel.Option(nameValue, nameValue, false);
     }
 
     private boolean checkAndWaitForProjectCacheData(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
@@ -141,11 +140,11 @@ public class CommonFieldValueProvider {
             try {
                 cacheData.checkAndWaitForData(coverityConnectInstance, updateNow);
                 return true;
-            } catch (final IntegrationException | InterruptedException e) {
+            } catch (final IllegalArgumentException | IllegalStateException ignored) {
+                // Handled by form validation
+            } catch (final Exception e) {
                 logger.warn("Unexpected exception encountered when checking or waiting for Coverity data: " + e.getMessage());
                 logger.trace("Stack trace:", e);
-            } catch (final IllegalStateException ignored) {
-                // Handled by form validation
             }
         }
 
