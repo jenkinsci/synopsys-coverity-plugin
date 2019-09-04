@@ -38,7 +38,7 @@ project.afterEvaluate {
 }
 
 repositories {
-    maven { url 'https://repo.blackducksoftware.com/artifactory/bds-integrations-release' }
+    maven { url 'https://sig-repo.synopsys.com/bds-integrations-release' }
 }
 
 
@@ -55,7 +55,7 @@ jenkinsPlugin {
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
 
-    implementation 'com.synopsys.integration:coverity-common:0.2.2'
+    implementation 'com.synopsys.integration:coverity-common:0.3.0'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'

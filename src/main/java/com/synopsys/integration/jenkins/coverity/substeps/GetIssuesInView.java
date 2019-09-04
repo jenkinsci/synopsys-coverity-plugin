@@ -67,7 +67,7 @@ public class GetIssuesInView {
         if (null == viewContents) {
             defectCount = 0;
         } else {
-            defectCount = viewContents.totalRows.intValue();
+            defectCount = viewContents.getTotalRows().intValue();
         }
 
         return defectCount;
