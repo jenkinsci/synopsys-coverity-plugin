@@ -40,5 +40,6 @@ class GenerateJelly extends DefaultTask {
 
     static final String SELECT = 'f:select'
     static final String TEXTBOX = 'f:textbox'
+    static final String COMBO = 'f:combobox'
 
 }

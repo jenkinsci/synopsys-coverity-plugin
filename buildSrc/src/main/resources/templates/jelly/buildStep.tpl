@@ -1,15 +1,14 @@
 package templates.jelly
 
-import static com.synopsys.integration.jenkins.coverity.GenerateJelly.SELECT
-import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
+import static com.synopsys.integration.jenkins.coverity.GenerateJelly.*
 
 'j:jelly'('xmlns:j': 'jelly:core', 'xmlns:f': '/lib/form') {
     script(src: '${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js')
     script(type: 'text/javascript', 'setRootURL("${app.rootUrl}");')
 
     entry(coverityInstanceUrlField, coverityInstanceUrlTitle, SELECT)
-    entry(projectNameField, projectNameTitle, SELECT)
-    entry(streamNameField, streamNameTitle, SELECT)
+    entry(projectNameField, projectNameTitle, COMBO)
+    entry(streamNameField, streamNameTitle, COMBO)
 
     'f:optionalBlock'(checked: "\${instance.$checkForIssuesInViewField != null}", field: checkForIssuesInViewField, title: checkForIssuesInViewTitle) {
         'j:scope' {

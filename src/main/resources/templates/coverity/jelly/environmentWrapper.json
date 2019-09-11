@@ -9,6 +9,8 @@
     "streamNameTitle": "Coverity stream",
     "viewNameField": "viewName",
     "viewNameTitle": "Coverity view",
+    "createMissingProjectsAndStreamsField": "createMissingProjectsAndStreams",
+    "createMissingProjectsAndStreamsTitle": "Create project and/or stream if they do not exist",
     "configureChangeSetPatternsField": "configureChangeSetPatterns",
     "configureChangeSetPatternsTitle": "Customize change set",
     "changeSetInclusionPatternsField": "changeSetInclusionPatterns",
