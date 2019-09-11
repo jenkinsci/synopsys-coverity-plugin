@@ -37,6 +37,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
+import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
@@ -45,6 +47,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPa
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
+import com.synopsys.integration.jenkins.coverity.substeps.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
 import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
 import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteInstallationValidator;
@@ -67,6 +70,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildWrapperDescriptor;
+import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildWrapper;
@@ -80,6 +84,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     private String streamName;
     private String viewName;
     private ConfigureChangeSetPatterns configureChangeSetPatterns;
+    private Boolean createMissingProjectsAndStreams;
 
     @DataBoundConstructor
     public CoverityEnvironmentWrapper(final String coverityInstanceUrl) {
@@ -87,6 +92,18 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentIntLogger(), coverityInstanceUrl)
                                       .flatMap(CoverityConnectInstance::getCoverityPassword)
                                       .orElse(StringUtils.EMPTY);
+    }
+
+    public Boolean getCreateMissingProjectsAndStreams() {
+        if (Boolean.FALSE.equals(createMissingProjectsAndStreams)) {
+            return null;
+        }
+        return createMissingProjectsAndStreams;
+    }
+
+    @DataBoundSetter
+    public void setCreateMissingProjectsAndStreams(@QueryParameter("createMissingProjectsAndStreams") final Boolean createMissingProjectsAndStreams) {
+        this.createMissingProjectsAndStreams = createMissingProjectsAndStreams;
     }
 
     public String getCoverityInstanceUrl() {
@@ -170,6 +187,13 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             final SetUpCoverityEnvironment coverityEnvironmentStep = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
             coverityEnvironmentStep.setUpCoverityEnvironment();
             intEnvironmentVariables.getVariables().forEach(context::env);
+
+            if (createMissingProjectsAndStreams) {
+                final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
+                final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+                final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
+                createMissingProjectsAndStreams.checkAndCreateMissingProjectsAndStreams();
+            }
         } catch (final InterruptedException e) {
             throw e;
         } catch (final IntegrationException e) {
@@ -215,15 +239,15 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, updateNow);
+        public ComboBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
+            return commonFieldValueProvider.doFillProjectNameItemsAsComboBoxModel(coverityInstanceUrl, updateNow);
         }
 
         public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
+        public ComboBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
             return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, updateNow);
         }
 

@@ -34,18 +34,19 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
-import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
+import com.synopsys.integration.jenkins.coverity.substeps.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.substeps.GetCoverityCommands;
 import com.synopsys.integration.jenkins.coverity.substeps.GetIssuesInView;
 import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
@@ -68,6 +69,7 @@ import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
+import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
@@ -92,8 +94,6 @@ public class CoverityBuildStep extends Builder {
         this.checkForIssuesInView = checkForIssuesInView;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
         this.coverityRunConfiguration = coverityRunConfiguration;
-
-        //TODO: Replace constructor string value with enum in 3.0.0
         this.onCommandFailure = OnCommandFailure.valueOf(onCommandFailure);
     }
 
@@ -101,7 +101,6 @@ public class CoverityBuildStep extends Builder {
         return cleanUpAction;
     }
 
-    // TODO: Add to constructor in 3.0.0
     @DataBoundSetter
     public void setCleanUpAction(final CleanUpAction cleanUpAction) {
         this.cleanUpAction = cleanUpAction;
@@ -136,12 +135,7 @@ public class CoverityBuildStep extends Builder {
     }
 
     public CoverityRunConfiguration getDefaultCoverityRunConfiguration() {
-        final SimpleCoverityRunConfiguration defaultCoverityRunConfiguration = new SimpleCoverityRunConfiguration(CoverityAnalysisType.COV_ANALYZE, "", null);
-        defaultCoverityRunConfiguration.setCoverityCaptureType(CoverityCaptureType.COV_BUILD);
-        defaultCoverityRunConfiguration.setChangeSetAnalysisThreshold(100);
-        return defaultCoverityRunConfiguration;
-        // TODO: Uncomment the following in 3.0.0
-        // return new SimpleCoverityRunConfiguration(CoverityCaptureType.COV_BUILD, CoverityAnalysisType.COV_ANALYZE, 100, null);
+        return SimpleCoverityRunConfiguration.DEFAULT_CONFIGURATION();
     }
 
     @Override
@@ -193,6 +187,11 @@ public class CoverityBuildStep extends Builder {
             final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
             setUpCoverityEnvironment.setUpCoverityEnvironment();
 
+            final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
+            final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+            final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
+            createMissingProjectsAndStreams.checkAndCreateMissingProjectsAndStreams();
+
             final GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
             final List<List<String>> commands = getCoverityCommands.getCoverityCommands();
 
@@ -203,8 +202,8 @@ public class CoverityBuildStep extends Builder {
                 if (build.getResult() != null && build.getResult().isWorseThan(Result.SUCCESS)) {
                     throw new AbortException("Skipping the Synopsys Coverity Check for Issues in View step because the build was not successful.");
                 }
-                final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
-                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, webServiceFactory, projectName, viewName);
+                final ViewService viewService = webServiceFactory.createViewService();
+                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, projectName, viewName);
 
                 logger.alwaysLog("Checking for issues in view");
                 logger.alwaysLog("-- Build state for issues in the view: " + checkForIssuesInView.getBuildStatusForIssues().getDisplayName());
@@ -297,19 +296,19 @@ public class CoverityBuildStep extends Builder {
             return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, updateNow);
+        public ComboBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
+            return commonFieldValueProvider.doFillProjectNameItemsAsComboBoxModel(coverityInstanceUrl, updateNow);
         }
 
         public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
+        public ComboBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
             return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, updateNow);
         }
 
-        public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+        public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("streamName") String streamName) {
             return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 

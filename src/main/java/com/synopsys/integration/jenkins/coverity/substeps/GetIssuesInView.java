@@ -23,14 +23,11 @@
 package com.synopsys.integration.jenkins.coverity.substeps;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
+import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
@@ -38,28 +35,24 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 
 public class GetIssuesInView {
-    private final WebServiceFactory webServiceFactory;
+    private final ConfigurationServiceWrapper configurationServiceWrapper;
+    private final ViewService viewService;
     private final String projectName;
     private final String viewName;
     private final JenkinsCoverityLogger logger;
 
-    public GetIssuesInView(final JenkinsCoverityLogger logger, final WebServiceFactory webServiceFactory, final String projectName, final String viewName) {
+    public GetIssuesInView(final JenkinsCoverityLogger logger, final ConfigurationServiceWrapper configurationServiceWrapper, final ViewService viewService, final String projectName, final String viewName) {
         this.logger = logger;
-        this.webServiceFactory = webServiceFactory;
+        this.configurationServiceWrapper = configurationServiceWrapper;
+        this.viewService = viewService;
         this.projectName = projectName;
         this.viewName = viewName;
     }
 
     public Integer getTotalIssuesInView() throws IOException, IntegrationException, CovRemoteServiceException_Exception {
         logger.alwaysLog(String.format("Checking for issues in project \"%s\", view \"%s\".", projectName, viewName));
-
-        webServiceFactory.connect();
-
-        final ConfigurationService configurationService = webServiceFactory.createConfigurationService();
-        final String projectId = getProjectIdFromName(projectName, configurationService);
-
-        final ViewService viewService = webServiceFactory.createViewService();
-        final String viewId = getViewIdFromName(viewName, viewService);
+        final String projectId = getProjectIdFromName(projectName);
+        final String viewId = getViewIdFromName(viewName);
 
         final int defectCount;
 
@@ -73,12 +66,8 @@ public class GetIssuesInView {
         return defectCount;
     }
 
-    private String getProjectIdFromName(final String projectName, final ConfigurationService configurationService) throws CovRemoteServiceException_Exception, CoverityJenkinsException {
-        final ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
-        final List<ProjectDataObj> projects = configurationService.getProjects(projectFilterSpecDataObj);
-        return projects.stream()
-                   .filter(projectDataObj -> projectDataObjHasName(projectDataObj, projectName))
-                   .findFirst()
+    private String getProjectIdFromName(final String projectName) throws CovRemoteServiceException_Exception, CoverityJenkinsException {
+        return configurationServiceWrapper.getProjectByExactName(projectName)
                    .map(ProjectDataObj::getProjectKey)
                    .map(String::valueOf)
                    .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for project \"%s\". It either does not exist or the current user does not have access to it.", projectName)));
@@ -88,7 +77,7 @@ public class GetIssuesInView {
         return projectDataObj.getId() != null && projectDataObj.getId().getName() != null && projectDataObj.getId().getName().equals(name);
     }
 
-    private String getViewIdFromName(final String viewName, final ViewService viewService) throws IntegrationException, IOException {
+    private String getViewIdFromName(final String viewName) throws IntegrationException, IOException {
         return viewService.getViews().entrySet().stream()
                    .filter(entry -> entry.getValue() != null)
                    .filter(entry -> entry.getValue().equals(viewName))

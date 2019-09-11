@@ -37,11 +37,12 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
-import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
@@ -68,10 +69,6 @@ public class CheckForIssuesStep extends Step implements Serializable {
     private String projectName;
     private String viewName;
     private Boolean returnIssueCount;
-
-    @DataBoundConstructor
-    public CheckForIssuesStep() {
-    }
 
     public Boolean getReturnIssueCount() {
         if (Boolean.FALSE.equals(returnIssueCount)) {
@@ -162,7 +159,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         }
 
         public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillProjectNameItems(coverityInstanceUrl, updateNow);
+            return commonFieldValueProvider.doFillProjectNameItemsAsListBoxModel(coverityInstanceUrl, updateNow);
         }
 
         public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
@@ -223,7 +220,10 @@ public class CheckForIssuesStep extends Step implements Serializable {
                 final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
                 final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, resolvedCoverityInstanceUrl);
-                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, webServiceFactory, resolvedProjectName, resolvedViewName);
+                webServiceFactory.connect();
+                final ViewService viewService = webServiceFactory.createViewService();
+                final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, resolvedProjectName, resolvedViewName);
 
                 final int defectCount = getIssuesInView.getTotalIssuesInView();
 

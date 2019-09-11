@@ -59,11 +59,17 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
         this.commandArguments = commandArguments;
     }
 
+    public static SimpleCoverityRunConfiguration DEFAULT_CONFIGURATION() {
+        final SimpleCoverityRunConfiguration defaultCoverityRunConfiguration = new SimpleCoverityRunConfiguration(CoverityAnalysisType.COV_ANALYZE, "", null);
+        defaultCoverityRunConfiguration.setCoverityCaptureType(CoverityCaptureType.COV_BUILD);
+        defaultCoverityRunConfiguration.setChangeSetAnalysisThreshold(100);
+        return defaultCoverityRunConfiguration;
+    }
+
     public CoverityCaptureType getCoverityCaptureType() {
         return coverityCaptureType;
     }
 
-    // TODO: Add to constructor in 3.0.0
     @DataBoundSetter
     public void setCoverityCaptureType(final CoverityCaptureType coverityCaptureType) {
         this.coverityCaptureType = coverityCaptureType;

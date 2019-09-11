@@ -22,7 +22,10 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
+import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,6 +40,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.CoveritySelectBoxEnu
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
+import hudson.util.ComboBoxModel;
 import hudson.util.ListBoxModel;
 
 public class CommonFieldValueProvider {
@@ -54,46 +58,50 @@ public class CommonFieldValueProvider {
         final ListBoxModel listBoxModel = GlobalValueHelper.getGlobalCoverityConnectInstances().stream()
                                               .map(CoverityConnectInstance::getUrl)
                                               .map(this::wrapAsListBoxModelOption)
-                                              .collect(ListBoxModel::new, ListBoxModel::add, ListBoxModel::addAll);
+                                              .collect(Collectors.toCollection(ListBoxModel::new));
         listBoxModel.add("- none -", "");
         return listBoxModel;
     }
 
-    public ListBoxModel doFillProjectNameItems(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
-        if (checkAndWaitForProjectCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
-            return projectCacheData.getCachedData().stream()
-                       .map(this::toProjectName)
-                       .filter(StringUtils::isNotBlank)
-                       .map(this::wrapAsListBoxModelOption)
-                       .collect(Collectors.toCollection(ListBoxModel::new));
-        }
-
-        return new ListBoxModel();
+    public ComboBoxModel doFillProjectNameItemsAsComboBoxModel(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
+        return doFillProjectNameItems(ComboBoxModel::new, Function.identity(), jenkinsCoverityInstanceUrl, updateNow);
     }
 
-    public ListBoxModel doFillStreamNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final Boolean updateNow) {
+    public ListBoxModel doFillProjectNameItemsAsListBoxModel(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
+        return doFillProjectNameItems(ListBoxModel::new, this::wrapAsListBoxModelOption, jenkinsCoverityInstanceUrl, updateNow);
+    }
+
+    public ComboBoxModel doFillStreamNameItems(final String jenkinsCoverityInstanceUrl, final String selectedProjectName, final Boolean updateNow) {
         if (checkAndWaitForProjectCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
             return projectCacheData.getCachedData().stream()
                        .filter(projectDataObj -> isMatchingProject(projectDataObj, selectedProjectName))
                        .flatMap(this::toProjectStreams)
                        .map(this::toStreamName)
                        .filter(StringUtils::isNotBlank)
-                       .map(this::wrapAsListBoxModelOption)
-                       .collect(Collectors.toCollection(ListBoxModel::new));
+                       .collect(Collectors.toCollection(ComboBoxModel::new));
         }
 
-        return new ListBoxModel();
+        return new ComboBoxModel();
     }
 
     public ListBoxModel doFillViewNameItems(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
-        if (checkAndWaitForViewCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
-            return viewCacheData.getCachedData().stream()
+        return doFillViewNameItems(ListBoxModel::new, this::wrapAsListBoxModelOption, jenkinsCoverityInstanceUrl, updateNow);
+    }
+
+    private ListBoxModel.Option wrapAsListBoxModelOption(final String nameValue) {
+        return new ListBoxModel.Option(nameValue, nameValue, false);
+    }
+
+    private <T, R extends Collection<T>> R doFillProjectNameItems(final Supplier<R> supplier, final Function<String, T> itemWrapper, final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
+        if (checkAndWaitForProjectCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
+            return projectCacheData.getCachedData().stream()
+                       .map(this::toProjectName)
                        .filter(StringUtils::isNotBlank)
-                       .map(this::wrapAsListBoxModelOption)
-                       .collect(Collectors.toCollection(ListBoxModel::new));
+                       .map(itemWrapper)
+                       .collect(Collectors.toCollection(supplier));
         }
 
-        return new ListBoxModel();
+        return supplier.get();
     }
 
     private String toProjectName(final ProjectDataObj projectDataObj) {
@@ -101,6 +109,13 @@ public class CommonFieldValueProvider {
             return projectDataObj.getId().getName();
         }
         return null;
+    }
+
+    private Boolean isMatchingProject(final ProjectDataObj projectDataObj, final String selectedProjectName) {
+        return null != projectDataObj
+                   && null != projectDataObj.getId()
+                   && null != projectDataObj.getId().getName()
+                   && projectDataObj.getId().getName().equals(selectedProjectName);
     }
 
     private Stream<StreamDataObj> toProjectStreams(final ProjectDataObj projectDataObj) {
@@ -115,15 +130,15 @@ public class CommonFieldValueProvider {
         return null;
     }
 
-    private Boolean isMatchingProject(final ProjectDataObj projectDataObj, final String selectedProjectName) {
-        return null != projectDataObj
-                   && null != projectDataObj.getId()
-                   && null != projectDataObj.getId().getName()
-                   && projectDataObj.getId().getName().equals(selectedProjectName);
-    }
+    private <T, R extends Collection<T>> R doFillViewNameItems(final Supplier<R> supplier, final Function<String, T> itemWrapper, final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {
+        if (checkAndWaitForViewCacheData(jenkinsCoverityInstanceUrl, updateNow)) {
+            return viewCacheData.getCachedData().stream()
+                       .filter(StringUtils::isNotBlank)
+                       .map(itemWrapper)
+                       .collect(Collectors.toCollection(supplier));
+        }
 
-    private ListBoxModel.Option wrapAsListBoxModelOption(final String nameValue) {
-        return new ListBoxModel.Option(nameValue, nameValue, false);
+        return supplier.get();
     }
 
     private boolean checkAndWaitForProjectCacheData(final String jenkinsCoverityInstanceUrl, final Boolean updateNow) {

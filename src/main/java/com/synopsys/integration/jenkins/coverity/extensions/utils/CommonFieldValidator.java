@@ -88,7 +88,7 @@ public class CommonFieldValidator {
     }
 
     public FormValidation testConnectionToCoverityInstance(final CoverityConnectInstance coverityConnectInstance) {
-        final String url = coverityConnectInstance.getCoverityURL().map(URL::toString).orElse(null);
+        final String url = coverityConnectInstance.getCoverityURL().map(URL::toString).orElse(StringUtils.EMPTY);
         final String username = coverityConnectInstance.getCoverityUsername().orElse(null);
         final String password = coverityConnectInstance.getCoverityPassword().orElse(null);
 
