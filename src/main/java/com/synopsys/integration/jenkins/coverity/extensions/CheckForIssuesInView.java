@@ -26,8 +26,11 @@ import java.io.Serializable;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 import hudson.Extension;
 import hudson.RelativePath;
@@ -61,20 +64,24 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
 
     @Extension
     public static class DescriptorImpl extends Descriptor<CheckForIssuesInView> {
-        private transient final CommonFieldValueProvider commonFieldValueProvider;
+        private transient final ViewFieldHelper viewFieldHelper;
 
         public DescriptorImpl() {
             super(CheckForIssuesInView.class);
             load();
-            this.commonFieldValueProvider = new CommonFieldValueProvider();
+            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(CheckForIssuesInView.class));
+            viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
         }
 
-        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) {
-            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, updateNow);
+        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) throws InterruptedException {
+            if (updateNow) {
+                viewFieldHelper.updateNow(coverityInstanceUrl);
+            }
+            return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillBuildStatusForIssuesItems() {
-            return CommonFieldValueProvider.getListBoxModelOf(BuildStatus.values());
+            return FieldHelper.getListBoxModelOf(BuildStatus.values());
         }
 
     }

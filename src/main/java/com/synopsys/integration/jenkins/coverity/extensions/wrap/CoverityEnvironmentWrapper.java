@@ -25,6 +25,7 @@ package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -36,6 +37,7 @@ import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
@@ -45,13 +47,15 @@ import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.substeps.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
 import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
 import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteInstallationValidator;
 import com.synopsys.integration.log.SilentIntLogger;
+import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
@@ -221,46 +225,62 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     @Symbol("withCoverityEnvironment")
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
-        private final transient CommonFieldValidator commonFieldValidator;
-        private final transient CommonFieldValueProvider commonFieldValueProvider;
+        private final transient CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private final transient ProjectStreamFieldHelper projectStreamFieldHelper;
+        private final transient ViewFieldHelper viewFieldHelper;
 
         public DescriptorImpl() {
             super(CoverityEnvironmentWrapper.class);
             load();
-            commonFieldValidator = new CommonFieldValidator();
-            commonFieldValueProvider = new CommonFieldValueProvider();
+
+            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+            coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
+            projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
+            viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems() {
-            return commonFieldValueProvider.doFillCoverityInstanceUrlItems();
+            return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
         public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
-            return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ComboBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillProjectNameItemsAsComboBoxModel(coverityInstanceUrl, updateNow);
+        public ComboBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+            if (updateNow) {
+                projectStreamFieldHelper.updateNow(coverityInstanceUrl);
+            }
+            return projectStreamFieldHelper.getProjectNamesForComboBox(coverityInstanceUrl);
         }
 
-        public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
+        public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName) {
+            return FormValidation.aggregate(Arrays.asList(
+                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl),
+                projectStreamFieldHelper.checkForProjectInCache(coverityInstanceUrl, projectName)
+            ));
         }
 
-        public ComboBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillStreamNameItems(coverityInstanceUrl, projectName, updateNow);
+        public ComboBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName) throws InterruptedException {
+            return projectStreamFieldHelper.getStreamNamesForComboBox(coverityInstanceUrl, projectName);
         }
 
-        public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
+        public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName) {
+            return FormValidation.aggregate(Arrays.asList(
+                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl),
+                projectStreamFieldHelper.checkForStreamInCache(coverityInstanceUrl, projectName, streamName)
+            ));
         }
 
-        public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, updateNow);
+        public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+            if (updateNow) {
+                viewFieldHelper.updateNow(coverityInstanceUrl);
+            }
+            return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
         public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
         @Override

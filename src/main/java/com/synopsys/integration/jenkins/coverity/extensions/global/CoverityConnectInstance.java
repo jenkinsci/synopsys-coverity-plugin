@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
+import org.slf4j.LoggerFactory;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
@@ -40,7 +41,8 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.log.Slf4jIntLogger;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -126,12 +128,13 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
 
     @Extension
     public static class DescriptorImpl extends Descriptor<CoverityConnectInstance> {
-        private final CommonFieldValidator commonFieldValidator;
+        private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
 
         public DescriptorImpl() {
             super(CoverityConnectInstance.class);
             load();
-            commonFieldValidator = new CommonFieldValidator();
+            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+            coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
         }
 
         public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
@@ -170,7 +173,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
             }
 
             final CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId);
-            return commonFieldValidator.testConnectionToCoverityInstance(coverityConnectInstance);
+            return coverityConnectUrlFieldHelper.testConnectionToCoverityInstance(coverityConnectInstance);
         }
     }
 

@@ -33,7 +33,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import com.synopsys.integration.jenkins.SerializationHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
 
 import hudson.Extension;
 import hudson.util.ListBoxModel;
@@ -126,11 +126,11 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
         }
 
         public ListBoxModel doFillCoverityCaptureTypeItems() {
-            return CommonFieldValueProvider.getListBoxModelOf(CoverityCaptureType.values());
+            return FieldHelper.getListBoxModelOf(CoverityCaptureType.values());
         }
 
         public ListBoxModel doFillCoverityAnalysisTypeItems() {
-            return CommonFieldValueProvider.getListBoxModelOf(CoverityAnalysisType.values());
+            return FieldHelper.getListBoxModelOf(CoverityAnalysisType.values());
         }
 
         @Override

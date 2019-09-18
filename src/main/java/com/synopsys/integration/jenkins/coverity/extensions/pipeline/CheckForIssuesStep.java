@@ -39,6 +39,7 @@ import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
@@ -47,9 +48,11 @@ import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValueProvider;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.substeps.GetIssuesInView;
+import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
@@ -126,12 +129,15 @@ public class CheckForIssuesStep extends Step implements Serializable {
     @Symbol(PIPELINE_NAME)
     @Extension(optional = true)
     public static final class DescriptorImpl extends StepDescriptor {
-        private CommonFieldValueProvider commonFieldValueProvider;
-        private CommonFieldValidator commonFieldValidator;
+        private transient final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private transient final ProjectStreamFieldHelper projectStreamFieldHelper;
+        private transient final ViewFieldHelper viewFieldHelper;
 
         public DescriptorImpl() {
-            this.commonFieldValueProvider = new CommonFieldValueProvider();
-            this.commonFieldValidator = new CommonFieldValidator();
+            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+            coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
+            projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
+            viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
         }
 
         @Override
@@ -151,27 +157,33 @@ public class CheckForIssuesStep extends Step implements Serializable {
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems() {
-            return commonFieldValueProvider.doFillCoverityInstanceUrlItems();
+            return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
         public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
-            return commonFieldValidator.doCheckCoverityInstanceUrl(coverityInstanceUrl);
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) {
-            return commonFieldValueProvider.doFillProjectNameItemsAsListBoxModel(coverityInstanceUrl, updateNow);
+        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+            if (updateNow) {
+                projectStreamFieldHelper.updateNow(coverityInstanceUrl);
+            }
+            return projectStreamFieldHelper.getProjectNamesForListBox(coverityInstanceUrl);
         }
 
         public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) {
-            return commonFieldValueProvider.doFillViewNameItems(coverityInstanceUrl, updateNow);
+        public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) throws InterruptedException {
+            if (updateNow) {
+                viewFieldHelper.updateNow(coverityInstanceUrl);
+            }
+            return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
         public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return commonFieldValidator.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
     }

@@ -23,11 +23,12 @@
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CommonFieldValidator;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
@@ -78,28 +79,37 @@ public class CommandArguments extends AbstractDescribableImpl<CommandArguments> 
 
     @Extension
     public static class DescriptorImpl extends Descriptor<CommandArguments> {
-        private final transient CommonFieldValidator commonFieldValidator;
-
         public DescriptorImpl() {
             super(CommandArguments.class);
-            this.commonFieldValidator = new CommonFieldValidator();
             load();
         }
 
         public FormValidation doCheckCovBuildArguments(@QueryParameter("covBuildArguments") final String covBuildArguments) {
-            return commonFieldValidator.checkForAlreadyProvidedArguments(covBuildArguments, RepeatableCommand.Argument.DIR);
+            return checkForAlreadyProvidedArguments(covBuildArguments, RepeatableCommand.Argument.DIR);
         }
 
         public FormValidation doCheckCovAnalyzeArguments(@QueryParameter("covAnalyzeArguments") final String covAnalyzeArguments) {
-            return commonFieldValidator.checkForAlreadyProvidedArguments(covAnalyzeArguments, RepeatableCommand.Argument.DIR);
+            return checkForAlreadyProvidedArguments(covAnalyzeArguments, RepeatableCommand.Argument.DIR);
         }
 
         public FormValidation doCheckCovRunDesktopArguments(@QueryParameter("covRunDesktopArguments") final String covRunDesktopArguments) {
-            return commonFieldValidator.checkForAlreadyProvidedArguments(covRunDesktopArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.URL, RepeatableCommand.Argument.STREAM);
+            return checkForAlreadyProvidedArguments(covRunDesktopArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.URL, RepeatableCommand.Argument.STREAM);
         }
 
         public FormValidation doCheckCovCommitDefectsArguments(@QueryParameter("covCommitDefectsArguments") final String covCommitDefectsArguments) {
-            return commonFieldValidator.checkForAlreadyProvidedArguments(covCommitDefectsArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.URL, RepeatableCommand.Argument.STREAM);
+            return checkForAlreadyProvidedArguments(covCommitDefectsArguments, RepeatableCommand.Argument.DIR, RepeatableCommand.Argument.URL, RepeatableCommand.Argument.STREAM);
+        }
+
+        private FormValidation checkForAlreadyProvidedArguments(final String command, final RepeatableCommand.Argument... providedArguments) {
+            final String alreadyProvidedArguments = Arrays.stream(providedArguments)
+                                                        .map(RepeatableCommand.Argument::toString)
+                                                        .filter(command::contains)
+                                                        .collect(Collectors.joining(", "));
+
+            if (StringUtils.isNotBlank(alreadyProvidedArguments)) {
+                return FormValidation.error(String.format("The argument(s) %s are automatically provided in this mode. If you wish to override, configure the 'Run custom Coverity commands' section instead.", alreadyProvidedArguments));
+            }
+            return FormValidation.ok();
         }
 
     }

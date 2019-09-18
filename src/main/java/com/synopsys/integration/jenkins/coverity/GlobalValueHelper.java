@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.CoverityPhoneHomeHelper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
@@ -84,6 +85,10 @@ public class GlobalValueHelper {
         }
 
         return Optional.empty();
+    }
+
+    public static CoverityConnectInstance getCoverityInstanceWithUrlOrDie(final IntLogger logger, final String coverityInstanceUrl) throws CoverityIntegrationException {
+        return getCoverityInstanceWithUrl(logger, coverityInstanceUrl).orElseThrow(() -> new CoverityIntegrationException("No Coverity Connect instance is configured with the url " + coverityInstanceUrl));
     }
 
     public static WebServiceFactory createWebServiceFactoryFromUrl(final IntLogger logger, final String coverityInstanceUrl) throws CoverityJenkinsException {
