@@ -22,8 +22,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-import java.io.Serializable;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -34,8 +32,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import net.sf.json.JSONObject;
 
-public class ConfigureChangeSetPatterns extends AbstractDescribableImpl<ConfigureChangeSetPatterns> implements Serializable {
-    private static final long serialVersionUID = 2552665058566675304L;
+public class ConfigureChangeSetPatterns extends AbstractDescribableImpl<ConfigureChangeSetPatterns> {
     private final String changeSetExclusionPatterns;
     private final String changeSetInclusionPatterns;
 

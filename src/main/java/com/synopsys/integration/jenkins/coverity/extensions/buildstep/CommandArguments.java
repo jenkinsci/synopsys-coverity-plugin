@@ -22,7 +22,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -35,8 +34,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 
-public class CommandArguments extends AbstractDescribableImpl<CommandArguments> implements Serializable {
-    private static final long serialVersionUID = 3324059940310844285L;
+public class CommandArguments extends AbstractDescribableImpl<CommandArguments> {
     private final String covBuildArguments;
     private final String covAnalyzeArguments;
     private final String covRunDesktopArguments;

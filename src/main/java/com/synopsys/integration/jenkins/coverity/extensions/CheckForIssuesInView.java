@@ -22,8 +22,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-import java.io.Serializable;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
@@ -38,7 +36,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
 
-public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssuesInView> implements Serializable {
+public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssuesInView> {
     private static final long serialVersionUID = 850747793907762852L;
     private final String viewName;
     private final BuildStatus buildStatusForIssues;

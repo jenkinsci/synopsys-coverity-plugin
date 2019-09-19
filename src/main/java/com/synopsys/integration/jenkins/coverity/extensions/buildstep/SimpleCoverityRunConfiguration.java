@@ -22,7 +22,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
-import java.io.Serializable;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
@@ -38,9 +37,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
 import hudson.Extension;
 import hudson.util.ListBoxModel;
 
-public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration implements Serializable {
-    private static final long serialVersionUID = -4515622706956940126L;
-
+public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     static {
         // TODO: Migrated in 2.1.0 -- Remove migration in 3.0.0
         SerializationHelper.migrateFieldFrom("buildCommand", SimpleCoverityRunConfiguration.class, "sourceArgument");
@@ -119,7 +116,7 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration imp
     }
 
     @Extension
-    public static class DescriptorImpl extends CoverityRunConfiguration.DescriptorImpl {
+    public static class DescriptorImpl extends CoverityRunConfiguration.RunConfigurationDescriptor {
         public DescriptorImpl() {
             super(SimpleCoverityRunConfiguration.class);
             load();

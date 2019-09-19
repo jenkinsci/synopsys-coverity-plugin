@@ -59,9 +59,9 @@ public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
         final ExecutableManager executableManager = new ExecutableManager(new File(coverityToolHome));
         final Integer exitCode;
         final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
-        try {
+        try (final PrintStream errorStream = new PrintStream(errorOutputStream, true, "UTF-8")) {
             final PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
-            exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, new PrintStream(errorOutputStream, true, "UTF-8"));
+            exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, errorStream);
         } catch (final UnsupportedEncodingException | ExecutableException | ExecutableRunnerException e) {
             throw new CoverityJenkinsException(e);
         } catch (final InterruptedException e) {

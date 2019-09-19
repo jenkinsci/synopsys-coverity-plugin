@@ -22,21 +22,17 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
-import java.io.Serializable;
-
 import com.synopsys.integration.jenkins.coverity.extensions.CoveritySelectBoxEnum;
 
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 
-public abstract class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRunConfiguration> implements Serializable {
-    private static final long serialVersionUID = -8235345319349012937L;
-
+public abstract class CoverityRunConfiguration extends AbstractDescribableImpl<CoverityRunConfiguration> {
     public abstract RunConfigurationType getRunConFigurationType();
 
     @Override
-    public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl) super.getDescriptor();
+    public RunConfigurationDescriptor getDescriptor() {
+        return (RunConfigurationDescriptor) super.getDescriptor();
     }
 
     public enum RunConfigurationType implements CoveritySelectBoxEnum {
@@ -55,8 +51,8 @@ public abstract class CoverityRunConfiguration extends AbstractDescribableImpl<C
         }
     }
 
-    public static abstract class DescriptorImpl extends Descriptor<CoverityRunConfiguration> {
-        public DescriptorImpl(final Class<? extends CoverityRunConfiguration> clazz) {
+    public static abstract class RunConfigurationDescriptor extends Descriptor<CoverityRunConfiguration> {
+        public RunConfigurationDescriptor(final Class<? extends CoverityRunConfiguration> clazz) {
             super(clazz);
         }
     }

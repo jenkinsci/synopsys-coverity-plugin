@@ -22,16 +22,13 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
-import java.io.Serializable;
-
 import javax.annotation.Nonnull;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.Extension;
 
-public class AdvancedCoverityRunConfiguration extends CoverityRunConfiguration implements Serializable {
-    private static final long serialVersionUID = -1293423958272198347L;
+public class AdvancedCoverityRunConfiguration extends CoverityRunConfiguration {
     private final RepeatableCommand[] commands;
 
     @DataBoundConstructor
@@ -54,7 +51,7 @@ public class AdvancedCoverityRunConfiguration extends CoverityRunConfiguration i
     }
 
     @Extension
-    public static class DescriptorImpl extends CoverityRunConfiguration.DescriptorImpl {
+    public static class DescriptorImpl extends CoverityRunConfiguration.RunConfigurationDescriptor {
         public DescriptorImpl() {
             super(AdvancedCoverityRunConfiguration.class);
             load();

@@ -23,7 +23,6 @@
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -210,7 +209,8 @@ public class CoverityBuildStep extends Builder {
             }
 
             if (checkForIssuesInView != null) {
-                if (build.getResult() != null && build.getResult().isWorseThan(Result.SUCCESS)) {
+                final Result buildResult = build.getResult();
+                if (buildResult != null && buildResult.isWorseThan(Result.SUCCESS)) {
                     throw new AbortException("Skipping the Synopsys Coverity Check for Issues in View step because the build was not successful.");
                 }
                 final ViewService viewService = webServiceFactory.createViewService();
@@ -276,8 +276,7 @@ public class CoverityBuildStep extends Builder {
     }
 
     @Extension
-    public static class DescriptorImpl extends BuildStepDescriptor<Builder> implements Serializable {
-        private static final long serialVersionUID = -7146909743946288527L;
+    public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
         private final transient CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
         private final transient ProjectStreamFieldHelper projectStreamFieldHelper;
 

@@ -22,7 +22,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.global;
 
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -53,8 +52,7 @@ import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
-public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> implements Serializable {
-    private static final long serialVersionUID = -7638734141012629078L;
+public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> {
     private final String url;
     private final String credentialId;
 

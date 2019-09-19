@@ -23,7 +23,6 @@
 package com.synopsys.integration.jenkins.coverity.extensions.pipeline;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -63,10 +62,9 @@ import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
-public class CheckForIssuesStep extends Step implements Serializable {
+public class CheckForIssuesStep extends Step {
     public static final String DISPLAY_NAME = "Check for Issues in Coverity View";
     public static final String PIPELINE_NAME = "coverityIssueCheck";
-    private static final long serialVersionUID = 3602102048550370960L;
 
     private String coverityInstanceUrl;
     private String projectName;
