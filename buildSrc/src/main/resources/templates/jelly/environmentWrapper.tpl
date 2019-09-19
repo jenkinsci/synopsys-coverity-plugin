@@ -21,19 +21,22 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.*
         }
     }
 
-    refreshConnectionButton(refreshConnectionButtonValue)
+    refreshConnectionButton(refreshConnectionButtonValue, coverityInstanceUrlField, projectNameField, streamNameField, viewNameField)
 }
 
 def entry(def field, def title, def inputTag) {
     'f:entry'(field: field, title: title) {
-        "$inputTag"(id: "${field}Id")
+        "$inputTag"(id: "${field}EnvWrapperId")
     }
 }
 
-def refreshConnectionButton(def buttonValue) {
+def refreshConnectionButton(def buttonValue, def urlField, def projectField, def streamField, def viewField) {
     'f:entry' {
         div(style: 'float:right') {
-            input(type: 'button', value: buttonValue, class: 'yui-button ${attrs.clazz}', onclick: 'loadProjects();loadStreams();loadViews();')
+            input(type: 'button', value: buttonValue, class: 'yui-button ${attrs.clazz}', onclick: "\
+loadProjectsThenStreams('${urlField}EnvWrapperId', '${projectField}EnvWrapperId', '${streamField}EnvWrapperId', 'com.synopsys.integration.jenkins.coverity.extensions.wrap.CoverityEnvironmentWrapper');\
+loadViews('${urlField}EnvWrapperId', '${viewField}EnvWrapperId', 'com.synopsys.integration.jenkins.coverity.extensions.wrap.CoverityEnvironmentWrapper');\
+")
         }
     }
 }

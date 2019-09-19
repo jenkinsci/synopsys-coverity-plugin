@@ -30,7 +30,7 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.*
         }
     }
 
-    refreshConnectionButton(refreshConnectionButtonValue)
+    refreshConnectionButton(refreshConnectionButtonValue, coverityInstanceUrlField, projectNameField, streamNameField, viewNameField)
 
     'f:dropdownDescriptorSelector'(field: coverityRunConfigurationField, title: coverityRunConfigurationTitle, default: "\${instance.$coverityRunConfigurationDefault}")
 
@@ -40,14 +40,17 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.*
 
 def entry(def field, def title, def inputTag) {
     'f:entry'(field: field, title: title) {
-        "$inputTag"(id: "${field}Id")
+        "$inputTag"(id: "${field}BuildStepId")
     }
 }
 
-def refreshConnectionButton(def buttonValue) {
+def refreshConnectionButton(def buttonValue, def urlFieldId, def projectField, def streamField, def viewField) {
     'f:entry' {
         div(style: 'float:right') {
-            input(type: 'button', value: buttonValue, class: 'yui-button ${attrs.clazz}', onclick: 'loadProjects();loadStreams();loadViews();')
+            input(type: 'button', value: buttonValue, class: 'yui-button ${attrs.clazz}', onclick: "\
+loadProjectsThenStreams('${urlFieldId}BuildStepId', '${projectField}BuildStepId', '${streamField}BuildStepId', 'com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityBuildStep');\
+loadViews('${urlFieldId}BuildStepId', '${viewField}BuildStepId', 'com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView');\
+")
         }
     }
 }

@@ -24,7 +24,6 @@ package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -254,10 +253,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName) {
-            return FormValidation.aggregate(Arrays.asList(
-                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl),
-                projectStreamFieldHelper.checkForProjectInCache(coverityInstanceUrl, projectName)
-            ));
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
         public ComboBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName) throws InterruptedException {
@@ -265,10 +261,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName) {
-            return FormValidation.aggregate(Arrays.asList(
-                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl),
-                projectStreamFieldHelper.checkForStreamInCache(coverityInstanceUrl, projectName, streamName)
-            ));
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {

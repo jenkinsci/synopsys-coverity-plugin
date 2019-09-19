@@ -74,7 +74,7 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
                        .filter(projectName::equals)
                        .findFirst()
                        .map(ignored -> FormValidation.ok())
-                       .orElseGet(() -> FormValidation.warning(String.format("Project '%s' may not exist. If it does not, it will automatically be created with default settings when this job is run.", projectName)));
+                       .orElseGet(() -> FormValidation.warning(String.format("If project '%s' does not exist it will be created with defaults the next time this job is run.", projectName)));
         } catch (final CoverityIntegrationException e) {
             return FormValidation.error(e, e.getMessage());
         } catch (final InterruptedException e) {
@@ -90,7 +90,7 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
                        .filter(streamName::equals)
                        .findFirst()
                        .map(ignored -> FormValidation.ok())
-                       .orElseGet(() -> FormValidation.warning(String.format("Stream '%s' may not exist. If it does not, it will automatically be created with default settings when this job is run.", streamName)));
+                       .orElseGet(() -> FormValidation.warning(String.format("If stream '%s' does not exist in project '%s' it will be created with defaults the next time this job is run", streamName, projectName)));
         } catch (final CoverityIntegrationException e) {
             return FormValidation.error(e, e.getMessage());
         } catch (final InterruptedException e) {
