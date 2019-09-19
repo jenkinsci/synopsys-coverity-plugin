@@ -32,7 +32,7 @@ import hudson.remoting.Callable;
 
 public abstract class CoverityRemoteCallable<T> implements Callable<T, IntegrationException> {
     private static final long serialVersionUID = -4096882757092525358L;
-    protected transient final JenkinsCoverityLogger logger;
+    protected final JenkinsCoverityLogger logger;
 
     public CoverityRemoteCallable(final JenkinsCoverityLogger logger) {
         this.logger = logger;

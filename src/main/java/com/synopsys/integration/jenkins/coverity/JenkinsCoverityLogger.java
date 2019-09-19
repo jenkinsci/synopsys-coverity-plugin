@@ -23,6 +23,7 @@
 package com.synopsys.integration.jenkins.coverity;
 
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringWriter;
 
 import com.synopsys.integration.coverity.CoverityIntLogger;
@@ -31,7 +32,8 @@ import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.model.TaskListener;
 
-public class JenkinsCoverityLogger extends CoverityIntLogger {
+public class JenkinsCoverityLogger extends CoverityIntLogger implements Serializable {
+    private static final long serialVersionUID = 7672279347652895598L;
     private final TaskListener jenkinsLogger;
 
     private LogLevel level;
