@@ -6,6 +6,9 @@ language: java
 sudo: false
 install: true
 
+### only trusty has oraclejdk8 reliably
+dist: trusty
+
 jdk:
   - oraclejdk8
 
