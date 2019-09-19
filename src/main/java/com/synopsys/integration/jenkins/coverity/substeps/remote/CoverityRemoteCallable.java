@@ -22,8 +22,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.substeps.remote;
 
-import java.io.Serializable;
-
 import org.jenkinsci.remoting.Role;
 import org.jenkinsci.remoting.RoleChecker;
 
@@ -32,9 +30,9 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 
 import hudson.remoting.Callable;
 
-public abstract class CoverityRemoteCallable<T extends Serializable> implements Callable<T, IntegrationException> {
+public abstract class CoverityRemoteCallable<T> implements Callable<T, IntegrationException> {
     private static final long serialVersionUID = -4096882757092525358L;
-    protected final JenkinsCoverityLogger logger;
+    protected transient final JenkinsCoverityLogger logger;
 
     public CoverityRemoteCallable(final JenkinsCoverityLogger logger) {
         this.logger = logger;
