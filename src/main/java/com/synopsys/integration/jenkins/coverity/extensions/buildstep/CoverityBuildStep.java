@@ -52,6 +52,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamF
 import com.synopsys.integration.jenkins.coverity.substeps.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.substeps.GetCoverityCommands;
 import com.synopsys.integration.jenkins.coverity.substeps.GetIssuesInView;
+import com.synopsys.integration.jenkins.coverity.substeps.IncrementalAnalysisValidation;
 import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
 import com.synopsys.integration.jenkins.coverity.substeps.RunCoverityCommands;
 import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
@@ -184,7 +185,7 @@ public class CoverityBuildStep extends Builder {
             final ProcessChangeLogSets processChangeLogSets = new ProcessChangeLogSets(logger, build.getChangeSets(), configureChangeSetPatterns);
             final List<String> changeSet = processChangeLogSets.computeChangeSet();
 
-            final Boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
+            final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
             final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, isSimpleMode, (HashMap<String, String>) intEnvironmentVariables.getVariables());
             final String pathToCoverityToolHome = virtualChannel.call(coverityRemoteInstallationValidator);
 
@@ -193,14 +194,20 @@ public class CoverityBuildStep extends Builder {
 
             final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
             final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+
             final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
             createMissingProjectsAndStreams.checkAndCreateMissingProjectsAndStreams();
 
-            final GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
-            final List<List<String>> commands = getCoverityCommands.getCoverityCommands();
+            final IncrementalAnalysisValidation incrementalAnalysisValidation = new IncrementalAnalysisValidation(intEnvironmentVariables, coverityRunConfiguration);
+            if (incrementalAnalysisValidation.isIncremental() && incrementalAnalysisValidation.incrementalShouldNotRun()) {
+                logger.alwaysLog("Skipping Synopsys Coverity static analysis because the analysis type was determined to be Incremental Analysis and the Jenkins $CHANGE_SET was empty.");
+            } else {
+                final GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
+                final List<List<String>> commands = getCoverityCommands.getCoverityCommands();
 
-            final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, workingDirectory.getRemote(), commands, onCommandFailure, virtualChannel);
-            runCoverityCommands.runCoverityCommands();
+                final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, workingDirectory.getRemote(), commands, onCommandFailure, virtualChannel);
+                runCoverityCommands.runCoverityCommands();
+            }
 
             if (checkForIssuesInView != null) {
                 if (build.getResult() != null && build.getResult().isWorseThan(Result.SUCCESS)) {

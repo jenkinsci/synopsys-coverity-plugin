@@ -62,7 +62,7 @@ public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<
             throw new CoverityJenkinsException("The specified Analysis installation directory doesn't exist.");
         }
 
-        if (validateVersion) {
+        if (Boolean.TRUE.equals(validateVersion)) {
             final Path pathToAnalysisVersionFile = pathToCoverityToolHome.resolve("VERSION");
             final Path pathToAnalysisVersionXml = pathToCoverityToolHome.resolve("VERSION.xml");
             if (!Files.exists(pathToAnalysisVersionXml) || !Files.exists(pathToAnalysisVersionFile)) {

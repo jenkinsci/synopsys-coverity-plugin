@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.lang.StringUtils;
+
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
@@ -66,6 +68,7 @@ public class ProcessChangeLogSets {
                                            .flatMap(this::toAffectedFiles)
                                            .filter(changeSetFilter::shouldInclude)
                                            .map(ChangeLogSet.AffectedFile::getPath)
+                                           .filter(StringUtils::isNotBlank)
                                            .collect(Collectors.toList());
 
         logger.alwaysLog("Computed a $CHANGE_SET of " + changeSet.size() + " files");
