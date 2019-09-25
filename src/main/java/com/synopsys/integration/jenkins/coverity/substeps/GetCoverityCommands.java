@@ -95,7 +95,9 @@ public class GetCoverityCommands {
         } else if (coverityCaptureType == CoverityCaptureType.COV_CAPTURE_SCM) {
             repeatableCommands[0] = RepeatableCommand.COV_CAPTURE_SCM(sourceArgument, covCaptureArguments);
         } else {
-            logger.warn("No Coverity Capture Type specified. Assuming Capture type of 'Build.' If you're upgrading from a previous version, this warning will persist until you re-save your job config.");
+            if (coverityCaptureType != CoverityCaptureType.COV_BUILD) {
+                logger.warn("No valid Coverity Capture Type specified. Assuming Capture type of 'Build.' If you're upgrading from a previous version, this warning will persist until you re-save your job config.");
+            }
             repeatableCommands[0] = RepeatableCommand.COV_BUILD(sourceArgument, covBuildArguments);
         }
 
