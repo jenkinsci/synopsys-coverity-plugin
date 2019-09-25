@@ -150,7 +150,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
-        final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
+        final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         intEnvironmentVariables.putAll(initialEnvironment);
         final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
         final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);

@@ -199,7 +199,7 @@ public class CheckForIssuesStep extends Step {
 
         @Override
         protected Integer run() throws Exception {
-            final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
+            final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
             intEnvironmentVariables.putAll(envVars);
             final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
 

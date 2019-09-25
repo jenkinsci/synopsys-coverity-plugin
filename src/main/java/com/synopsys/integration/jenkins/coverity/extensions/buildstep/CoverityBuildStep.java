@@ -154,7 +154,7 @@ public class CoverityBuildStep extends Builder {
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
-        final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables();
+        final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         intEnvironmentVariables.putAll(build.getEnvironment(listener));
         final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
         final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
