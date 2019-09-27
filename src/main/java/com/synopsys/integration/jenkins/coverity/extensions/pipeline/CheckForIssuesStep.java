@@ -36,6 +36,7 @@ import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
 import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.jenkinsci.plugins.workflow.steps.SynchronousNonBlockingStepExecution;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
@@ -70,6 +71,11 @@ public class CheckForIssuesStep extends Step {
     private String projectName;
     private String viewName;
     private Boolean returnIssueCount;
+
+    @DataBoundConstructor
+    public CheckForIssuesStep() {
+        // All fields are optional, so this constructor exists only to prevent some versions of the pipeline syntax generator from failing
+    }
 
     public Boolean getReturnIssueCount() {
         if (Boolean.FALSE.equals(returnIssueCount)) {
