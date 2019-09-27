@@ -24,6 +24,7 @@ package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 
@@ -286,7 +287,8 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
     }
 
-    private static final class FilterImpl extends ConsoleLogFilter {
+    private static final class FilterImpl extends ConsoleLogFilter implements Serializable {
+        private static final long serialVersionUID = 1787519634824445328L;
         private final String passwordToMask;
 
         public FilterImpl(final String passwordToMask) {
