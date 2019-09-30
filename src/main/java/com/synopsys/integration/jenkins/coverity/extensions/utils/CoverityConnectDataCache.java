@@ -74,7 +74,7 @@ public abstract class CoverityConnectDataCache<T> {
 
             lastTimeRetrieved = Instant.now();
             logger.info("Connection refreshed successfully.");
-        } catch (final MalformedURLException | CoverityIntegrationException e) {
+        } catch (final MalformedURLException | IllegalArgumentException | IllegalStateException | CoverityIntegrationException e) {
             logger.error("[ERROR] Could not refresh connection to Coverity Connect instance. Please confirm you have a valid URL.");
             logger.trace("Stack trace:", e);
         } finally {

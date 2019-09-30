@@ -53,8 +53,8 @@ public class ViewFieldHelper extends ConnectionCachingFieldHelper<ViewCache> {
 
     private List<String> getViews(final String coverityConnectUrl) throws CoverityIntegrationException, InterruptedException {
         final CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
-        final ViewCache projectStreamCache = getCache(coverityConnectUrl);
-        return projectStreamCache.getData(coverityConnectInstance);
+        final ViewCache viewCache = getCache(coverityConnectUrl);
+        return viewCache.getData(coverityConnectInstance);
     }
 
 }
