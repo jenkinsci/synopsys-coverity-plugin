@@ -191,7 +191,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             coverityEnvironmentStep.setUpCoverityEnvironment();
             intEnvironmentVariables.getVariables().forEach(context::env);
 
-            if (createMissingProjectsAndStreams) {
+            if (Boolean.TRUE.equals(createMissingProjectsAndStreams)) {
                 final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
                 final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
                 final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
