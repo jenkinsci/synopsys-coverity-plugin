@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
@@ -213,28 +214,13 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
             final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
             try {
-                final String unresolvedCoverityInstanceUrl;
-                if (StringUtils.isBlank(coverityInstanceUrl)) {
-                    unresolvedCoverityInstanceUrl = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_URL.toString());
-                } else {
-                    unresolvedCoverityInstanceUrl = coverityInstanceUrl;
-                }
+                final String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
                 final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
 
-                final String unresolvedProjectName;
-                if (StringUtils.isBlank(projectName)) {
-                    unresolvedProjectName = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT.toString());
-                } else {
-                    unresolvedProjectName = projectName;
-                }
+                final String unresolvedProjectName = getRequiredValueOrDie(projectName, "projectName", JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
                 final String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
 
-                final String unresolvedViewName;
-                if (StringUtils.isBlank(viewName)) {
-                    unresolvedViewName = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW.toString());
-                } else {
-                    unresolvedViewName = viewName;
-                }
+                final String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
                 final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
                 final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, resolvedCoverityInstanceUrl);
@@ -260,6 +246,21 @@ public class CheckForIssuesStep extends Step implements Serializable {
                     phoneHomeResponse.getImmediateResult();
                 }
             }
+        }
+
+        private String getRequiredValueOrDie(final String pipelineParamter, final String parameterName, final JenkinsCoverityEnvironmentVariable environmentVariable, final Function<String, String> environmentVariableGetter)
+            throws CoverityJenkinsException {
+            if (StringUtils.isNotBlank(pipelineParamter)) {
+                return pipelineParamter;
+            }
+
+            final String valueFromEnvironmentVariable = environmentVariableGetter.apply(environmentVariable.toString());
+            if (StringUtils.isNotBlank(valueFromEnvironmentVariable)) {
+                return valueFromEnvironmentVariable;
+            }
+
+            throw new CoverityJenkinsException(
+                "Coverity issue check failed because required parameter " + parameterName + " was not set. Please set " + parameterName + " or populate $" + environmentVariable.toString() + " with the desired value.");
         }
 
     }

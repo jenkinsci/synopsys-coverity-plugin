@@ -73,10 +73,6 @@ public class GetIssuesInView {
                    .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for project \"%s\". It either does not exist or the current user does not have access to it.", projectName)));
     }
 
-    private boolean projectDataObjHasName(final ProjectDataObj projectDataObj, final String name) {
-        return projectDataObj.getId() != null && projectDataObj.getId().getName() != null && projectDataObj.getId().getName().equals(name);
-    }
-
     private String getViewIdFromName(final String viewName) throws IntegrationException, IOException {
         return viewService.getViews().entrySet().stream()
                    .filter(entry -> entry.getValue() != null)
