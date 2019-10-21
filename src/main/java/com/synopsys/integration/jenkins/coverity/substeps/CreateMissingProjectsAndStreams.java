@@ -29,8 +29,10 @@ import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Excepti
 import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+import com.synopsys.integration.jenkins.substeps.AbstractVoidSubStep;
+import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 
-public class CreateMissingProjectsAndStreams {
+public class CreateMissingProjectsAndStreams extends AbstractVoidSubStep<Void> {
     private final JenkinsCoverityLogger logger;
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final String projectName;
@@ -43,32 +45,42 @@ public class CreateMissingProjectsAndStreams {
         this.streamName = streamName;
     }
 
-    public void checkAndCreateMissingProjectsAndStreams() throws CovRemoteServiceException_Exception, InterruptedException {
-        Optional<ProjectDataObj> matchingProject = configurationServiceWrapper.getProjectByExactName(projectName);
-        if (!matchingProject.isPresent()) {
-            logger.info(String.format("No project with the name '%s' was found, attempting creation...", projectName));
-            configurationServiceWrapper.createSimpleProject(projectName);
-            matchingProject = configurationServiceWrapper.getAndWaitForProjectWithExactName(projectName);
+    @Override
+    public SubStepResponse<Void> run() {
+        try {
+            Optional<ProjectDataObj> matchingProject = configurationServiceWrapper.getProjectByExactName(projectName);
+            if (!matchingProject.isPresent()) {
+                logger.info(String.format("No project with the name '%s' was found, attempting creation...", projectName));
+                configurationServiceWrapper.createSimpleProject(projectName);
+                matchingProject = configurationServiceWrapper.getAndWaitForProjectWithExactName(projectName);
 
-            if (matchingProject.isPresent()) {
-                logger.info(String.format("Successfully created project '%s'", projectName));
-            } else {
-                logger.error(String.format("Could not create project '%s'", projectName));
+                if (matchingProject.isPresent()) {
+                    logger.info(String.format("Successfully created project '%s'", projectName));
+                } else {
+                    logger.error(String.format("Could not create project '%s'", projectName));
+                }
             }
+
+            Optional<StreamDataObj> matchingStream = configurationServiceWrapper.getStreamByExactName(streamName);
+            if (!matchingStream.isPresent() && matchingProject.isPresent()) {
+                logger.info(String.format("No stream with the name '%s' was found, attempting creation as an Any language stream with the Default Triage Store in project '%s'...", streamName, projectName));
+                configurationServiceWrapper.createSimpleStreamInProject(matchingProject.get().getId(), streamName);
+                matchingStream = configurationServiceWrapper.getAndWaitForStreamWithExactName(streamName);
+
+                if (matchingStream.isPresent()) {
+                    logger.info(String.format("Successfully created stream '%s'", streamName));
+                } else {
+                    logger.error(String.format("Could not create stream '%s'", streamName));
+                }
+            }
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return SubStepResponse.FAILURE(e);
+        } catch (final CovRemoteServiceException_Exception e) {
+            return SubStepResponse.FAILURE(e);
         }
 
-        Optional<StreamDataObj> matchingStream = configurationServiceWrapper.getStreamByExactName(streamName);
-        if (!matchingStream.isPresent() && matchingProject.isPresent()) {
-            logger.info(String.format("No stream with the name '%s' was found, attempting creation as an Any language stream with the Default Triage Store in project '%s'...", streamName, projectName));
-            configurationServiceWrapper.createSimpleStreamInProject(matchingProject.get().getId(), streamName);
-            matchingStream = configurationServiceWrapper.getAndWaitForStreamWithExactName(streamName);
-
-            if (matchingStream.isPresent()) {
-                logger.info(String.format("Successfully created stream '%s'", streamName));
-            } else {
-                logger.error(String.format("Could not create stream '%s'", streamName));
-            }
-        }
+        return SubStepResponse.SUCCESS();
     }
 
 }

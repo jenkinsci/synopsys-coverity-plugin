@@ -24,10 +24,10 @@ package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -40,7 +40,9 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
@@ -51,11 +53,15 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamF
 import com.synopsys.integration.jenkins.coverity.substeps.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.substeps.GetCoverityCommands;
 import com.synopsys.integration.jenkins.coverity.substeps.GetIssuesInView;
-import com.synopsys.integration.jenkins.coverity.substeps.IncrementalAnalysisValidation;
 import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
 import com.synopsys.integration.jenkins.coverity.substeps.RunCoverityCommands;
 import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
-import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteInstallationValidator;
+import com.synopsys.integration.jenkins.coverity.substeps.remote.ValidateCoverityInstallation;
+import com.synopsys.integration.jenkins.substeps.RemoteSubStep;
+import com.synopsys.integration.jenkins.substeps.StepWorkflow;
+import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
+import com.synopsys.integration.jenkins.substeps.SubStep;
+import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -79,7 +85,6 @@ import hudson.util.ListBoxModel;
 
 public class CoverityBuildStep extends Builder {
     public static final String FAILURE_MESSAGE = "Unable to perform Synopsys Coverity static analysis: ";
-
     private final OnCommandFailure onCommandFailure;
     private final CoverityRunConfiguration coverityRunConfiguration;
     private final String projectName;
@@ -87,6 +92,10 @@ public class CoverityBuildStep extends Builder {
     private final CheckForIssuesInView checkForIssuesInView;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
     private final String coverityInstanceUrl;
+    private JenkinsCoverityLogger logger;
+
+    // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
+    @Nullable
     private CleanUpAction cleanUpAction;
 
     @DataBoundConstructor
@@ -153,110 +162,155 @@ public class CoverityBuildStep extends Builder {
     }
 
     @Override
-    public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         intEnvironmentVariables.putAll(build.getEnvironment(listener));
-        final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
+        logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
         final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
 
+        if (Result.ABORTED.equals(build.getResult())) {
+            throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
+        }
+
+        final WebServiceFactory webServiceFactory;
         try {
-            final FilePath workingDirectory = getWorkingDirectory(build);
+            webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
+        } catch (final CoverityJenkinsException e) {
+            this.handleException(build, Result.UNSTABLE, e);
+            return false;
+        }
 
-            if (Result.ABORTED.equals(build.getResult())) {
-                throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
-            }
+        final VirtualChannel virtualChannel = getAndValidateChannel(build);
+        final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
+        final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
+        final String viewName = checkForIssuesInView != null && checkForIssuesInView.getViewName() != null ? checkForIssuesInView.getViewName() : StringUtils.EMPTY;
+        final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+        final ViewService viewService = webServiceFactory.createViewService();
+        final FilePath workingDirectory = getWorkingDirectory(build);
 
-            final Node node = build.getBuiltOn();
-            if (node == null) {
-                throw new AbortException(FAILURE_MESSAGE + "Could not access node.");
-            }
+        final RemoteSubStep<Void, Void> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, isSimpleMode, coverityToolHome));
+        final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, build.getChangeSets(), configureChangeSetPatterns);
+        final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName);
+        final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
+        final GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
+        final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, workingDirectory.getRemote(), onCommandFailure, virtualChannel);
+        final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, projectName, viewName);
 
-            final VirtualChannel virtualChannel = node.getChannel();
-            if (virtualChannel == null) {
-                throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
-            }
+        return StepWorkflow
+                   .firstCall(validateInstallation)
+                   .thenGetData(processChangeSet)
+                   .thenConsumeData(setUpCoverityEnvironment)
+                   .thenDo(createMissingProjectsAndStreams)
+                   .andSometimes(getCoverityCommands).thenConsumeData(runCoverityCommands).butOnlyIf(intEnvironmentVariables, this::shouldRunCoverityCommands)
+                   .andSometimes(getIssuesInView).thenExecute(failOnIssuesPresent(build, viewName)).butOnlyIf(checkForIssuesInView, Objects::nonNull)
+                   .andSometimes(cleanUpWorkspace(workingDirectory)).butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
+                   .run()
+                   .handleResponse(response -> afterPerform(response, build, phoneHomeResponse));
+    }
 
-            String viewName = StringUtils.EMPTY;
-            if (checkForIssuesInView != null && checkForIssuesInView.getViewName() != null) {
-                viewName = checkForIssuesInView.getViewName();
-            }
+    private VirtualChannel getAndValidateChannel(final AbstractBuild<?, ?> build) throws AbortException {
+        final Node node = build.getBuiltOn();
+        if (node == null) {
+            throw new AbortException(FAILURE_MESSAGE + "No node was configured or accessible.");
+        }
 
-            final ProcessChangeLogSets processChangeLogSets = new ProcessChangeLogSets(logger, build.getChangeSets(), configureChangeSetPatterns);
-            final List<String> changeSet = processChangeLogSets.computeChangeSet();
+        final VirtualChannel virtualChannel = node.getChannel();
+        if (virtualChannel == null) {
+            throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
+        }
 
-            final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
-            final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, isSimpleMode, (HashMap<String, String>) intEnvironmentVariables.getVariables());
-            final String pathToCoverityToolHome = virtualChannel.call(coverityRemoteInstallationValidator);
+        return virtualChannel;
+    }
 
-            final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
-            setUpCoverityEnvironment.setUpCoverityEnvironment();
+    private boolean shouldRunCoverityCommands(final IntEnvironmentVariables intEnvironmentVariables) {
+        if (analysisIsIncremental(intEnvironmentVariables) && intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString()).isEmpty()) {
+            logger.alwaysLog("Skipping Synopsys Coverity static analysis because the analysis type was determined to be Incremental Analysis and the Jenkins $CHANGE_SET was empty.");
+            return false;
+        }
+        return true;
+    }
 
-            final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
-            final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+    private boolean analysisIsIncremental(final IntEnvironmentVariables intEnvironmentVariables) {
+        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+            return true;
+        }
 
-            final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
-            createMissingProjectsAndStreams.checkAndCreateMissingProjectsAndStreams();
+        final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityRunConfiguration;
+        final int changeSetSize = Integer.valueOf(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), "0"));
 
-            final IncrementalAnalysisValidation incrementalAnalysisValidation = new IncrementalAnalysisValidation(intEnvironmentVariables, coverityRunConfiguration);
-            if (incrementalAnalysisValidation.isIncremental() && incrementalAnalysisValidation.incrementalShouldNotRun()) {
-                logger.alwaysLog("Skipping Synopsys Coverity static analysis because the analysis type was determined to be Incremental Analysis and the Jenkins $CHANGE_SET was empty.");
-            } else {
-                final GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
-                final List<List<String>> commands = getCoverityCommands.getCoverityCommands();
+        switch (simpleCoverityRunConfiguration.getCoverityAnalysisType()) {
+            case COV_RUN_DESKTOP:
+                return false;
+            case THRESHOLD:
+                return changeSetSize > simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold();
+            default:
+                return true;
+        }
+    }
 
-                final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, workingDirectory.getRemote(), commands, onCommandFailure, virtualChannel);
-                runCoverityCommands.runCoverityCommands();
-            }
-
-            if (checkForIssuesInView != null) {
-                final Result buildResult = build.getResult();
-                if (buildResult != null && buildResult.isWorseThan(Result.SUCCESS)) {
-                    throw new AbortException("Skipping the Synopsys Coverity Check for Issues in View step because the build was not successful.");
-                }
-                final ViewService viewService = webServiceFactory.createViewService();
-                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, projectName, viewName);
-
+    private SubStep.Consuming<Integer> failOnIssuesPresent(final AbstractBuild<?, ?> build, final String viewName) {
+        return previousResponse -> {
+            if (previousResponse.isSuccess() && previousResponse.hasData()) {
+                final int defectCount = previousResponse.getData();
                 logger.alwaysLog("Checking for issues in view");
                 logger.alwaysLog("-- Build state for issues in the view: " + checkForIssuesInView.getBuildStatusForIssues().getDisplayName());
                 logger.alwaysLog("-- Coverity project name: " + projectName);
                 logger.alwaysLog("-- Coverity view name: " + viewName);
-
-                final int defectCount = getIssuesInView.getTotalIssuesInView();
 
                 if (defectCount > 0) {
                     logger.alwaysLog(String.format("[Coverity] Found %s issues in view.", defectCount));
                     logger.alwaysLog("Setting build status to " + checkForIssuesInView.getBuildStatusForIssues().getResult().toString());
                     build.setResult(checkForIssuesInView.getBuildStatusForIssues().getResult());
                 }
+                return SubStepResponse.SUCCESS();
+            } else {
+                return SubStepResponse.FAILURE(previousResponse);
             }
+        };
+    }
 
-            if (CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY.equals(cleanUpAction)) {
+    private SubStep.Operating<Void> cleanUpWorkspace(final FilePath workingDirectory) {
+        return ignored -> {
+            try {
                 final FilePath intermediateDirectory = new FilePath(workingDirectory, "idir");
                 intermediateDirectory.deleteRecursive();
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return SubStepResponse.FAILURE(e);
+            } catch (final IOException e) {
+                return SubStepResponse.FAILURE(e);
             }
+            return SubStepResponse.SUCCESS();
+        };
+    }
 
+    private boolean afterPerform(final StepWorkflowResponse<Void> stepWorkflowResponse, final AbstractBuild<?, ?> build, final PhoneHomeResponse phoneHomeResponse) {
+        final boolean wasSuccessful = stepWorkflowResponse.wasSuccessful();
+        try {
+            if (!wasSuccessful) {
+                throw stepWorkflowResponse.getException();
+            }
         } catch (final InterruptedException e) {
             logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
             build.setResult(Result.ABORTED);
             Thread.currentThread().interrupt();
-            return false;
         } catch (final IntegrationException e) {
-            logger.error("[ERROR] " + e.getMessage());
-            logger.debug(e.getMessage(), e);
-            build.setResult(Result.FAILURE);
-            return false;
+            this.handleException(build, Result.FAILURE, e);
         } catch (final Exception e) {
-            logger.error("[ERROR] " + e.getMessage());
-            logger.debug(e.getMessage(), e);
-            build.setResult(Result.UNSTABLE);
-            return false;
+            this.handleException(build, Result.UNSTABLE, e);
         } finally {
-            if (null != phoneHomeResponse) {
+            if (phoneHomeResponse != null) {
                 phoneHomeResponse.getImmediateResult();
             }
         }
 
-        return true;
+        return stepWorkflowResponse.wasSuccessful();
+    }
+
+    private void handleException(final AbstractBuild build, final Result result, final Exception e) {
+        logger.error("[ERROR] " + e.getMessage());
+        logger.debug(e.getMessage(), e);
+        build.setResult(result);
     }
 
     private FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) throws AbortException {

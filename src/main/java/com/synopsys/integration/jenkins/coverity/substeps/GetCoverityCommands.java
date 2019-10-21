@@ -40,11 +40,13 @@ import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArg
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
+import com.synopsys.integration.jenkins.substeps.AbstractSupplyingSubStep;
+import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.Util;
 
-public class GetCoverityCommands {
+public class GetCoverityCommands extends AbstractSupplyingSubStep<Void, List<List<String>>> {
     private final JenkinsCoverityLogger logger;
     private final IntEnvironmentVariables intEnvironmentVariables;
     private final CoverityRunConfiguration coverityRunConfiguration;
@@ -55,26 +57,30 @@ public class GetCoverityCommands {
         this.coverityRunConfiguration = coverityRunConfiguration;
     }
 
-    public List<List<String>> getCoverityCommands() throws CoverityJenkinsException {
+    public SubStepResponse<List<List<String>>> run() {
         logger.debug("Preparing Coverity commands");
-        final RepeatableCommand[] commands;
-        final int changeSetSize = Integer.valueOf(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString()));
+        try {
+            final RepeatableCommand[] commands;
+            final int changeSetSize = Integer.valueOf(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString()));
 
-        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
-            commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
-        } else {
-            commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration, changeSetSize);
+            if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+                commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
+            } else {
+                commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration, changeSetSize);
+            }
+
+            if (Arrays.stream(commands).map(RepeatableCommand::getCommand).allMatch(StringUtils::isBlank)) {
+                throw new CoverityJenkinsException("[ERROR] The are no non-empty Coverity commands configured.");
+            }
+
+            return Arrays.stream(commands)
+                       .map(RepeatableCommand::getCommand)
+                       .filter(StringUtils::isNotBlank)
+                       .map(this::toParameters)
+                       .collect(Collectors.collectingAndThen(Collectors.toList(), SubStepResponse::SUCCESS));
+        } catch (final CoverityJenkinsException e) {
+            return SubStepResponse.FAILURE(e);
         }
-
-        if (Arrays.stream(commands).map(RepeatableCommand::getCommand).allMatch(StringUtils::isBlank)) {
-            throw new CoverityJenkinsException("[ERROR] The are no non-empty Coverity commands configured.");
-        }
-
-        return Arrays.stream(commands)
-                   .map(RepeatableCommand::getCommand)
-                   .filter(StringUtils::isNotBlank)
-                   .map(this::toParameters)
-                   .collect(Collectors.toList());
     }
 
     private RepeatableCommand[] getSimpleModeCommands(final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, final int changeSetSize) throws CoverityJenkinsException {

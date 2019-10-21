@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -54,6 +55,8 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnec
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.substeps.GetIssuesInView;
+import com.synopsys.integration.jenkins.substeps.StepWorkflow;
+import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -70,9 +73,17 @@ public class CheckForIssuesStep extends Step implements Serializable {
     public static final String PIPELINE_NAME = "coverityIssueCheck";
     private static final long serialVersionUID = 3602102048550370960L;
 
+    // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
+    @Nullable
     private String coverityInstanceUrl;
+
+    @Nullable
     private String projectName;
+
+    @Nullable
     private String viewName;
+
+    @Nullable
     private Boolean returnIssueCount;
 
     @DataBoundConstructor
@@ -213,39 +224,27 @@ public class CheckForIssuesStep extends Step implements Serializable {
             final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
 
             final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
-            try {
-                final String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
-                final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
+            final String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
+            final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
 
-                final String unresolvedProjectName = getRequiredValueOrDie(projectName, "projectName", JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
-                final String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
+            final String unresolvedProjectName = getRequiredValueOrDie(projectName, "projectName", JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
+            final String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
 
-                final String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
-                final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
+            final String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
+            final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
-                final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, resolvedCoverityInstanceUrl);
-                webServiceFactory.connect();
-                final ViewService viewService = webServiceFactory.createViewService();
-                final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-                final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, resolvedProjectName, resolvedViewName);
+            final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, resolvedCoverityInstanceUrl);
+            webServiceFactory.connect();
+            final ViewService viewService = webServiceFactory.createViewService();
+            final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
 
-                final int defectCount = getIssuesInView.getTotalIssuesInView();
+            final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, resolvedProjectName, resolvedViewName);
 
-                if (defectCount > 0) {
-                    final String defectMessage = String.format("[Coverity] Found %s issues in view.", defectCount);
-                    if (null != getReturnIssueCount() && getReturnIssueCount()) {
-                        logger.error(defectMessage);
-                    } else {
-                        throw new CoverityJenkinsException(defectMessage);
-                    }
-                }
+            return StepWorkflow
+                       .just(getIssuesInView)
+                       .run()
+                       .handleResponse(response -> afterRun(logger, phoneHomeResponse, response, getReturnIssueCount()));
 
-                return defectCount;
-            } finally {
-                if (null != phoneHomeResponse) {
-                    phoneHomeResponse.getImmediateResult();
-                }
-            }
         }
 
         private String getRequiredValueOrDie(final String pipelineParamter, final String parameterName, final JenkinsCoverityEnvironmentVariable environmentVariable, final Function<String, String> environmentVariableGetter)
@@ -263,5 +262,28 @@ public class CheckForIssuesStep extends Step implements Serializable {
                 "Coverity issue check failed because required parameter " + parameterName + " was not set. Please set " + parameterName + " or populate $" + environmentVariable.toString() + " with the desired value.");
         }
 
+        private Integer afterRun(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Integer> response, final Boolean returnIssueCount) throws Exception {
+            try {
+                if (response.wasSuccessful()) {
+                    final Integer defectCount = response.getData();
+                    if (defectCount > 0) {
+                        final String defectMessage = String.format("[Coverity] Found %s issues in view.", defectCount);
+                        if (Boolean.TRUE.equals(returnIssueCount)) {
+                            logger.error(defectMessage);
+                        } else {
+                            throw new CoverityJenkinsException(defectMessage);
+                        }
+                    }
+                    return defectCount;
+                } else {
+                    throw response.getException();
+                }
+            } finally {
+                if (null != phoneHomeResponse) {
+                    phoneHomeResponse.getImmediateResult();
+                }
+            }
+
+        }
     }
 }

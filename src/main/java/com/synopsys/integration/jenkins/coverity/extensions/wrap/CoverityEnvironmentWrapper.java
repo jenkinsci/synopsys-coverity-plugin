@@ -25,10 +25,10 @@ package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
@@ -43,6 +43,7 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
@@ -52,7 +53,12 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelpe
 import com.synopsys.integration.jenkins.coverity.substeps.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
 import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
-import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteInstallationValidator;
+import com.synopsys.integration.jenkins.coverity.substeps.remote.ValidateCoverityInstallation;
+import com.synopsys.integration.jenkins.substeps.RemoteSubStep;
+import com.synopsys.integration.jenkins.substeps.StepWorkflow;
+import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
+import com.synopsys.integration.jenkins.substeps.SubStep;
+import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
@@ -83,10 +89,21 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     private final String coverityInstanceUrl;
     private final String coverityPassphrase;
+
+    // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
+    @Nullable
     private String projectName;
+
+    @Nullable
     private String streamName;
+
+    @Nullable
     private String viewName;
+
+    @Nullable
     private ConfigureChangeSetPatterns configureChangeSetPatterns;
+
+    @Nullable
     private Boolean createMissingProjectsAndStreams;
 
     @DataBoundConstructor
@@ -155,9 +172,56 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         intEnvironmentVariables.putAll(initialEnvironment);
         final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
         final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
+        if (Result.ABORTED.equals(build.getResult())) {
+            throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
+        }
 
         final RunWrapper runWrapper = new RunWrapper(build, true);
+        final VirtualChannel virtualChannel = getAndValidateChannel(workspace);
+        final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
+        final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
+        final WebServiceFactory webServiceFactory;
+        try {
+            changeSets = runWrapper.getChangeSets();
+            webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
+        } catch (final Exception e) {
+            throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
+        }
 
+        final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+
+        final RemoteSubStep<Void, Void> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, false, coverityToolHome));
+        final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
+        final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName);
+        final CreateMissingProjectsAndStreams createMissingProjectsAndStreamsStep = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
+
+        StepWorkflow.firstCall(validateInstallation)
+            .thenGetData(processChangeSet)
+            .thenConsumeData(setUpCoverityEnvironment)
+            .thenExecute(populateEnvironment(context, intEnvironmentVariables))
+            .andSometimes(createMissingProjectsAndStreamsStep).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
+            .run()
+            .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response));
+    }
+
+    private void afterSetUp(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Void> response) throws IOException {
+        try {
+            if (null != phoneHomeResponse) {
+                phoneHomeResponse.getImmediateResult();
+            }
+
+            if (!response.wasSuccessful()) {
+                throw response.getException();
+            }
+        } catch (final IntegrationException e) {
+            logger.debug(null, e);
+            throw new AbortException(FAILURE_MESSAGE + e.getMessage());
+        } catch (final Exception e) {
+            throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
+        }
+    }
+
+    private VirtualChannel getAndValidateChannel(final FilePath workspace) throws AbortException {
         final Computer computer = workspace.toComputer();
         if (computer == null) {
             throw new AbortException(FAILURE_MESSAGE + "This workspace does not represent a FilePath on a particular Computer.");
@@ -168,47 +232,19 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new AbortException(FAILURE_MESSAGE + "Could not access workspace's node to inject Coverity environment.");
         }
 
-        if (Result.ABORTED.equals(build.getResult())) {
-            throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
-        }
-
         final VirtualChannel virtualChannel = node.getChannel();
         if (virtualChannel == null) {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
 
-        try {
-            final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
-            changeSets = runWrapper.getChangeSets();
+        return virtualChannel;
+    }
 
-            final ProcessChangeLogSets processChangeLogSets = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
-            final List<String> changeSet = processChangeLogSets.computeChangeSet();
-
-            final CoverityRemoteInstallationValidator coverityRemoteInstallationValidator = new CoverityRemoteInstallationValidator(logger, false, (HashMap<String, String>) intEnvironmentVariables.getVariables());
-            final String pathToCoverityToolHome = virtualChannel.call(coverityRemoteInstallationValidator);
-
-            final SetUpCoverityEnvironment coverityEnvironmentStep = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, pathToCoverityToolHome, coverityInstanceUrl, projectName, streamName, viewName, changeSet);
-            coverityEnvironmentStep.setUpCoverityEnvironment();
+    private SubStep.Operating<Void> populateEnvironment(final Context context, final IntEnvironmentVariables intEnvironmentVariables) {
+        return ignored -> {
             intEnvironmentVariables.getVariables().forEach(context::env);
-
-            if (Boolean.TRUE.equals(createMissingProjectsAndStreams)) {
-                final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
-                final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-                final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
-                createMissingProjectsAndStreams.checkAndCreateMissingProjectsAndStreams();
-            }
-        } catch (final InterruptedException e) {
-            throw e;
-        } catch (final IntegrationException e) {
-            logger.debug(null, e);
-            throw new AbortException(FAILURE_MESSAGE + e.getMessage());
-        } catch (final Exception e) {
-            throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
-        } finally {
-            if (phoneHomeResponse != null) {
-                phoneHomeResponse.getImmediateResult();
-            }
-        }
+            return SubStepResponse.SUCCESS();
+        };
     }
 
     @Override
