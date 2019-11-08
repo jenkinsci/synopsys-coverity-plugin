@@ -11,11 +11,11 @@ buildscript {
 }
 
 plugins {
-    id 'org.jenkins-ci.jpi' version '0.31.0'
+    id 'org.jenkins-ci.jpi' version '0.33.0'
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '2.2.2-SNAPSHOT'
+version = '2.3.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
@@ -55,7 +55,7 @@ jenkinsPlugin {
 dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
 
-    implementation 'com.synopsys.integration:coverity-common:0.4.3'
+    implementation 'com.synopsys.integration:coverity-common:0.5.0'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
@@ -75,8 +75,9 @@ task renameFile {
 }
 
 task generateJelly(type: GenerateJelly) {
-    pathToExtensionResourcesPackage = 'src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/'
-    pathToJellyJson = 'src/main/resources/templates/coverity/jelly/'
+    def resourcesDir = project.sourceSets.main.resources.srcDirs.first()
+    pathToExtensionResourcesPackage = "$resourcesDir/com/synopsys/integration/jenkins/coverity/extensions/"
+    pathToJellyJson = "$resourcesDir/templates/coverity/jelly/"
     outputPathToJson = ['buildstep/CoverityBuildStep'               : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
                         'buildstep/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
@@ -86,8 +87,9 @@ task generateJelly(type: GenerateJelly) {
 }
 
 task generateHelp(type: GenerateHtml) {
-    pathToExtensionResourcesPackage = 'src/main/resources/com/synopsys/integration/jenkins/coverity/extensions/'
-    pathToHelpJson = 'src/main/resources/templates/coverity/help/'
+    def resourcesDir = project.sourceSets.main.resources.srcDirs.first()
+    pathToExtensionResourcesPackage = "$resourcesDir/com/synopsys/integration/jenkins/coverity/extensions/"
+    pathToHelpJson = "$resourcesDir/templates/coverity/help/"
     outputPathToJson = ['buildstep/CoverityBuildStep'             : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
                         'buildstep/CommandArguments'              : 'commandArguments.json',

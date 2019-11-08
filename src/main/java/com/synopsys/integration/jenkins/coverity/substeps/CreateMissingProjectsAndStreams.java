@@ -24,10 +24,10 @@ package com.synopsys.integration.jenkins.coverity.substeps;
 
 import java.util.Optional;
 
+import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceException_Exception;
+import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
+import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
-import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
-import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 
 public class CreateMissingProjectsAndStreams {
