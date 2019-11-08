@@ -22,7 +22,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -153,13 +152,19 @@ public class CoverityBuildStep extends Builder {
     }
 
     @Override
-    public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) {
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
-        intEnvironmentVariables.putAll(build.getEnvironment(listener));
         final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
-        final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
+        PhoneHomeResponse phoneHomeResponse = null;
+        final Thread currentThread = Thread.currentThread();
+        final ClassLoader threadClassLoader = currentThread.getContextClassLoader();
+        final ClassLoader classClassLoader = this.getClass().getClassLoader();
 
         try {
+            currentThread.setContextClassLoader(classClassLoader);
+            phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
+            intEnvironmentVariables.putAll(build.getEnvironment(listener));
+
             final FilePath workingDirectory = getWorkingDirectory(build);
 
             if (Result.ABORTED.equals(build.getResult())) {
@@ -254,6 +259,7 @@ public class CoverityBuildStep extends Builder {
             if (null != phoneHomeResponse) {
                 phoneHomeResponse.getImmediateResult();
             }
+            currentThread.setContextClassLoader(threadClassLoader);
         }
 
         return true;

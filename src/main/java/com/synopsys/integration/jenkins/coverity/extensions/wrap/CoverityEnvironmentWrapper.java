@@ -177,7 +177,11 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
 
+        final Thread currentThread = Thread.currentThread();
+        final ClassLoader threadClassLoader = currentThread.getContextClassLoader();
+        final ClassLoader classClassLoader = this.getClass().getClassLoader();
         try {
+            currentThread.setContextClassLoader(classClassLoader);
             final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
             changeSets = runWrapper.getChangeSets();
 
@@ -205,6 +209,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         } catch (final Exception e) {
             throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
         } finally {
+            currentThread.setContextClassLoader(threadClassLoader);
             if (phoneHomeResponse != null) {
                 phoneHomeResponse.getImmediateResult();
             }

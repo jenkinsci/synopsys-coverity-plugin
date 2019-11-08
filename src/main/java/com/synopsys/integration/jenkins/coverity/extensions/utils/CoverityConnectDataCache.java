@@ -22,15 +22,11 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
-import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
 
@@ -66,15 +62,11 @@ public abstract class CoverityConnectDataCache<T> {
             logger.info("Refreshing connection to Coverity Connect instance...");
             retrievingNow.set(true);
 
-            final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig();
-            final WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
-            webServiceFactory.connect();
-
-            this.cachedData = getFreshData(webServiceFactory);
+            this.cachedData = getFreshData(coverityConnectInstance);
 
             lastTimeRetrieved = Instant.now();
             logger.info("Connection refreshed successfully.");
-        } catch (final MalformedURLException | IllegalArgumentException | IllegalStateException | CoverityIntegrationException e) {
+        } catch (final IllegalArgumentException | IllegalStateException e) {
             logger.error("[ERROR] Could not refresh connection to Coverity Connect instance. Please confirm you have a valid URL.");
             logger.trace("Stack trace:", e);
         } finally {
@@ -82,6 +74,6 @@ public abstract class CoverityConnectDataCache<T> {
         }
     }
 
-    protected abstract T getFreshData(final WebServiceFactory webServiceFactory);
+    protected abstract T getFreshData(final CoverityConnectInstance coverityConnectInstance);
 
 }

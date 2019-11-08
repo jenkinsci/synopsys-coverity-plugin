@@ -22,15 +22,13 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
-import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.List;
 
-import com.synopsys.integration.coverity.api.ws.configuration.ConfigurationService;
-import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceException_Exception;
 import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
-import com.synopsys.integration.coverity.api.ws.configuration.ProjectFilterSpecDataObj;
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
+import com.synopsys.integration.jenkins.coverity.UiWebServices;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
 
 public class ProjectStreamCache extends CoverityConnectDataCache<List<ProjectDataObj>> {
@@ -39,18 +37,16 @@ public class ProjectStreamCache extends CoverityConnectDataCache<List<ProjectDat
     }
 
     @Override
-    protected List<ProjectDataObj> getFreshData(final WebServiceFactory webServiceFactory) {
+    protected List<ProjectDataObj> getFreshData(final CoverityConnectInstance coverityConnectInstance) {
         List<ProjectDataObj> projects = Collections.emptyList();
+
         try {
-            logger.info("Attempting retrieval of Coverity Projects.");
-            final ConfigurationService configurationService = webServiceFactory.createConfigurationService();
-            final ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
-            projects = configurationService.getProjects(projectFilterSpecDataObj);
-            logger.info("Completed retrieval of Coverity Projects.");
-        } catch (MalformedURLException | CovRemoteServiceException_Exception e) {
+            projects = UiWebServices.withLogger(logger).getAllProjects(coverityConnectInstance);
+        } catch (final CoverityIntegrationException e) {
             logger.error(e.getMessage());
             logger.trace("Stack trace:", e);
         }
+
         return projects;
     }
 }

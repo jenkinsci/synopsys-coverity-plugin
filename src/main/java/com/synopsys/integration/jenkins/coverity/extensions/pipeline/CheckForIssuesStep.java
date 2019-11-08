@@ -213,7 +213,12 @@ public class CheckForIssuesStep extends Step implements Serializable {
             final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
 
             final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
+
+            final Thread currentThread = Thread.currentThread();
+            final ClassLoader threadClassLoader = currentThread.getContextClassLoader();
+            final ClassLoader classClassLoader = this.getClass().getClassLoader();
             try {
+                currentThread.setContextClassLoader(classClassLoader);
                 final String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
                 final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
 
@@ -242,6 +247,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
                 return defectCount;
             } finally {
+                currentThread.setContextClassLoader(threadClassLoader);
                 if (null != phoneHomeResponse) {
                     phoneHomeResponse.getImmediateResult();
                 }
