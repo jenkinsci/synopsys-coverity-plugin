@@ -196,9 +196,9 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         final CreateMissingProjectsAndStreams createMissingProjectsAndStreamsStep = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
 
         StepWorkflow.firstCall(validateInstallation)
-            .thenGetData(processChangeSet)
-            .thenConsumeData(setUpCoverityEnvironment)
-            .thenExecute(populateEnvironment(context, intEnvironmentVariables))
+            .then(processChangeSet)
+            .then(setUpCoverityEnvironment)
+            .then(populateEnvironment(context, intEnvironmentVariables))
             .andSometimes(createMissingProjectsAndStreamsStep).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
             .run()
             .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response));

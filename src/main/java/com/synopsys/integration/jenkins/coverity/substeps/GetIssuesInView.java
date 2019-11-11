@@ -25,10 +25,10 @@ package com.synopsys.integration.jenkins.coverity.substeps;
 import java.io.IOException;
 import java.util.Map;
 
+import com.synopsys.integration.coverity.api.rest.ViewContents;
+import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceException_Exception;
+import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
-import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
-import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.view.ViewContents;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
@@ -36,7 +36,7 @@ import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsExcept
 import com.synopsys.integration.jenkins.substeps.AbstractSupplyingSubStep;
 import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 
-public class GetIssuesInView extends AbstractSupplyingSubStep<Void, Integer> {
+public class GetIssuesInView extends AbstractSupplyingSubStep<Integer> {
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final ViewService viewService;
     private final String projectName;

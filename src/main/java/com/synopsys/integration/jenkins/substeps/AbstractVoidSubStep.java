@@ -22,10 +22,10 @@
  */
 package com.synopsys.integration.jenkins.substeps;
 
-public abstract class AbstractVoidSubStep<T> implements SubStep.Consuming<T> {
-    public abstract SubStepResponse<Void> run();
+public abstract class AbstractVoidSubStep implements SubStep.Executing {
+    public abstract SubStepResponse<Object> run();
 
-    public SubStepResponse<Void> run(final SubStepResponse<T> previousResponse) {
+    public SubStepResponse<Object> run(final SubStepResponse previousResponse) {
         if (previousResponse.isSuccess()) {
             return run();
         } else {

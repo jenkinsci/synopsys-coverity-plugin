@@ -26,11 +26,11 @@ import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.List;
 
+import com.synopsys.integration.coverity.api.ws.configuration.ConfigurationService;
+import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceException_Exception;
+import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
+import com.synopsys.integration.coverity.api.ws.configuration.ProjectFilterSpecDataObj;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.coverity.ws.v9.ConfigurationService;
-import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
-import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.v9.ProjectFilterSpecDataObj;
 import com.synopsys.integration.log.IntLogger;
 
 public class ProjectStreamCache extends CoverityConnectDataCache<List<ProjectDataObj>> {

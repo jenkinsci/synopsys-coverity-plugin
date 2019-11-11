@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
+import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
-import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;

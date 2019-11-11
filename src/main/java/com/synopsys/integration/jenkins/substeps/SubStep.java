@@ -27,11 +27,19 @@ public interface SubStep<T, R> {
     SubStepResponse<R> run(final SubStepResponse<T> previousResponse);
 
     @FunctionalInterface
-    interface Consuming<T> extends SubStep<T, Void> {
+    interface Consuming<T> extends SubStep<T, Object> {
+    }
+
+    @FunctionalInterface
+    interface Supplying<R> extends SubStep<Object, R> {
     }
 
     @FunctionalInterface
     interface Operating<T> extends SubStep<T, T> {
+    }
+
+    @FunctionalInterface
+    interface Executing extends SubStep<Object, Object> {
     }
 
 }

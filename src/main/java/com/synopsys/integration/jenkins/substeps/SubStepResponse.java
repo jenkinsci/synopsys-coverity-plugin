@@ -34,7 +34,7 @@ public class SubStepResponse<T> {
     }
 
     // You should not return no data on a success unless you explicitly claim to return no data -- rotte OCT 9 2019
-    public static SubStepResponse<Void> SUCCESS() {
+    public static SubStepResponse<Object> SUCCESS() {
         return SUCCESS(null);
     }
 

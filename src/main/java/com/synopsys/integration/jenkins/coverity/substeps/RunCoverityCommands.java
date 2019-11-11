@@ -53,7 +53,7 @@ public class RunCoverityCommands extends AbstractConsumingSubStep<List<List<Stri
         this.virtualChannel = virtualChannel;
     }
 
-    public SubStepResponse<Void> run(final List<List<String>> commands) {
+    public SubStepResponse<Object> run(final List<List<String>> commands) {
         try {
             boolean oneOrMoreCommandsFailed = false;
             for (final List<String> arguments : commands) {

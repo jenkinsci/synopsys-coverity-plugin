@@ -40,7 +40,7 @@ import com.synopsys.integration.rest.RestConstants;
 
 import hudson.scm.ChangeLogSet;
 
-public class ProcessChangeLogSets extends AbstractSupplyingSubStep<Void, List<String>> {
+public class ProcessChangeLogSets extends AbstractSupplyingSubStep<List<String>> {
     private final IntLogger logger;
     private final List<ChangeLogSet<?>> changeLogSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;

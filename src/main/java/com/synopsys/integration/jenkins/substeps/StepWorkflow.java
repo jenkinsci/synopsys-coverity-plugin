@@ -22,25 +22,23 @@
  */
 package com.synopsys.integration.jenkins.substeps;
 
-public class StepWorkflow<T> {
-    private Node<Void, ?> firstStep;
-    private Node<?, T> lastStep;
+import java.util.function.Predicate;
 
-    protected StepWorkflow(final Node<Void, ?> firstStep, final Node<?, T> lastStep) {
+public class StepWorkflow<T> {
+    protected FlowController<Object, ?> firstStep;
+    protected FlowController<?, T> lastStep;
+
+    protected StepWorkflow(final FlowController<Object, ?> firstStep, final FlowController<?, T> lastStep) {
         this.firstStep = firstStep;
         this.lastStep = lastStep;
     }
 
-    public static <R> StepWorkflowBuilder<R> first(final SubStep<Void, R> firstStep) {
-        return new StepWorkflowBuilder<>(firstStep);
+    public static <R> Builder<R> first(final SubStep<Object, R> firstStep) {
+        return new Builder<>(firstStep);
     }
 
-    public static <R> StepWorkflowBuilder<R> firstCall(final RemoteSubStep<Void, R> firstStep) {
-        return new StepWorkflowBuilder<>(firstStep);
-    }
-
-    public static <R> StepWorkflow<R> just(final SubStep<Void, R> onlyStep) {
-        return new StepWorkflow<>(new Node<>(onlyStep), new Node<>(onlyStep));
+    public static <R> StepWorkflow<R> just(final SubStep<Object, R> onlyStep) {
+        return new StepWorkflow<>(new FlowController<>(onlyStep), new FlowController<>(onlyStep));
     }
 
     public StepWorkflowResponse<T> run() {
@@ -48,42 +46,107 @@ public class StepWorkflow<T> {
         return new StepWorkflowResponse<>(lastStep.response);
     }
 
-    public SubStepResponse<T> runAsSubStep() {
+    private SubStepResponse<T> runAsSubStep() {
         firstStep.runStep(SubStepResponse.SUCCESS());
         return lastStep.response;
     }
 
-    protected interface Builder<T> {
-        <R> Builder<R> thenExecute(final SubStep<T, R> subStep);
-
-        Builder<Void> thenDo(final AbstractVoidSubStep<T> subStep);
-
-        <R> Builder<R> thenGetData(final AbstractSupplyingSubStep<T, R> subStep);
-
-        Builder<Void> thenConsumeData(final AbstractConsumingSubStep<T> subStep);
-
-        <R> Builder<R> thenCall(final RemoteSubStep<T, R> subStep);
-    }
-
-    public static class Node<U, S> {
+    protected static class FlowController<U, S> {
         private final SubStep<U, S> step;
-        private Node<S, ?> next;
+        private FlowController<S, ?> next;
         private SubStepResponse<S> response;
 
-        public Node(final SubStep<U, S> current) {
+        protected FlowController(final SubStep<U, S> current) {
             this.step = current;
         }
 
-        public <R> Node<S, R> addNext(final SubStep<S, R> next) {
-            final Node<S, R> nextNode = new Node<>(next);
-            this.next = nextNode;
-            return nextNode;
+        protected SubStepResponse<S> getResponse() {
+            return response;
         }
 
-        public void runStep(final SubStepResponse<U> previousResponse) {
+        protected <R> FlowController<S, R> addNext(final SubStep<S, R> nextStep) {
+            final FlowController<S, R> next = new FlowController<>(nextStep);
+            this.next = next;
+            return next;
+        }
+
+        protected void runStep(final SubStepResponse<U> previousResponse) {
             response = step.run(previousResponse);
             if (next != null) {
                 next.runStep(response);
+            }
+        }
+    }
+
+    public static class Builder<T> {
+        private final FlowController<Object, ?> firstStep;
+        private final FlowController<?, T> lastStep;
+
+        private Builder(final SubStep<Object, T> firstStep) {
+            final FlowController<Object, T> firstFlowController = new FlowController<>(firstStep);
+            this.firstStep = firstFlowController;
+            this.lastStep = firstFlowController;
+        }
+
+        private <S> Builder(final Builder<S> stepWorkflowBuilder, final SubStep<S, T> nextStep) {
+            this.firstStep = stepWorkflowBuilder.firstStep;
+            this.lastStep = stepWorkflowBuilder.lastStep.addNext(nextStep);
+        }
+
+        public <R> Builder<R> then(final SubStep<T, R> subStep) {
+            return new Builder<>(this, subStep);
+        }
+
+        public <R> ConditionalBuilder<T, R> andSometimes(final SubStep<Object, R> subStep) {
+            return new ConditionalBuilder<>(this, subStep);
+        }
+
+        public StepWorkflow<T> build() {
+            return new StepWorkflow<>(firstStep, lastStep);
+        }
+
+        public StepWorkflowResponse<T> run() {
+            return this.build().run();
+        }
+
+    }
+
+    public static class ConditionalBuilder<P, T> {
+        private final Builder<T> conditionalStepWorkflowBuilder;
+        private final Builder<P> parentBuilder;
+
+        private ConditionalBuilder(final Builder<P> parentBuilder, final SubStep<Object, T> firstStep) {
+            this.parentBuilder = parentBuilder;
+            this.conditionalStepWorkflowBuilder = new Builder<>(firstStep);
+        }
+
+        private <U> ConditionalBuilder(final ConditionalBuilder<P, U> currentBuilder, final Builder<T> conditionalStepWorkflowBuilder) {
+            this.parentBuilder = currentBuilder.parentBuilder;
+            this.conditionalStepWorkflowBuilder = conditionalStepWorkflowBuilder;
+        }
+
+        public <R> ConditionalBuilder<P, R> then(final SubStep<T, R> subStep) {
+            return new ConditionalBuilder<>(this, conditionalStepWorkflowBuilder.then(subStep));
+        }
+
+        public <B> Builder<Object> butOnlyIf(final B objectToTest, final Predicate<B> tester) {
+            return this.build(previousResponse -> this.runConditionalWorkflow(objectToTest, tester, previousResponse));
+        }
+
+        private Builder<Object> build(final SubStep<P, Object> workflowAsSubstep) {
+            return new Builder<>(parentBuilder, workflowAsSubstep);
+        }
+
+        private <B> SubStepResponse<Object> runConditionalWorkflow(final B objectToTest, final Predicate<B> tester, final SubStepResponse<P> previousResponse) {
+            if (previousResponse.isSuccess()) {
+                if (tester.test(objectToTest)) {
+                    final SubStepResponse<T> response = conditionalStepWorkflowBuilder.build().runAsSubStep();
+                    // The test occurs at runtime but our builder API demands a promise of typing at compile time. Since we don't know until runtime, we cannot promise data. -- rotte OCT 07 2019
+                    return new SubStepResponse<>(response.isSuccess(), null, response.getException());
+                }
+                return SubStepResponse.SUCCESS();
+            } else {
+                return SubStepResponse.FAILURE(previousResponse);
             }
         }
     }

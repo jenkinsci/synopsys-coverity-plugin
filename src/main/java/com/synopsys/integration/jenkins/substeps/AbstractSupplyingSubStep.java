@@ -22,11 +22,11 @@
  */
 package com.synopsys.integration.jenkins.substeps;
 
-public abstract class AbstractSupplyingSubStep<T, R> implements SubStep<T, R> {
+public abstract class AbstractSupplyingSubStep<R> implements SubStep.Supplying<R> {
     public abstract SubStepResponse<R> run();
 
     @Override
-    public SubStepResponse<R> run(final SubStepResponse<T> previousResponse) {
+    public SubStepResponse<R> run(final SubStepResponse previousResponse) {
         if (previousResponse.isSuccess()) {
             return run();
         } else {

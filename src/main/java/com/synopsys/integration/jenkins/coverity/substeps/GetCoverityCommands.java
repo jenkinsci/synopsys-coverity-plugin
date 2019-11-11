@@ -46,7 +46,7 @@ import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.Util;
 
-public class GetCoverityCommands extends AbstractSupplyingSubStep<Void, List<List<String>>> {
+public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<String>>> {
     private final JenkinsCoverityLogger logger;
     private final IntEnvironmentVariables intEnvironmentVariables;
     private final CoverityRunConfiguration coverityRunConfiguration;

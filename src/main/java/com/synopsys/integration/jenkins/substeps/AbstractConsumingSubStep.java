@@ -23,10 +23,10 @@
 package com.synopsys.integration.jenkins.substeps;
 
 public abstract class AbstractConsumingSubStep<T> implements SubStep.Consuming<T> {
-    public abstract SubStepResponse<Void> run(T data);
+    public abstract SubStepResponse<Object> run(T data);
 
     @Override
-    public SubStepResponse<Void> run(final SubStepResponse<T> previousResponse) {
+    public SubStepResponse<Object> run(final SubStepResponse<T> previousResponse) {
         if (previousResponse.isSuccess() && previousResponse.hasData()) {
             return run(previousResponse.getData());
         } else {

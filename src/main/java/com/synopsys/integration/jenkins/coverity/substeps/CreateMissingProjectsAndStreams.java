@@ -24,15 +24,15 @@ package com.synopsys.integration.jenkins.coverity.substeps;
 
 import java.util.Optional;
 
+import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceException_Exception;
+import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
+import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
-import com.synopsys.integration.coverity.ws.v9.CovRemoteServiceException_Exception;
-import com.synopsys.integration.coverity.ws.v9.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.v9.StreamDataObj;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.substeps.AbstractVoidSubStep;
 import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 
-public class CreateMissingProjectsAndStreams extends AbstractVoidSubStep<Void> {
+public class CreateMissingProjectsAndStreams extends AbstractVoidSubStep {
     private final JenkinsCoverityLogger logger;
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final String projectName;
@@ -46,7 +46,7 @@ public class CreateMissingProjectsAndStreams extends AbstractVoidSubStep<Void> {
     }
 
     @Override
-    public SubStepResponse<Void> run() {
+    public SubStepResponse<Object> run() {
         try {
             Optional<ProjectDataObj> matchingProject = configurationServiceWrapper.getProjectByExactName(projectName);
             if (!matchingProject.isPresent()) {

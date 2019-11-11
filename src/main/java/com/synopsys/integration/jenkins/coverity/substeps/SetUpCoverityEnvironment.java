@@ -59,7 +59,7 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<List<Stri
     }
 
     @Override
-    public SubStepResponse<Void> run(final List<String> changeSet) {
+    public SubStepResponse<Object> run(final List<String> changeSet) {
         try {
             final CoverityConnectInstance coverityInstance = GlobalValueHelper.getCoverityInstanceWithUrl(logger, coverityInstanceUrl).orElseThrow(
                 () -> new CoverityJenkinsException("No Coverity Connect instance with the URL \"" + coverityInstanceUrl + "\" could be found in the Jenkins System config.")
