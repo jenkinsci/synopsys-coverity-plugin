@@ -61,7 +61,7 @@ import com.synopsys.integration.jenkins.coverity.substeps.remote.ValidateCoverit
 import com.synopsys.integration.jenkins.substeps.RemoteSubStep;
 import com.synopsys.integration.jenkins.substeps.StepWorkflow;
 import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
+import com.synopsys.integration.jenkins.substeps.SubStep;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -190,7 +190,7 @@ public class CoverityBuildStep extends Builder {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
 
-        final FilePath workingDirectory = build.getWorkspace() == null ? build.getWorkspace() : new FilePath(node.getChannel(), build.getProject().getCustomWorkspace());
+        final FilePath workingDirectory = build.getWorkspace() != null ? build.getWorkspace() : new FilePath(node.getChannel(), build.getProject().getCustomWorkspace());
 
         final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
         final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
@@ -209,25 +209,16 @@ public class CoverityBuildStep extends Builder {
         final ClassLoader threadClassLoader = thread.getContextClassLoader();
 
         return StepWorkflow
-                   .first(previousResponse -> setContextClassloader(previousResponse, thread))
+                   .first(SubStep.Executing.of(() -> thread.setContextClassLoader(this.getClass().getClassLoader())))
                    .then(validateInstallation)
                    .then(processChangeSet)
                    .then(setUpCoverityEnvironment)
                    .then(createMissingProjectsAndStreams)
                    .andSometimes(getCoverityCommands).then(runCoverityCommands).butOnlyIf(intEnvironmentVariables, this::shouldRunCoverityCommands)
-                   .andSometimes(getIssuesInView).then(previousResponse -> failOnIssuesPresent(previousResponse, build, viewName)).butOnlyIf(checkForIssuesInView, Objects::nonNull)
-                   .andSometimes(previousResponse -> cleanUpWorkspace(previousResponse, workingDirectory)).butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
+                   .andSometimes(getIssuesInView).then(SubStep.Consuming.of(issueCount -> failOnIssuesPresent(issueCount, build, viewName))).butOnlyIf(checkForIssuesInView, Objects::nonNull)
+                   .andSometimes(SubStep.Executing.of(() -> cleanUpWorkspace(workingDirectory))).butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
                    .run()
                    .handleResponse(response -> afterPerform(response, build, phoneHomeResponse, thread, threadClassLoader));
-    }
-
-    private SubStepResponse<Object> setContextClassloader(final SubStepResponse<Object> previousResponse, final Thread thread) {
-        if (previousResponse.isSuccess()) {
-            thread.setContextClassLoader(this.getClass().getClassLoader());
-            return SubStepResponse.SUCCESS();
-        } else {
-            return SubStepResponse.FAILURE(previousResponse);
-        }
     }
 
     private boolean shouldRunCoverityCommands(final IntEnvironmentVariables intEnvironmentVariables) {
@@ -250,40 +241,22 @@ public class CoverityBuildStep extends Builder {
         return true;
     }
 
-    private SubStepResponse<Object> failOnIssuesPresent(final SubStepResponse<Integer> previousResponse, final AbstractBuild<?, ?> build, final String viewName) {
-        if (previousResponse.isSuccess() && previousResponse.hasData()) {
-            final int defectCount = previousResponse.getData();
-            logger.alwaysLog("Checking for issues in view");
-            logger.alwaysLog("-- Build state for issues in the view: " + checkForIssuesInView.getBuildStatusForIssues().getDisplayName());
-            logger.alwaysLog("-- Coverity project name: " + projectName);
-            logger.alwaysLog("-- Coverity view name: " + viewName);
+    private void failOnIssuesPresent(final Integer defectCount, final AbstractBuild<?, ?> build, final String viewName) {
+        logger.alwaysLog("Checking for issues in view");
+        logger.alwaysLog("-- Build state for issues in the view: " + checkForIssuesInView.getBuildStatusForIssues().getDisplayName());
+        logger.alwaysLog("-- Coverity project name: " + projectName);
+        logger.alwaysLog("-- Coverity view name: " + viewName);
 
-            if (defectCount > 0) {
-                logger.alwaysLog(String.format("[Coverity] Found %s issues in view.", defectCount));
-                logger.alwaysLog("Setting build status to " + checkForIssuesInView.getBuildStatusForIssues().getResult().toString());
-                build.setResult(checkForIssuesInView.getBuildStatusForIssues().getResult());
-            }
-            return SubStepResponse.SUCCESS();
-        } else {
-            return SubStepResponse.FAILURE(previousResponse);
+        if (defectCount > 0) {
+            logger.alwaysLog(String.format("[Coverity] Found %s issues in view.", defectCount));
+            logger.alwaysLog("Setting build status to " + checkForIssuesInView.getBuildStatusForIssues().getResult().toString());
+            build.setResult(checkForIssuesInView.getBuildStatusForIssues().getResult());
         }
     }
 
-    private SubStepResponse<Object> cleanUpWorkspace(final SubStepResponse<Object> previousStep, final FilePath workingDirectory) {
-        if (previousStep.isSuccess()) {
-            try {
-                final FilePath intermediateDirectory = new FilePath(workingDirectory, "idir");
-                intermediateDirectory.deleteRecursive();
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return SubStepResponse.FAILURE(e);
-            } catch (final IOException e) {
-                return SubStepResponse.FAILURE(e);
-            }
-            return SubStepResponse.SUCCESS();
-        } else {
-            return SubStepResponse.FAILURE(previousStep);
-        }
+    private void cleanUpWorkspace(final FilePath workingDirectory) throws IOException, InterruptedException {
+        final FilePath intermediateDirectory = new FilePath(workingDirectory, "idir");
+        intermediateDirectory.deleteRecursive();
     }
 
     private boolean afterPerform(final StepWorkflowResponse<Object> stepWorkflowResponse, final AbstractBuild<?, ?> build, final PhoneHomeResponse phoneHomeResponse, final Thread thread, final ClassLoader threadClassLoader) {

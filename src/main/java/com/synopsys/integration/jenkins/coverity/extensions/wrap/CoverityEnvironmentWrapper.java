@@ -57,7 +57,7 @@ import com.synopsys.integration.jenkins.coverity.substeps.remote.ValidateCoverit
 import com.synopsys.integration.jenkins.substeps.RemoteSubStep;
 import com.synopsys.integration.jenkins.substeps.StepWorkflow;
 import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
+import com.synopsys.integration.jenkins.substeps.SubStep;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
@@ -176,7 +176,22 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         final RunWrapper runWrapper = new RunWrapper(build, true);
-        final VirtualChannel virtualChannel = getAndValidateChannel(workspace);
+
+        final Computer computer = workspace.toComputer();
+        if (computer == null) {
+            throw new AbortException(FAILURE_MESSAGE + "This workspace does not represent a FilePath on a particular Computer.");
+        }
+
+        final Node node = computer.getNode();
+        if (node == null) {
+            throw new AbortException(FAILURE_MESSAGE + "Could not access workspace's node to inject Coverity environment.");
+        }
+
+        final VirtualChannel virtualChannel = node.getChannel();
+        if (virtualChannel == null) {
+            throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
+        }
+
         final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
         final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
         final WebServiceFactory webServiceFactory;
@@ -197,7 +212,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         StepWorkflow.first(validateInstallation)
             .then(processChangeSet)
             .then(setUpCoverityEnvironment)
-            .then(previousResponse -> populateEnvironment(previousResponse, context, intEnvironmentVariables))
+            .then(SubStep.Executing.of(() -> intEnvironmentVariables.getVariables().forEach(context::env)))
             .andSometimes(createMissingProjectsAndStreamsStep).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
             .run()
             .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response));
@@ -217,34 +232,6 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new AbortException(FAILURE_MESSAGE + e.getMessage());
         } catch (final Exception e) {
             throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
-        }
-    }
-
-    private VirtualChannel getAndValidateChannel(final FilePath workspace) throws AbortException {
-        final Computer computer = workspace.toComputer();
-        if (computer == null) {
-            throw new AbortException(FAILURE_MESSAGE + "This workspace does not represent a FilePath on a particular Computer.");
-        }
-
-        final Node node = computer.getNode();
-        if (node == null) {
-            throw new AbortException(FAILURE_MESSAGE + "Could not access workspace's node to inject Coverity environment.");
-        }
-
-        final VirtualChannel virtualChannel = node.getChannel();
-        if (virtualChannel == null) {
-            throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
-        }
-
-        return virtualChannel;
-    }
-
-    private SubStepResponse<Object> populateEnvironment(final SubStepResponse previousResponse, final Context context, final IntEnvironmentVariables intEnvironmentVariables) {
-        if (previousResponse.isSuccess()) {
-            intEnvironmentVariables.getVariables().forEach(context::env);
-            return SubStepResponse.SUCCESS();
-        } else {
-            return SubStepResponse.FAILURE(previousResponse);
         }
     }
 

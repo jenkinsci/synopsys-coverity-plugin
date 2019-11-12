@@ -22,6 +22,6 @@
  */
 package com.synopsys.integration.function;
 
-public interface ThrowingConsumer<T, E extends Throwable> {
-    void apply(T t) throws E;
+public interface ThrowingExecutor<E extends Throwable> {
+    void execute() throws E;
 }
