@@ -46,6 +46,7 @@ import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsExcept
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
+import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
@@ -179,13 +180,23 @@ public class CoverityBuildStep extends Builder {
             return false;
         }
 
-        final VirtualChannel virtualChannel = getAndValidateChannel(build);
+        final Node node = build.getBuiltOn();
+        if (node == null) {
+            throw new AbortException(FAILURE_MESSAGE + "No node was configured or accessible.");
+        }
+
+        final VirtualChannel virtualChannel = node.getChannel();
+        if (virtualChannel == null) {
+            throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
+        }
+
+        final FilePath workingDirectory = build.getWorkspace() == null ? build.getWorkspace() : new FilePath(node.getChannel(), build.getProject().getCustomWorkspace());
+
         final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
         final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
         final String viewName = checkForIssuesInView != null && checkForIssuesInView.getViewName() != null ? checkForIssuesInView.getViewName() : StringUtils.EMPTY;
         final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
         final ViewService viewService = webServiceFactory.createViewService();
-        final FilePath workingDirectory = getWorkingDirectory(build);
 
         final RemoteSubStep<Object, Object> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, isSimpleMode, coverityToolHome));
         final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, build.getChangeSets(), configureChangeSetPatterns);
@@ -210,20 +221,6 @@ public class CoverityBuildStep extends Builder {
                    .handleResponse(response -> afterPerform(response, build, phoneHomeResponse, thread, threadClassLoader));
     }
 
-    private VirtualChannel getAndValidateChannel(final AbstractBuild<?, ?> build) throws AbortException {
-        final Node node = build.getBuiltOn();
-        if (node == null) {
-            throw new AbortException(FAILURE_MESSAGE + "No node was configured or accessible.");
-        }
-
-        final VirtualChannel virtualChannel = node.getChannel();
-        if (virtualChannel == null) {
-            throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
-        }
-
-        return virtualChannel;
-    }
-
     private SubStepResponse<Object> setContextClassloader(final SubStepResponse<Object> previousResponse, final Thread thread) {
         if (previousResponse.isSuccess()) {
             thread.setContextClassLoader(this.getClass().getClassLoader());
@@ -234,29 +231,23 @@ public class CoverityBuildStep extends Builder {
     }
 
     private boolean shouldRunCoverityCommands(final IntEnvironmentVariables intEnvironmentVariables) {
-        if (analysisIsIncremental(intEnvironmentVariables) && intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString()).isEmpty()) {
+        final boolean analysisIsIncremental;
+        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+            analysisIsIncremental = false;
+        } else {
+            final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityRunConfiguration;
+            final int changeSetSize = Integer.valueOf(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), "0"));
+            final CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
+            final int changeSetThreshold = simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold();
+
+            analysisIsIncremental = CoverityAnalysisType.COV_RUN_DESKTOP.equals(coverityAnalysisType) || (CoverityAnalysisType.THRESHOLD.equals(coverityAnalysisType) && changeSetSize < changeSetThreshold);
+        }
+
+        if (analysisIsIncremental && intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString()).isEmpty()) {
             logger.alwaysLog("Skipping Synopsys Coverity static analysis because the analysis type was determined to be Incremental Analysis and the Jenkins $CHANGE_SET was empty.");
             return false;
         }
         return true;
-    }
-
-    private boolean analysisIsIncremental(final IntEnvironmentVariables intEnvironmentVariables) {
-        if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
-            return true;
-        }
-
-        final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityRunConfiguration;
-        final int changeSetSize = Integer.valueOf(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), "0"));
-
-        switch (simpleCoverityRunConfiguration.getCoverityAnalysisType()) {
-            case COV_RUN_DESKTOP:
-                return false;
-            case THRESHOLD:
-                return changeSetSize > simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold();
-            default:
-                return true;
-        }
     }
 
     private SubStepResponse<Object> failOnIssuesPresent(final SubStepResponse<Integer> previousResponse, final AbstractBuild<?, ?> build, final String viewName) {
@@ -323,22 +314,6 @@ public class CoverityBuildStep extends Builder {
         logger.error("[ERROR] " + e.getMessage());
         logger.debug(e.getMessage(), e);
         build.setResult(result);
-    }
-
-    private FilePath getWorkingDirectory(final AbstractBuild<?, ?> build) throws AbortException {
-        final FilePath workingDirectory;
-        if (build.getWorkspace() == null) {
-            // might be using custom workspace
-            final Node node = build.getBuiltOn();
-            if (node != null) {
-                workingDirectory = new FilePath(node.getChannel(), build.getProject().getCustomWorkspace());
-            } else {
-                throw new AbortException(FAILURE_MESSAGE + "Could not determine working directory");
-            }
-        } else {
-            workingDirectory = build.getWorkspace();
-        }
-        return workingDirectory;
     }
 
     @Extension
