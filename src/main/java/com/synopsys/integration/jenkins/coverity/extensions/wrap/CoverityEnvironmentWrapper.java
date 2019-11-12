@@ -57,7 +57,6 @@ import com.synopsys.integration.jenkins.coverity.substeps.remote.ValidateCoverit
 import com.synopsys.integration.jenkins.substeps.RemoteSubStep;
 import com.synopsys.integration.jenkins.substeps.StepWorkflow;
 import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
-import com.synopsys.integration.jenkins.substeps.SubStep;
 import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -190,21 +189,21 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
 
-        final RemoteSubStep<Void, Void> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, false, coverityToolHome));
+        final RemoteSubStep<Object, Object> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, false, coverityToolHome));
         final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
         final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName);
         final CreateMissingProjectsAndStreams createMissingProjectsAndStreamsStep = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
 
-        StepWorkflow.firstCall(validateInstallation)
+        StepWorkflow.first(validateInstallation)
             .then(processChangeSet)
             .then(setUpCoverityEnvironment)
-            .then(populateEnvironment(context, intEnvironmentVariables))
+            .then(previousResponse -> populateEnvironment(previousResponse, context, intEnvironmentVariables))
             .andSometimes(createMissingProjectsAndStreamsStep).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
             .run()
             .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response));
     }
 
-    private void afterSetUp(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Void> response) throws IOException {
+    private void afterSetUp(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Object> response) throws IOException {
         try {
             if (null != phoneHomeResponse) {
                 phoneHomeResponse.getImmediateResult();
@@ -240,11 +239,13 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         return virtualChannel;
     }
 
-    private SubStep.Operating<Void> populateEnvironment(final Context context, final IntEnvironmentVariables intEnvironmentVariables) {
-        return ignored -> {
+    private SubStepResponse<Object> populateEnvironment(final SubStepResponse previousResponse, final Context context, final IntEnvironmentVariables intEnvironmentVariables) {
+        if (previousResponse.isSuccess()) {
             intEnvironmentVariables.getVariables().forEach(context::env);
             return SubStepResponse.SUCCESS();
-        };
+        } else {
+            return SubStepResponse.FAILURE(previousResponse);
+        }
     }
 
     @Override
