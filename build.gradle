@@ -77,7 +77,7 @@ task renameFile {
 task generateJelly(type: GenerateJelly) {
     def resourcesDir = project.sourceSets.main.resources.srcDirs.first()
     pathToExtensionResourcesPackage = "$resourcesDir/com/synopsys/integration/jenkins/coverity/extensions/"
-    pathToJellyJson = 'src/main/resources/templates/coverity/jelly/'
+    pathToJellyJson = "$resourcesDir/templates/coverity/jelly/"
     outputPathToJson = ['buildstep/CoverityBuildStep'               : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
                         'buildstep/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
@@ -89,8 +89,8 @@ task generateJelly(type: GenerateJelly) {
 task generateHelp(type: GenerateHtml) {
     def resourcesDir = project.sourceSets.main.resources.srcDirs.first()
     pathToExtensionResourcesPackage = "$resourcesDir/com/synopsys/integration/jenkins/coverity/extensions/"
-    pathToHelpJson = 'src/main/resources/templates/coverity/help/'
-    outputPathToJson = ['buildstep/CoverityBuildStep'            : 'buildStep.json',
+    pathToHelpJson = "$resourcesDir/templates/coverity/help/"
+    outputPathToJson = ['buildstep/CoverityBuildStep'             : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
                         'buildstep/CommandArguments'              : 'commandArguments.json',
                         'CheckForIssuesInView'                    : 'checkForIssuesInView.json',

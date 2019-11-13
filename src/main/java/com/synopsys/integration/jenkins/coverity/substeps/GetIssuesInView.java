@@ -72,7 +72,7 @@ public class GetIssuesInView extends AbstractSupplyingSubStep<Integer> {
         }
     }
 
-    private String getProjectIdFromName(final String projectName) throws CovRemoteServiceException_Exception, CoverityJenkinsException {
+    private String getProjectIdFromName(final String projectName) throws CoverityJenkinsException, CovRemoteServiceException_Exception {
         return configurationServiceWrapper.getProjectByExactName(projectName)
                    .map(ProjectDataObj::getProjectKey)
                    .map(String::valueOf)
