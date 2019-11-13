@@ -20,8 +20,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.function;
+package com.synopsys.integration.jenkins.substeps;
 
-public interface ThrowingOperator<T, E extends Throwable> {
-    T operate(T t) throws E;
+public abstract class AbstractExecutingSubStep implements SubStep<Object, Object> {
+    public abstract SubStepResponse<Object>
+
+    run();
+
+    public SubStepResponse<Object> run(final SubStepResponse previousResponse) {
+        if (previousResponse.isSuccess()) {
+            return run();
+        } else {
+            return SubStepResponse.FAILURE(previousResponse);
+        }
+    }
 }

@@ -202,17 +202,18 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
         }
 
+        final FilePath intermediateDirectory = new FilePath(workspace, "idir");
         final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
 
         final RemoteSubStep<Object, Object> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, false, coverityToolHome));
         final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
-        final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName);
+        final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName, intermediateDirectory.getRemote());
         final CreateMissingProjectsAndStreams createMissingProjectsAndStreamsStep = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
 
         StepWorkflow.first(validateInstallation)
             .then(processChangeSet)
             .then(setUpCoverityEnvironment)
-            .then(SubStep.Executing.of(() -> intEnvironmentVariables.getVariables().forEach(context::env)))
+            .then(SubStep.ofExecutor(() -> intEnvironmentVariables.getVariables().forEach(context::env)))
             .andSometimes(createMissingProjectsAndStreamsStep).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
             .run()
             .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response));

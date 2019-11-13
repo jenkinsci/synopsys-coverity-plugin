@@ -29,10 +29,10 @@ import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
-import com.synopsys.integration.jenkins.substeps.AbstractVoidSubStep;
+import com.synopsys.integration.jenkins.substeps.AbstractExecutingSubStep;
 import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 
-public class CreateMissingProjectsAndStreams extends AbstractVoidSubStep {
+public class CreateMissingProjectsAndStreams extends AbstractExecutingSubStep {
     private final JenkinsCoverityLogger logger;
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final String projectName;

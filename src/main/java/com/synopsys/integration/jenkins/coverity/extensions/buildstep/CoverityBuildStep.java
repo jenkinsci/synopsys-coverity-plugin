@@ -94,7 +94,7 @@ public class CoverityBuildStep extends Builder {
     private final String coverityInstanceUrl;
     private JenkinsCoverityLogger logger;
 
-    // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
+    // Any field set by a DataBoundSetter should be explicitly declared as @Nullable to avoid accidental NPEs -- rotte 10/21/2019
     @Nullable
     private CleanUpAction cleanUpAction;
 
@@ -190,9 +190,11 @@ public class CoverityBuildStep extends Builder {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
 
-        final FilePath workingDirectory = build.getWorkspace() != null ? build.getWorkspace() : new FilePath(node.getChannel(), build.getProject().getCustomWorkspace());
-
         final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
+        final String customWorkingDirectory = isSimpleMode ? ((SimpleCoverityRunConfiguration) coverityRunConfiguration).getCustomWorkingDirectory() : null;
+        final String remoteWorkingDirectoryPath = computeRemoteWorkingDirectory(customWorkingDirectory, build.getWorkspace(), build.getProject().getCustomWorkspace());
+        final FilePath intermediateDirectory = new FilePath(virtualChannel, remoteWorkingDirectoryPath).child("idir");
+
         final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
         final String viewName = checkForIssuesInView != null && checkForIssuesInView.getViewName() != null ? checkForIssuesInView.getViewName() : StringUtils.EMPTY;
         final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
@@ -200,25 +202,35 @@ public class CoverityBuildStep extends Builder {
 
         final RemoteSubStep<Object, Object> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, isSimpleMode, coverityToolHome));
         final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, build.getChangeSets(), configureChangeSetPatterns);
-        final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName);
+        final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName, intermediateDirectory.getRemote());
         final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
         final GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
-        final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, workingDirectory.getRemote(), onCommandFailure, virtualChannel);
+        final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, remoteWorkingDirectoryPath, onCommandFailure, virtualChannel);
         final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, projectName, viewName);
         final Thread thread = Thread.currentThread();
         final ClassLoader threadClassLoader = thread.getContextClassLoader();
 
         return StepWorkflow
-                   .first(SubStep.Executing.of(() -> thread.setContextClassLoader(this.getClass().getClassLoader())))
+                   .first(SubStep.ofExecutor(() -> thread.setContextClassLoader(this.getClass().getClassLoader())))
                    .then(validateInstallation)
                    .then(processChangeSet)
                    .then(setUpCoverityEnvironment)
                    .then(createMissingProjectsAndStreams)
                    .andSometimes(getCoverityCommands).then(runCoverityCommands).butOnlyIf(intEnvironmentVariables, this::shouldRunCoverityCommands)
-                   .andSometimes(getIssuesInView).then(SubStep.Consuming.of(issueCount -> failOnIssuesPresent(issueCount, build, viewName))).butOnlyIf(checkForIssuesInView, Objects::nonNull)
-                   .andSometimes(SubStep.Executing.of(() -> cleanUpWorkspace(workingDirectory))).butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
+                   .andSometimes(getIssuesInView).then(SubStep.ofConsumer(issueCount -> failOnIssuesPresent(issueCount, build, viewName))).butOnlyIf(checkForIssuesInView, Objects::nonNull)
+                   .andSometimes(SubStep.ofExecutor(intermediateDirectory::deleteRecursive)).butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
                    .run()
                    .handleResponse(response -> afterPerform(response, build, phoneHomeResponse, thread, threadClassLoader));
+    }
+
+    private String computeRemoteWorkingDirectory(final String customWorkingDirectory, final FilePath buildWorkspace, final String customProjectWorkspace) {
+        if (StringUtils.isNotBlank(customWorkingDirectory)) {
+            return customWorkingDirectory;
+        } else if (buildWorkspace != null) {
+            return buildWorkspace.getRemote();
+        } else {
+            return customProjectWorkspace;
+        }
     }
 
     private boolean shouldRunCoverityCommands(final IntEnvironmentVariables intEnvironmentVariables) {
@@ -254,12 +266,7 @@ public class CoverityBuildStep extends Builder {
         }
     }
 
-    private void cleanUpWorkspace(final FilePath workingDirectory) throws IOException, InterruptedException {
-        final FilePath intermediateDirectory = new FilePath(workingDirectory, "idir");
-        intermediateDirectory.deleteRecursive();
-    }
-
-    private boolean afterPerform(final StepWorkflowResponse<Object> stepWorkflowResponse, final AbstractBuild<?, ?> build, final PhoneHomeResponse phoneHomeResponse, final Thread thread, final ClassLoader threadClassLoader) {
+    private boolean afterPerform(final StepWorkflowResponse stepWorkflowResponse, final AbstractBuild<?, ?> build, final PhoneHomeResponse phoneHomeResponse, final Thread thread, final ClassLoader threadClassLoader) {
         final boolean wasSuccessful = stepWorkflowResponse.wasSuccessful();
         try {
             if (!wasSuccessful) {

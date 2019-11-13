@@ -90,7 +90,7 @@ task generateHelp(type: GenerateHtml) {
     def resourcesDir = project.sourceSets.main.resources.srcDirs.first()
     pathToExtensionResourcesPackage = "$resourcesDir/com/synopsys/integration/jenkins/coverity/extensions/"
     pathToHelpJson = 'src/main/resources/templates/coverity/help/'
-    outputPathToJson = ['buildstep/CoverityBuildSt ep'            : 'buildStep.json',
+    outputPathToJson = ['buildstep/CoverityBuildStep'            : 'buildStep.json',
                         'buildstep/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
                         'buildstep/CommandArguments'              : 'commandArguments.json',
                         'CheckForIssuesInView'                    : 'checkForIssuesInView.json',

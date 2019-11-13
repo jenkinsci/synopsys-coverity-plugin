@@ -22,9 +22,8 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
-import java.util.Optional;
-
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -46,8 +45,16 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     private final CoverityAnalysisType coverityAnalysisType;
     private final CommandArguments commandArguments;
     private final String sourceArgument;
+
+    // Any field set by a DataBoundSetter should be explicitly declared as @Nullable to avoid accidental NPEs -- rotte 11/13/2019
+    @Nullable
+    private String customWorkingDirectory;
+
+    @Nullable
     private CoverityCaptureType coverityCaptureType;
-    private int changeSetAnalysisThreshold;
+
+    @Nullable
+    private Integer changeSetAnalysisThreshold;
 
     @DataBoundConstructor
     public SimpleCoverityRunConfiguration(final CoverityAnalysisType coverityAnalysisType, final String sourceArgument, final CommandArguments commandArguments) {
@@ -63,6 +70,43 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
         return defaultCoverityRunConfiguration;
     }
 
+    public String getSourceArgument() {
+        return sourceArgument;
+    }
+
+    public CommandArguments getCommandArguments() {
+        return commandArguments;
+    }
+
+    public CoverityAnalysisType getCoverityAnalysisType() {
+        return coverityAnalysisType;
+    }
+
+    public CoverityAnalysisType getDefaultCoverityAnalysisType() {
+        return CoverityAnalysisType.COV_ANALYZE;
+    }
+
+    public int getChangeSetAnalysisThreshold() {
+        if (changeSetAnalysisThreshold == null) {
+            return 0;
+        }
+        return changeSetAnalysisThreshold;
+    }
+
+    @DataBoundSetter
+    public void setChangeSetAnalysisThreshold(final Integer changeSetAnalysisThreshold) {
+        this.changeSetAnalysisThreshold = changeSetAnalysisThreshold;
+    }
+
+    public String getCustomWorkingDirectory() {
+        return customWorkingDirectory;
+    }
+
+    @DataBoundSetter
+    public void setCustomWorkingDirectory(final String customWorkingDirectory) {
+        this.customWorkingDirectory = customWorkingDirectory;
+    }
+
     public CoverityCaptureType getCoverityCaptureType() {
         return coverityCaptureType;
     }
@@ -74,35 +118,6 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
 
     public CoverityCaptureType getDefaultCoverityCaptureType() {
         return CoverityCaptureType.COV_BUILD;
-    }
-
-    public String getSourceArgument() {
-        return sourceArgument;
-    }
-
-    public int getChangeSetAnalysisThreshold() {
-        return changeSetAnalysisThreshold;
-    }
-
-    @DataBoundSetter
-    public void setChangeSetAnalysisThreshold(final Integer changeSetAnalysisThreshold) {
-        this.changeSetAnalysisThreshold = changeSetAnalysisThreshold;
-    }
-
-    public CoverityAnalysisType getCoverityAnalysisType() {
-        return coverityAnalysisType;
-    }
-
-    public CoverityAnalysisType getDefaultCoverityAnalysisType() {
-        return CoverityAnalysisType.COV_ANALYZE;
-    }
-
-    public CommandArguments getCommandArguments() {
-        return commandArguments;
-    }
-
-    public Optional<CommandArguments> getCommandArgumentsSafely() {
-        return Optional.ofNullable(commandArguments);
     }
 
     @Override

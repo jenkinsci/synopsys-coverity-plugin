@@ -22,7 +22,7 @@
  */
 package com.synopsys.integration.jenkins.substeps;
 
-public abstract class AbstractSupplyingSubStep<R> implements SubStep.Supplying<R> {
+public abstract class AbstractSupplyingSubStep<R> implements SubStep<Object, R> {
     public abstract SubStepResponse<R> run();
 
     @Override

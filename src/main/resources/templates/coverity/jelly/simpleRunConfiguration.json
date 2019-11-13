@@ -11,6 +11,8 @@
     "coverityAnalysisTypeDefault": "getDefaultCoverityAnalysisType",
     "changeSetAnalysisThresholdField": "changeSetAnalysisThreshold",
     "changeSetAnalysisThresholdTitle": "Change set threshold",
+    "customWorkingDirectoryField": "customWorkingDirectory",
+    "customWorkingDirectoryTitle": "Custom Coverity working directory path",
     "commandArgumentsField": "commandArguments",
     "commandArgumentsTitle": "Provide command-specific arguments",
     "covBuildArgumentsField": "covBuildArguments",

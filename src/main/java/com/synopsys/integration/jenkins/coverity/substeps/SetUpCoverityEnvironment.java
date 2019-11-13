@@ -23,7 +23,6 @@
 package com.synopsys.integration.jenkins.coverity.substeps;
 
 import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -47,15 +46,17 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<List<Stri
     private final String projectName;
     private final String streamName;
     private final String viewName;
+    private final String intermediateDirectoryPath;
 
     public SetUpCoverityEnvironment(final IntLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final String coverityInstanceUrl, final String projectName,
-        final String streamName, final String viewName) {
+        final String streamName, final String viewName, final String intermediateDirectoryPath) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.projectName = projectName;
         this.streamName = streamName;
         this.viewName = viewName;
+        this.intermediateDirectoryPath = intermediateDirectoryPath;
     }
 
     @Override
@@ -75,7 +76,7 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<List<Stri
             intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW.toString(), viewName);
             intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString(), String.join(" ", changeSet));
             intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), String.valueOf(changeSet.size()));
-            intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY.toString(), computeIntermediateDirectory());
+            intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY.toString(), intermediateDirectoryPath);
 
             logger.alwaysLog("Synopsys Coverity environment:");
             logger.alwaysLog("-- Synopsys Coverity static analysis tool home: " + coverityToolHomeBin);
@@ -91,13 +92,6 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<List<Stri
         }
 
         return SubStepResponse.SUCCESS();
-    }
-
-    private String computeIntermediateDirectory() {
-        final String workspace = intEnvironmentVariables.getValue("WORKSPACE");
-        final Path workspacePath = Paths.get(workspace);
-        final Path intermediateDirectoryPath = workspacePath.resolve("idir");
-        return intermediateDirectoryPath.toString();
     }
 
 }

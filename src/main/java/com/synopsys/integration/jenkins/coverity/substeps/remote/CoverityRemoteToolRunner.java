@@ -43,19 +43,19 @@ public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
     private final List<String> arguments;
     private final HashMap<String, String> environmentVariables;
 
-    private final String workspacePath;
+    private final String workingDirectoryPath;
 
-    public CoverityRemoteToolRunner(final JenkinsCoverityLogger logger, final String coverityToolHome, final List<String> arguments, final String workspacePath, final HashMap<String, String> environmentVariables) {
+    public CoverityRemoteToolRunner(final JenkinsCoverityLogger logger, final String coverityToolHome, final List<String> arguments, final String workingDirectoryPath, final HashMap<String, String> environmentVariables) {
         super(logger);
         this.environmentVariables = environmentVariables;
         this.coverityToolHome = coverityToolHome;
         this.arguments = arguments;
-        this.workspacePath = workspacePath;
+        this.workingDirectoryPath = workingDirectoryPath;
     }
 
     public Integer call() throws CoverityJenkinsException {
-        final File workspace = new File(workspacePath);
-        final Executable executable = new Executable(arguments, workspace, environmentVariables);
+        final File workingDirectory = new File(workingDirectoryPath);
+        final Executable executable = new Executable(arguments, workingDirectory, environmentVariables);
         final ExecutableManager executableManager = new ExecutableManager(new File(coverityToolHome));
         final Integer exitCode;
         final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();

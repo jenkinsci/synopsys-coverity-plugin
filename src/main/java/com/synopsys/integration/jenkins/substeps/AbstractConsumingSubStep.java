@@ -22,7 +22,7 @@
  */
 package com.synopsys.integration.jenkins.substeps;
 
-public abstract class AbstractConsumingSubStep<T> implements SubStep.Consuming<T> {
+public abstract class AbstractConsumingSubStep<T> implements SubStep<T, Object> {
     public abstract SubStepResponse<Object> run(T data);
 
     @Override
