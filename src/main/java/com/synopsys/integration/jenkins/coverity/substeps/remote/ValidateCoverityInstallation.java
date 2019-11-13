@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -36,22 +35,21 @@ import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
+import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 
-public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<String> {
+public class ValidateCoverityInstallation extends CoverityRemoteCallable<SubStepResponse<Object>> {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_PACIFIC;
     private static final long serialVersionUID = -460886461718309214L;
-    private final HashMap<String, String> environmentVariables;
+    private final String coverityToolHome;
     private final Boolean validateVersion;
 
-    public CoverityRemoteInstallationValidator(final JenkinsCoverityLogger logger, final Boolean validateVersion, final HashMap<String, String> environmentVariables) {
+    public ValidateCoverityInstallation(final JenkinsCoverityLogger logger, final Boolean validateVersion, final String coverityToolHome) {
         super(logger);
-        this.environmentVariables = environmentVariables;
+        this.coverityToolHome = coverityToolHome;
         this.validateVersion = validateVersion;
     }
 
-    public String call() throws CoverityJenkinsException {
-        final String coverityToolHome = environmentVariables.get(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
-
+    public SubStepResponse<Object> call() throws CoverityJenkinsException {
         if (StringUtils.isBlank(coverityToolHome)) {
             throw new CoverityJenkinsException(String.format("Cannot find Coverity installation, %s is not set.", JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()));
         }
@@ -85,7 +83,7 @@ public class CoverityRemoteInstallationValidator extends CoverityRemoteCallable<
             throw new CoverityJenkinsException(String.format("%s was not found", pathToBinDirectory.toString()));
         }
 
-        return pathToBinDirectory.toString();
+        return SubStepResponse.SUCCESS();
     }
 
     /*

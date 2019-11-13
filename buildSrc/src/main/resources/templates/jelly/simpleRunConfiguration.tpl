@@ -11,6 +11,8 @@ import static com.synopsys.integration.jenkins.coverity.GenerateJelly.TEXTBOX
         'f:entry'(field: changeSetAnalysisThresholdField, title: changeSetAnalysisThresholdTitle) {
             'f:textbox'(clazz: 'number', checkmethod: 'post')
         }
+        entry(customWorkingDirectoryField, customWorkingDirectoryTitle, TEXTBOX)
+
         'f:optionalBlock'(checked: "\${instance.$commandArgumentsField != null}", field: commandArgumentsField, title: commandArgumentsTitle) {
             'j:scope' {
                 'j:set'(var: 'descriptor', value: "\${descriptor.getPropertyType(instance,'${commandArgumentsField}').getApplicableDescriptors().get(0)}")

@@ -31,25 +31,28 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.lang.StringUtils;
 
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
+import com.synopsys.integration.jenkins.substeps.AbstractSupplyingSubStep;
+import com.synopsys.integration.jenkins.substeps.SubStepResponse;
+import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.rest.RestConstants;
 
 import hudson.scm.ChangeLogSet;
 
-public class ProcessChangeLogSets {
-    private final JenkinsCoverityLogger logger;
+public class ProcessChangeLogSets extends AbstractSupplyingSubStep<List<String>> {
+    private final IntLogger logger;
     private final List<ChangeLogSet<?>> changeLogSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
-    public ProcessChangeLogSets(final JenkinsCoverityLogger logger, final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public ProcessChangeLogSets(final IntLogger logger, final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         this.logger = logger;
         this.changeLogSets = changeLogSets;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
-    public List<String> computeChangeSet() {
+    @Override
+    public SubStepResponse<List<String>> run() {
         logger.debug("Computing $CHANGE_SET");
         final ChangeSetFilter changeSetFilter;
         if (configureChangeSetPatterns == null) {
@@ -73,7 +76,7 @@ public class ProcessChangeLogSets {
 
         logger.alwaysLog("Computed a $CHANGE_SET of " + changeSet.size() + " files");
 
-        return changeSet;
+        return SubStepResponse.SUCCESS(changeSet);
     }
 
     private Stream<? extends ChangeLogSet.Entry> toEntries(final ChangeLogSet<? extends ChangeLogSet.Entry> changeLogSet) {
@@ -90,4 +93,5 @@ public class ProcessChangeLogSets {
             logger.debug(String.format("Commit %s by %s on %s: %s", entry.getCommitId(), entry.getAuthor(), RestConstants.formatDate(date), entry.getMsg()));
         }
     }
+
 }

@@ -33,8 +33,10 @@ import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
+import com.synopsys.integration.jenkins.substeps.AbstractSupplyingSubStep;
+import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 
-public class GetIssuesInView {
+public class GetIssuesInView extends AbstractSupplyingSubStep<Integer> {
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final ViewService viewService;
     private final String projectName;
@@ -49,21 +51,25 @@ public class GetIssuesInView {
         this.viewName = viewName;
     }
 
-    public Integer getTotalIssuesInView() throws IOException, IntegrationException, CovRemoteServiceException_Exception {
-        logger.alwaysLog(String.format("Checking for issues in project \"%s\", view \"%s\".", projectName, viewName));
-        final String projectId = getProjectIdFromName(projectName);
-        final String viewId = getViewIdFromName(viewName);
+    public SubStepResponse<Integer> run() {
+        try {
+            logger.alwaysLog(String.format("Checking for issues in project \"%s\", view \"%s\".", projectName, viewName));
+            final String projectId = getProjectIdFromName(projectName);
+            final String viewId = getViewIdFromName(viewName);
 
-        final int defectCount;
+            final int defectCount;
 
-        final ViewContents viewContents = viewService.getViewContents(projectId, viewId, 1, 0);
-        if (null == viewContents) {
-            defectCount = 0;
-        } else {
-            defectCount = viewContents.getTotalRows().intValue();
+            final ViewContents viewContents = viewService.getViewContents(projectId, viewId, 1, 0);
+            if (null == viewContents) {
+                defectCount = 0;
+            } else {
+                defectCount = viewContents.getTotalRows().intValue();
+            }
+
+            return SubStepResponse.SUCCESS(defectCount);
+        } catch (final IOException | IntegrationException | CovRemoteServiceException_Exception e) {
+            return SubStepResponse.FAILURE(e);
         }
-
-        return defectCount;
     }
 
     private String getProjectIdFromName(final String projectName) throws CoverityJenkinsException, CovRemoteServiceException_Exception {
