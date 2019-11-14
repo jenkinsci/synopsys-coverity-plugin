@@ -28,9 +28,9 @@ import hudson.remoting.VirtualChannel;
 
 public class RemoteSubStep<T, R> implements SubStep<T, R> {
     private final VirtualChannel virtualChannel;
-    private final CoverityRemoteCallable<SubStepResponse<R>> callable;
+    private final CoverityRemoteCallable<RemoteSubStepResponse<R>> callable;
 
-    public RemoteSubStep(final VirtualChannel virtualChannel, final CoverityRemoteCallable<SubStepResponse<R>> callable) {
+    public RemoteSubStep(final VirtualChannel virtualChannel, final CoverityRemoteCallable<RemoteSubStepResponse<R>> callable) {
         this.virtualChannel = virtualChannel;
         this.callable = callable;
     }
@@ -39,7 +39,8 @@ public class RemoteSubStep<T, R> implements SubStep<T, R> {
     public SubStepResponse<R> run(final SubStepResponse<T> previousResponse) {
         if (previousResponse.isSuccess()) {
             try {
-                return virtualChannel.call(callable);
+                final RemoteSubStepResponse<R> thisResponse = virtualChannel.call(callable);
+                return thisResponse.toSubStepResponse();
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return SubStepResponse.FAILURE(e);
@@ -50,4 +51,5 @@ public class RemoteSubStep<T, R> implements SubStep<T, R> {
             return SubStepResponse.FAILURE(previousResponse);
         }
     }
+
 }

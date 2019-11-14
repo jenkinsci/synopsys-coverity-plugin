@@ -223,6 +223,10 @@ public class CheckForIssuesStep extends Step implements Serializable {
             intEnvironmentVariables.putAll(envVars);
             final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
 
+            final Thread thread = Thread.currentThread();
+            final ClassLoader threadClassLoader = thread.getContextClassLoader();
+            thread.setContextClassLoader(this.getClass().getClassLoader());
+
             final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
             final String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
             final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
@@ -239,11 +243,9 @@ public class CheckForIssuesStep extends Step implements Serializable {
             final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
 
             final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, resolvedProjectName, resolvedViewName);
-
-            return StepWorkflow
-                       .just(getIssuesInView)
+            return StepWorkflow.just(getIssuesInView)
                        .run()
-                       .handleResponse(response -> afterRun(logger, phoneHomeResponse, response, getReturnIssueCount()));
+                       .handleResponse(response -> afterRun(logger, phoneHomeResponse, response, getReturnIssueCount(), thread, threadClassLoader));
 
         }
 
@@ -262,7 +264,8 @@ public class CheckForIssuesStep extends Step implements Serializable {
                 "Coverity issue check failed because required parameter " + parameterName + " was not set. Please set " + parameterName + " or populate $" + environmentVariable.toString() + " with the desired value.");
         }
 
-        private Integer afterRun(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Integer> response, final Boolean returnIssueCount) throws Exception {
+        private Integer afterRun(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Integer> response, final Boolean returnIssueCount, final Thread thread,
+            final ClassLoader threadClassLoader) throws Exception {
             try {
                 if (response.wasSuccessful()) {
                     final Integer defectCount = response.getData();
@@ -282,6 +285,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
                 if (null != phoneHomeResponse) {
                     phoneHomeResponse.getImmediateResult();
                 }
+                thread.setContextClassLoader(threadClassLoader);
             }
 
         }

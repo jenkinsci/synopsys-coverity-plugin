@@ -22,32 +22,35 @@
  */
 package com.synopsys.integration.jenkins.substeps;
 
-public class SubStepResponse<T> {
+import java.io.Serializable;
+
+public class RemoteSubStepResponse<T> implements Serializable {
+    private static final long serialVersionUID = -2531902620195156395L;
     private final boolean subStepSucceeded;
     private final Exception exception;
     private final T data;
 
-    protected SubStepResponse(final boolean subStepSucceeded, final T data, final Exception e) {
+    protected RemoteSubStepResponse(final boolean subStepSucceeded, final T data, final Exception e) {
         this.subStepSucceeded = subStepSucceeded;
         this.exception = e;
         this.data = data;
     }
 
     // You should not return no data on a success unless you explicitly claim to return no data -- rotte OCT 9 2019
-    public static SubStepResponse<Object> SUCCESS() {
+    public static RemoteSubStepResponse<Object> SUCCESS() {
         return SUCCESS(null);
     }
 
-    public static <S> SubStepResponse<S> SUCCESS(final S data) {
-        return new SubStepResponse<>(true, data, null);
+    public static <S> RemoteSubStepResponse<S> SUCCESS(final S data) {
+        return new RemoteSubStepResponse<>(true, data, null);
     }
 
-    public static <S> SubStepResponse<S> FAILURE(final SubStepResponse previousFailure) {
+    public static <S> RemoteSubStepResponse<S> FAILURE(final RemoteSubStepResponse previousFailure) {
         return FAILURE(previousFailure.exception);
     }
 
-    public static <S> SubStepResponse<S> FAILURE(final Exception e) {
-        return new SubStepResponse<>(false, null, e);
+    public static <S> RemoteSubStepResponse<S> FAILURE(final Exception e) {
+        return new RemoteSubStepResponse<>(false, null, e);
     }
 
     public boolean isSuccess() {
@@ -72,5 +75,9 @@ public class SubStepResponse<T> {
 
     public Exception getException() {
         return exception;
+    }
+
+    public SubStepResponse<T> toSubStepResponse() {
+        return new SubStepResponse<>(subStepSucceeded, data, exception);
     }
 }

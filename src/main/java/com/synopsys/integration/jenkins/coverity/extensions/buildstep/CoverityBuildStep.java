@@ -190,6 +190,10 @@ public class CoverityBuildStep extends Builder {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
 
+        final Thread thread = Thread.currentThread();
+        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        thread.setContextClassLoader(this.getClass().getClassLoader());
+
         final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
         final String customWorkingDirectory = isSimpleMode ? ((SimpleCoverityRunConfiguration) coverityRunConfiguration).getCustomWorkingDirectory() : null;
         final String remoteWorkingDirectoryPath = computeRemoteWorkingDirectory(customWorkingDirectory, build.getWorkspace(), build.getProject().getCustomWorkspace());
@@ -207,12 +211,8 @@ public class CoverityBuildStep extends Builder {
         final GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
         final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, remoteWorkingDirectoryPath, onCommandFailure, virtualChannel);
         final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, projectName, viewName);
-        final Thread thread = Thread.currentThread();
-        final ClassLoader threadClassLoader = thread.getContextClassLoader();
 
-        return StepWorkflow
-                   .first(SubStep.ofExecutor(() -> thread.setContextClassLoader(this.getClass().getClassLoader())))
-                   .then(validateInstallation)
+        return StepWorkflow.first(validateInstallation)
                    .then(processChangeSet)
                    .then(setUpCoverityEnvironment)
                    .then(createMissingProjectsAndStreams)

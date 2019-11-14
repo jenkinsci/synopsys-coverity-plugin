@@ -192,6 +192,10 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
 
+        final Thread thread = Thread.currentThread();
+        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        thread.setContextClassLoader(this.getClass().getClassLoader());
+
         final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
         final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
         final WebServiceFactory webServiceFactory;
@@ -210,21 +214,18 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName, intermediateDirectory.getRemote());
         final CreateMissingProjectsAndStreams createMissingProjectsAndStreamsStep = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
 
-        StepWorkflow.first(validateInstallation)
+        StepWorkflow
+            .first(validateInstallation)
             .then(processChangeSet)
             .then(setUpCoverityEnvironment)
             .then(SubStep.ofExecutor(() -> intEnvironmentVariables.getVariables().forEach(context::env)))
             .andSometimes(createMissingProjectsAndStreamsStep).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
             .run()
-            .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response));
+            .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response, thread, threadClassLoader));
     }
 
-    private void afterSetUp(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Object> response) throws IOException {
+    private void afterSetUp(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Object> response, final Thread thread, final ClassLoader threadClassLoader) throws IOException {
         try {
-            if (null != phoneHomeResponse) {
-                phoneHomeResponse.getImmediateResult();
-            }
-
             if (!response.wasSuccessful()) {
                 throw response.getException();
             }
@@ -233,6 +234,11 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             throw new AbortException(FAILURE_MESSAGE + e.getMessage());
         } catch (final Exception e) {
             throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
+        } finally {
+            if (null != phoneHomeResponse) {
+                phoneHomeResponse.getImmediateResult();
+            }
+            thread.setContextClassLoader(threadClassLoader);
         }
     }
 

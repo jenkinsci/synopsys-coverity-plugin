@@ -47,6 +47,11 @@
         "<strong>Determined by change set threshold</strong> will run an <strong>Incremental Analysis</strong> unless the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field.",
         "If the number of files specified in the $CHANGE_SET environment variable meets or exceeds the value of this field, <strong>Determined by change set threshold</strong> will run a <strong>Full Analysis</strong>"
       ]
+    },
+    "customWorkingDirectory": {
+      "overview": [
+        "The fully qualified path to a directory in which to run the cov-build or cov-capture command and create the idir."
+      ]
     }
   }
 }
