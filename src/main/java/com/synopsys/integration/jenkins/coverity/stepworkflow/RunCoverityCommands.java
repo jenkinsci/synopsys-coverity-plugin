@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.substeps;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -31,9 +31,9 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVaria
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
-import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteToolRunner;
-import com.synopsys.integration.jenkins.substeps.AbstractConsumingSubStep;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
+import com.synopsys.integration.jenkins.stepworkflow.CoverityRemoteToolRunner;
+import com.synopsys.integration.stepworkflow.AbstractConsumingSubStep;
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.remoting.VirtualChannel;

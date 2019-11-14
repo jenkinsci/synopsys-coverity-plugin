@@ -20,9 +20,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.substeps;
+package com.synopsys.integration.jenkins.stepworkflow;
 
-import com.synopsys.integration.jenkins.coverity.substeps.remote.CoverityRemoteCallable;
+import com.synopsys.integration.stepworkflow.SubStep;
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 import hudson.remoting.VirtualChannel;
 

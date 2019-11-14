@@ -20,17 +20,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.substeps;
+package com.synopsys.integration.jenkins.stepworkflow;
 
-public abstract class AbstractSupplyingSubStep<R> implements SubStep<Object, R> {
-    public abstract SubStepResponse<R> run();
+import org.jenkinsci.remoting.Role;
+import org.jenkinsci.remoting.RoleChecker;
+
+import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+
+import hudson.remoting.Callable;
+
+public abstract class CoverityRemoteCallable<T> implements Callable<T, IntegrationException> {
+    private static final long serialVersionUID = -4096882757092525358L;
+    protected final JenkinsCoverityLogger logger;
+
+    public CoverityRemoteCallable(final JenkinsCoverityLogger logger) {
+        this.logger = logger;
+    }
 
     @Override
-    public SubStepResponse<R> run(final SubStepResponse previousResponse) {
-        if (previousResponse.isSuccess()) {
-            return run();
-        } else {
-            return SubStepResponse.FAILURE(previousResponse);
-        }
+    public abstract T call() throws IntegrationException;
+
+    @Override
+    public void checkRoles(final RoleChecker checker) throws SecurityException {
+        checker.check(this, new Role(this.getClass()));
     }
 }

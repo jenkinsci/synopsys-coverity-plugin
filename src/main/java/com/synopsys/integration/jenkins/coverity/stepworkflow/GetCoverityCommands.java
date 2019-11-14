@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.substeps;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,8 +40,8 @@ import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArg
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
-import com.synopsys.integration.jenkins.substeps.AbstractSupplyingSubStep;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
+import com.synopsys.integration.stepworkflow.AbstractSupplyingSubStep;
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.Util;

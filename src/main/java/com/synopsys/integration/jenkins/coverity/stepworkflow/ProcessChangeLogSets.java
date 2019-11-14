@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.substeps;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.util.Date;
 import java.util.List;
@@ -32,11 +32,11 @@ import org.apache.commons.lang.StringUtils;
 
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.substeps.AbstractSupplyingSubStep;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.rest.RestConstants;
+import com.synopsys.integration.stepworkflow.AbstractSupplyingSubStep;
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 import hudson.scm.ChangeLogSet;
 

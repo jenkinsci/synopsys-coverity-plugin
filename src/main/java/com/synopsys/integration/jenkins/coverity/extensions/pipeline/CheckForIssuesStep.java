@@ -54,11 +54,11 @@ import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsExcept
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
-import com.synopsys.integration.jenkins.coverity.substeps.GetIssuesInView;
-import com.synopsys.integration.jenkins.substeps.StepWorkflow;
-import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.GetIssuesInView;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
+import com.synopsys.integration.stepworkflow.StepWorkflow;
+import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;

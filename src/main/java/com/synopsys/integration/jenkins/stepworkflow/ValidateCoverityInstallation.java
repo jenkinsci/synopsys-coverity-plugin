@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.substeps.remote;
+package com.synopsys.integration.jenkins.stepworkflow;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,7 +35,6 @@ import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.jenkins.substeps.RemoteSubStepResponse;
 
 public class ValidateCoverityInstallation extends CoverityRemoteCallable<RemoteSubStepResponse<Object>> {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_PACIFIC;

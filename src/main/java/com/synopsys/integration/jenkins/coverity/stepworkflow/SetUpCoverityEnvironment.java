@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.substeps;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
@@ -34,9 +34,9 @@ import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.substeps.AbstractConsumingSubStep;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
 import com.synopsys.integration.log.IntLogger;
+import com.synopsys.integration.stepworkflow.AbstractConsumingSubStep;
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<List<String>> {

@@ -50,17 +50,17 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
-import com.synopsys.integration.jenkins.coverity.substeps.CreateMissingProjectsAndStreams;
-import com.synopsys.integration.jenkins.coverity.substeps.ProcessChangeLogSets;
-import com.synopsys.integration.jenkins.coverity.substeps.SetUpCoverityEnvironment;
-import com.synopsys.integration.jenkins.coverity.substeps.remote.ValidateCoverityInstallation;
-import com.synopsys.integration.jenkins.substeps.RemoteSubStep;
-import com.synopsys.integration.jenkins.substeps.StepWorkflow;
-import com.synopsys.integration.jenkins.substeps.StepWorkflowResponse;
-import com.synopsys.integration.jenkins.substeps.SubStep;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.CreateMissingProjectsAndStreams;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.ProcessChangeLogSets;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.SetUpCoverityEnvironment;
+import com.synopsys.integration.jenkins.stepworkflow.RemoteSubStep;
+import com.synopsys.integration.jenkins.stepworkflow.ValidateCoverityInstallation;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
+import com.synopsys.integration.stepworkflow.StepWorkflow;
+import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
+import com.synopsys.integration.stepworkflow.SubStep;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;

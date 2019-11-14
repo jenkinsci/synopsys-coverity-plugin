@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.substeps;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.util.Optional;
 
@@ -29,8 +29,8 @@ import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
-import com.synopsys.integration.jenkins.substeps.AbstractExecutingSubStep;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
+import com.synopsys.integration.stepworkflow.AbstractExecutingSubStep;
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 public class CreateMissingProjectsAndStreams extends AbstractExecutingSubStep {
     private final JenkinsCoverityLogger logger;

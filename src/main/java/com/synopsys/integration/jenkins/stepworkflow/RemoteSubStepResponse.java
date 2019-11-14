@@ -20,9 +20,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.substeps;
+package com.synopsys.integration.jenkins.stepworkflow;
 
 import java.io.Serializable;
+
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 public class RemoteSubStepResponse<T> implements Serializable {
     private static final long serialVersionUID = -2531902620195156395L;

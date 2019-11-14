@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.coverity.substeps;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.io.IOException;
 import java.util.Map;
@@ -33,8 +33,8 @@ import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.jenkins.substeps.AbstractSupplyingSubStep;
-import com.synopsys.integration.jenkins.substeps.SubStepResponse;
+import com.synopsys.integration.stepworkflow.AbstractSupplyingSubStep;
+import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 public class GetIssuesInView extends AbstractSupplyingSubStep<Integer> {
     private final ConfigurationServiceWrapper configurationServiceWrapper;
