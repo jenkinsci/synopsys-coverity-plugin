@@ -26,7 +26,7 @@ public abstract class AbstractConsumingSubStep<T> implements SubStep<T, Object> 
     public abstract SubStepResponse<Object> run(T data);
 
     @Override
-    public SubStepResponse<Object> run(final SubStepResponse<T> previousResponse) {
+    public SubStepResponse<Object> run(final SubStepResponse<? extends T> previousResponse) {
         if (previousResponse.isSuccess() && previousResponse.hasData()) {
             return run(previousResponse.getData());
         } else {

@@ -204,7 +204,7 @@ public class CoverityBuildStep extends Builder {
         final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
         final ViewService viewService = webServiceFactory.createViewService();
 
-        final RemoteSubStep<Object, Object> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, isSimpleMode, coverityToolHome));
+        final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(logger, isSimpleMode, coverityToolHome);
         final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, build.getChangeSets(), configureChangeSetPatterns);
         final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName, intermediateDirectory.getRemote());
         final CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
@@ -212,7 +212,7 @@ public class CoverityBuildStep extends Builder {
         final RunCoverityCommands runCoverityCommands = new RunCoverityCommands(logger, intEnvironmentVariables, remoteWorkingDirectoryPath, onCommandFailure, virtualChannel);
         final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, projectName, viewName);
 
-        return StepWorkflow.first(validateInstallation)
+        return StepWorkflow.first(RemoteSubStep.of(virtualChannel, validateCoverityInstallation))
                    .then(processChangeSet)
                    .then(setUpCoverityEnvironment)
                    .then(createMissingProjectsAndStreams)

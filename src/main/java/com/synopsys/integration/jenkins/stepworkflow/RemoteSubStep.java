@@ -22,35 +22,32 @@
  */
 package com.synopsys.integration.jenkins.stepworkflow;
 
+import java.io.Serializable;
+
 import com.synopsys.integration.stepworkflow.SubStep;
 import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 import hudson.remoting.VirtualChannel;
 
-public class RemoteSubStep<T, R> implements SubStep<T, R> {
+public class RemoteSubStep<R extends Serializable> implements SubStep<Object, R> {
     private final VirtualChannel virtualChannel;
     private final CoverityRemoteCallable<RemoteSubStepResponse<R>> callable;
 
-    public RemoteSubStep(final VirtualChannel virtualChannel, final CoverityRemoteCallable<RemoteSubStepResponse<R>> callable) {
+    private RemoteSubStep(final VirtualChannel virtualChannel, final CoverityRemoteCallable<RemoteSubStepResponse<R>> callable) {
         this.virtualChannel = virtualChannel;
         this.callable = callable;
     }
 
+    public static <S extends Serializable> RemoteSubStep<S> of(final VirtualChannel virtualChannel, final CoverityRemoteCallable<RemoteSubStepResponse<S>> callable) {
+        return new RemoteSubStep<>(virtualChannel, callable);
+    }
+
     @Override
-    public SubStepResponse<R> run(final SubStepResponse<T> previousResponse) {
-        if (previousResponse.isSuccess()) {
-            try {
-                final RemoteSubStepResponse<R> thisResponse = virtualChannel.call(callable);
-                return thisResponse.toSubStepResponse();
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return SubStepResponse.FAILURE(e);
-            } catch (final Exception e) {
-                return SubStepResponse.FAILURE(e);
-            }
-        } else {
-            return SubStepResponse.FAILURE(previousResponse);
-        }
+    public SubStepResponse<R> run(final SubStepResponse<?> previousResponse) {
+        return SubStep.defaultExecution(previousResponse.isSuccess(), previousResponse, () -> {
+            final RemoteSubStepResponse<R> thisResponse = virtualChannel.call(callable);
+            return thisResponse.toSubStepResponse();
+        });
     }
 
 }

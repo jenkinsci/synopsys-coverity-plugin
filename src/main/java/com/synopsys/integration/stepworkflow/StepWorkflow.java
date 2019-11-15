@@ -53,7 +53,7 @@ public class StepWorkflow<T> {
 
     protected static class FlowController<U, S> {
         private final SubStep<U, S> step;
-        private FlowController<S, ?> next;
+        private FlowController<? super S, ?> next;
         private SubStepResponse<S> response;
 
         protected FlowController(final SubStep<U, S> current) {
@@ -64,13 +64,13 @@ public class StepWorkflow<T> {
             return response;
         }
 
-        protected <R> FlowController<S, R> addNext(final SubStep<S, R> nextStep) {
-            final FlowController<S, R> next = new FlowController<>(nextStep);
+        protected <R> FlowController<? super S, R> addNext(final SubStep<? super S, R> nextStep) {
+            final FlowController<? super S, R> next = new FlowController<>(nextStep);
             this.next = next;
             return next;
         }
 
-        protected void runStep(final SubStepResponse<U> previousResponse) {
+        protected void runStep(final SubStepResponse<? extends U> previousResponse) {
             response = step.run(previousResponse);
             if (next != null) {
                 next.runStep(response);
@@ -88,12 +88,12 @@ public class StepWorkflow<T> {
             this.lastStep = firstFlowController;
         }
 
-        private <S> Builder(final Builder<S> stepWorkflowBuilder, final SubStep<S, T> nextStep) {
+        private <S> Builder(final Builder<S> stepWorkflowBuilder, final SubStep<? super S, T> nextStep) {
             this.firstStep = stepWorkflowBuilder.firstStep;
             this.lastStep = stepWorkflowBuilder.lastStep.addNext(nextStep);
         }
 
-        public <R> Builder<R> then(final SubStep<T, R> subStep) {
+        public <R> Builder<R> then(final SubStep<? super T, R> subStep) {
             return new Builder<>(this, subStep);
         }
 
@@ -137,7 +137,7 @@ public class StepWorkflow<T> {
             return new Builder<>(parentBuilder, workflowAsSubstep);
         }
 
-        private <B> SubStepResponse<Object> runConditionalWorkflow(final B objectToTest, final Predicate<B> tester, final SubStepResponse<P> previousResponse) {
+        private <B> SubStepResponse<Object> runConditionalWorkflow(final B objectToTest, final Predicate<B> tester, final SubStepResponse<? extends P> previousResponse) {
             if (previousResponse.isSuccess()) {
                 if (tester.test(objectToTest)) {
                     final SubStepResponse<T> response = conditionalStepWorkflowBuilder.build().runAsSubStep();

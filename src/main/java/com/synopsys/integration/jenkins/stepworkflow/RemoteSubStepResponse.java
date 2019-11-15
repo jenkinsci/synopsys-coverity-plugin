@@ -26,7 +26,7 @@ import java.io.Serializable;
 
 import com.synopsys.integration.stepworkflow.SubStepResponse;
 
-public class RemoteSubStepResponse<T> implements Serializable {
+public class RemoteSubStepResponse<T extends Serializable> implements Serializable {
     private static final long serialVersionUID = -2531902620195156395L;
     private final boolean subStepSucceeded;
     private final Exception exception;
@@ -39,19 +39,19 @@ public class RemoteSubStepResponse<T> implements Serializable {
     }
 
     // You should not return no data on a success unless you explicitly claim to return no data -- rotte OCT 9 2019
-    public static RemoteSubStepResponse<Object> SUCCESS() {
+    public static RemoteSubStepResponse<Serializable> SUCCESS() {
         return SUCCESS(null);
     }
 
-    public static <S> RemoteSubStepResponse<S> SUCCESS(final S data) {
+    public static <S extends Serializable> RemoteSubStepResponse<S> SUCCESS(final S data) {
         return new RemoteSubStepResponse<>(true, data, null);
     }
 
-    public static <S> RemoteSubStepResponse<S> FAILURE(final RemoteSubStepResponse previousFailure) {
+    public static <S extends Serializable> RemoteSubStepResponse<S> FAILURE(final RemoteSubStepResponse previousFailure) {
         return FAILURE(previousFailure.exception);
     }
 
-    public static <S> RemoteSubStepResponse<S> FAILURE(final Exception e) {
+    public static <S extends Serializable> RemoteSubStepResponse<S> FAILURE(final Exception e) {
         return new RemoteSubStepResponse<>(false, null, e);
     }
 

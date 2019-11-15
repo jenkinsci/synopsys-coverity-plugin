@@ -209,13 +209,13 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         final FilePath intermediateDirectory = new FilePath(workspace, "idir");
         final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
 
-        final RemoteSubStep<Object, Object> validateInstallation = new RemoteSubStep<>(virtualChannel, new ValidateCoverityInstallation(logger, false, coverityToolHome));
+        final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(logger, false, coverityToolHome);
         final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
         final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName, intermediateDirectory.getRemote());
         final CreateMissingProjectsAndStreams createMissingProjectsAndStreamsStep = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
 
         StepWorkflow
-            .first(validateInstallation)
+            .first(RemoteSubStep.of(virtualChannel, validateCoverityInstallation))
             .then(processChangeSet)
             .then(setUpCoverityEnvironment)
             .then(SubStep.ofExecutor(() -> intEnvironmentVariables.getVariables().forEach(context::env)))

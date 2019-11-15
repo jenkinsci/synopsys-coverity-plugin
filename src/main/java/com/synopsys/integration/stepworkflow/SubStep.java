@@ -72,6 +72,6 @@ public interface SubStep<T, R> {
         });
     }
 
-    SubStepResponse<R> run(final SubStepResponse<T> previousResponse);
+    SubStepResponse<R> run(final SubStepResponse<? extends T> previousResponse);
 
 }
