@@ -25,12 +25,12 @@ package com.synopsys.integration.stepworkflow;
 import java.util.function.Predicate;
 
 public class StepWorkflow<T> {
-    protected FlowController<Object, ?> firstStep;
-    protected FlowController<?, T> lastStep;
+    protected FlowController<Object, ?> start;
+    protected FlowController<?, T> end;
 
-    protected StepWorkflow(final FlowController<Object, ?> firstStep, final FlowController<?, T> lastStep) {
-        this.firstStep = firstStep;
-        this.lastStep = lastStep;
+    protected StepWorkflow(final FlowController<Object, ?> start, final FlowController<?, T> end) {
+        this.start = start;
+        this.end = end;
     }
 
     public static <R> Builder<R> first(final SubStep<Object, R> firstStep) {
@@ -42,19 +42,19 @@ public class StepWorkflow<T> {
     }
 
     public StepWorkflowResponse<T> run() {
-        firstStep.runStep(SubStepResponse.SUCCESS());
-        return new StepWorkflowResponse<>(lastStep.response);
+        start.runStep(SubStepResponse.SUCCESS());
+        return new StepWorkflowResponse<>(end.response);
     }
 
     private SubStepResponse<T> runAsSubStep() {
-        firstStep.runStep(SubStepResponse.SUCCESS());
-        return lastStep.response;
+        start.runStep(SubStepResponse.SUCCESS());
+        return end.response;
     }
 
     protected static class FlowController<U, S> {
-        private final SubStep<U, S> step;
-        private FlowController<? super S, ?> next;
-        private SubStepResponse<S> response;
+        protected final SubStep<U, S> step;
+        protected FlowController<? super S, ?> next;
+        protected SubStepResponse<S> response;
 
         protected FlowController(final SubStep<U, S> current) {
             this.step = current;
@@ -64,10 +64,10 @@ public class StepWorkflow<T> {
             return response;
         }
 
-        protected <R> FlowController<? super S, R> addNext(final SubStep<? super S, R> nextStep) {
-            final FlowController<? super S, R> next = new FlowController<>(nextStep);
-            this.next = next;
-            return next;
+        protected <R> FlowController<?, R> append(final SubStep<? super S, R> nextStep) {
+            final FlowController<? super S, R> nextController = new FlowController<>(nextStep);
+            this.next = nextController;
+            return nextController;
         }
 
         protected void runStep(final SubStepResponse<? extends U> previousResponse) {
@@ -79,18 +79,18 @@ public class StepWorkflow<T> {
     }
 
     public static class Builder<T> {
-        private final FlowController<Object, ?> firstStep;
-        private final FlowController<?, T> lastStep;
+        protected final FlowController<Object, ?> start;
+        protected final FlowController<?, T> end;
 
-        private Builder(final SubStep<Object, T> firstStep) {
+        protected Builder(final SubStep<Object, T> firstStep) {
             final FlowController<Object, T> firstFlowController = new FlowController<>(firstStep);
-            this.firstStep = firstFlowController;
-            this.lastStep = firstFlowController;
+            this.start = firstFlowController;
+            this.end = firstFlowController;
         }
 
-        private <S> Builder(final Builder<S> stepWorkflowBuilder, final SubStep<? super S, T> nextStep) {
-            this.firstStep = stepWorkflowBuilder.firstStep;
-            this.lastStep = stepWorkflowBuilder.lastStep.addNext(nextStep);
+        protected <S> Builder(final Builder<S> previousStepWorkflowBuilder, final SubStep<? super S, T> thisStep) {
+            this.start = previousStepWorkflowBuilder.start;
+            this.end = previousStepWorkflowBuilder.end.append(thisStep);
         }
 
         public <R> Builder<R> then(final SubStep<? super T, R> subStep) {
@@ -102,7 +102,7 @@ public class StepWorkflow<T> {
         }
 
         public StepWorkflow<T> build() {
-            return new StepWorkflow<>(firstStep, lastStep);
+            return new StepWorkflow<>(start, end);
         }
 
         public StepWorkflowResponse<T> run() {
@@ -115,12 +115,12 @@ public class StepWorkflow<T> {
         private final Builder<T> conditionalStepWorkflowBuilder;
         private final Builder<P> parentBuilder;
 
-        private ConditionalBuilder(final Builder<P> parentBuilder, final SubStep<Object, T> firstStep) {
+        protected ConditionalBuilder(final Builder<P> parentBuilder, final SubStep<Object, T> firstStep) {
             this.parentBuilder = parentBuilder;
             this.conditionalStepWorkflowBuilder = new Builder<>(firstStep);
         }
 
-        private <U> ConditionalBuilder(final ConditionalBuilder<P, U> currentBuilder, final Builder<T> conditionalStepWorkflowBuilder) {
+        protected <U> ConditionalBuilder(final ConditionalBuilder<P, U> currentBuilder, final Builder<T> conditionalStepWorkflowBuilder) {
             this.parentBuilder = currentBuilder.parentBuilder;
             this.conditionalStepWorkflowBuilder = conditionalStepWorkflowBuilder;
         }
@@ -133,11 +133,11 @@ public class StepWorkflow<T> {
             return this.build(previousResponse -> this.runConditionalWorkflow(objectToTest, tester, previousResponse));
         }
 
-        private Builder<Object> build(final SubStep<P, Object> workflowAsSubstep) {
+        protected Builder<Object> build(final SubStep<P, Object> workflowAsSubstep) {
             return new Builder<>(parentBuilder, workflowAsSubstep);
         }
 
-        private <B> SubStepResponse<Object> runConditionalWorkflow(final B objectToTest, final Predicate<B> tester, final SubStepResponse<? extends P> previousResponse) {
+        protected <B> SubStepResponse<Object> runConditionalWorkflow(final B objectToTest, final Predicate<B> tester, final SubStepResponse<? extends P> previousResponse) {
             if (previousResponse.isSuccess()) {
                 if (tester.test(objectToTest)) {
                     final SubStepResponse<T> response = conditionalStepWorkflowBuilder.build().runAsSubStep();
