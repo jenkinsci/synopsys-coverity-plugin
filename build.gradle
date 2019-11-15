@@ -41,6 +41,18 @@ repositories {
     maven { url 'https://sig-repo.synopsys.com/bds-integrations-release' }
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            if (project.version.toString().contains("SNAPSHOT")) {
+                artifact("${project.getName()}-${project.version}.hpi")
+            } else {
+                artifact("${project.getName()}.hpi")
+            }
+        }
+    }
+}
+
 
 jenkinsPlugin {
     coreVersion = '2.60.1'
@@ -103,3 +115,4 @@ task generateHelp(type: GenerateHtml) {
 
 compileJava.dependsOn generateHelp, generateJelly
 jpi.finalizedBy renameFile
+artifactoryPublish.mustRunAfter renameFile
