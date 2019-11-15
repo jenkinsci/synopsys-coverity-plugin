@@ -53,6 +53,12 @@ publishing {
     }
 }
 
+artifactory {
+    publish {
+        defaults { publications('mavenJava') }
+    }
+}
+
 
 jenkinsPlugin {
     coreVersion = '2.60.1'
