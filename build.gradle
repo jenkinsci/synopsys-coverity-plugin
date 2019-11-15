@@ -1,6 +1,8 @@
 import com.synopsys.integration.jenkins.coverity.GenerateHtml
 import com.synopsys.integration.jenkins.coverity.GenerateJelly
 
+import java.nio.file.Paths
+
 buildscript {
     repositories {
         jcenter()
@@ -25,6 +27,10 @@ project.repositories.remove(jcenterRepo)
 def mavenRepo = project.repositories.findByName('maven')
 project.repositories.remove(mavenRepo)
 
+def libsDirectory = Paths.get("$project.buildDir").resolve('libs')
+def releaseBinary = file(libsDirectory.resolve("${project.getName()}.hpi"))
+def snapshotBinary = file(libsDirectory.resolve("${project.getName()}-${project.version}.hpi"))
+
 project.afterEvaluate {
     // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluated
     List<String> repoNames = new ArrayList()
@@ -45,9 +51,9 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             if (project.version.toString().contains("SNAPSHOT")) {
-                artifact("${project.getName()}-${project.version}.hpi")
+                artifact(snapshotBinary)
             } else {
-                artifact("${project.getName()}.hpi")
+                artifact(releaseBinary)
             }
         }
     }
@@ -84,10 +90,7 @@ dependencies {
 task renameFile {
     doLast {
         if (project.version.toString().contains("SNAPSHOT")) {
-            File libsDirectory = new File(project.buildDir, "libs")
-            File originalFile = new File(libsDirectory, "${project.getName()}.hpi")
-            File newFile = new File(libsDirectory, "${project.getName()}-${project.version}.hpi")
-            originalFile.renameTo newFile
+            releaseBinary.renameTo snapshotBinary
         }
     }
 }
