@@ -32,6 +32,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
+import com.synopsys.integration.jenkins.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 
 import hudson.Extension;
@@ -41,6 +42,10 @@ import hudson.util.FormValidation;
 
 public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand> {
     private static final String JENKINS_INTERMEDIATE_DIRECTORY = "${WORKSPACE}/idir";
+
+    @HelpMarkdown("Provide the Coverity command you want to run.  \r\n"
+                      + "The command should start with the name of the Coverity command you want to run. Ex: cov-build, cov-analyze, etc.  \r\n"
+                      + "For examples and a list of the available environment variables that can be used, refer to [the Command Examples documentation](https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/623024/Coverity+Command+Examples)")
     private final String command;
 
     @DataBoundConstructor

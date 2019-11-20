@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
+import com.synopsys.integration.jenkins.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
@@ -75,15 +76,19 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
     // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
     @Nullable
+    @HelpMarkdown("Specify which Synopsys Coverity connect instance to check for issues.")
     private String coverityInstanceUrl;
 
     @Nullable
+    @HelpMarkdown("Specify the name of the Coverity project the view is associated with.")
     private String projectName;
 
     @Nullable
+    @HelpMarkdown("Specify the name of the Coverity view that you would like to check for issues.")
     private String viewName;
 
     @Nullable
+    @HelpMarkdown("If checked, will return the number of issues discovered in the specified Coverity view instead of throwing an exception.")
     private Boolean returnIssueCount;
 
     @DataBoundConstructor

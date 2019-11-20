@@ -1,4 +1,3 @@
-import com.synopsys.integration.jenkins.coverity.GenerateHtml
 import com.synopsys.integration.jenkins.coverity.GenerateJelly
 
 import java.nio.file.Paths
@@ -33,14 +32,14 @@ def snapshotBinary = file(libsDirectory.resolve("${project.getName()}-${project.
 
 project.afterEvaluate {
     // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluated
-    List<String> repoNames = new ArrayList()
+    /* List<String> repoNames = new ArrayList()
     repoNames.addAll(project.repositories.getNames())
     for (String repoName : repoNames) {
         if (repoName.contains('MavenLocal')) {
             def repoToRemove = project.repositories.findByName(repoName)
             project.repositories.remove(repoToRemove)
         }
-    }
+    } */
 }
 
 repositories {
@@ -80,6 +79,8 @@ dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
 
     implementation 'com.synopsys.integration:coverity-common:0.5.0'
+    annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1-SNAPSHOT'
+    implementation 'com.synopsys.integration:jenkins-common:0.0.1-SNAPSHOT'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
@@ -107,21 +108,6 @@ task generateJelly(type: GenerateJelly) {
                         'wrap/CoverityEnvironmentWrapper'           : 'environmentWrapper.json',]
 }
 
-task generateHelp(type: GenerateHtml) {
-    def resourcesDir = project.sourceSets.main.resources.srcDirs.first()
-    pathToExtensionResourcesPackage = "$resourcesDir/com/synopsys/integration/jenkins/coverity/extensions/"
-    pathToHelpJson = "$resourcesDir/templates/coverity/help/"
-    outputPathToJson = ['buildstep/CoverityBuildStep'             : 'buildStep.json',
-                        'buildstep/SimpleCoverityRunConfiguration': 'simpleRunConfiguration.json',
-                        'buildstep/CommandArguments'              : 'commandArguments.json',
-                        'CheckForIssuesInView'                    : 'checkForIssuesInView.json',
-                        'ConfigureChangeSetPatterns'              : 'configureChangeSetPatterns.json',
-                        'global/CoverityConnectInstance'          : 'coverityConnectInstance.json',
-                        'buildstep/RepeatableCommand'             : 'repeatableCommand.json',
-                        'pipeline/CheckForIssuesStep'             : 'checkForIssuesStep.json',
-                        'wrap/CoverityEnvironmentWrapper'         : 'environmentWrapper.json']
-}
-
-compileJava.dependsOn generateHelp, generateJelly
+compileJava.dependsOn generateJelly
 jpi.finalizedBy renameFile
 artifactoryPublish.mustRunAfter renameFile

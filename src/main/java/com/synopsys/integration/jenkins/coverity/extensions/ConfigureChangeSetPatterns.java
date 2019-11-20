@@ -25,6 +25,7 @@ package com.synopsys.integration.jenkins.coverity.extensions;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+import com.synopsys.integration.jenkins.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
 
 import hudson.Extension;
@@ -33,7 +34,30 @@ import hudson.model.Descriptor;
 import net.sf.json.JSONObject;
 
 public class ConfigureChangeSetPatterns extends AbstractDescribableImpl<ConfigureChangeSetPatterns> {
+    @HelpMarkdown("Specify a comma separated list of filename patterns that you would like to explicitly included from the Jenkins change set.  \r\n"
+                      + "The pattern is applied to the $CHANGE_SET environment variable, and will affect which files are analyzed in an incremental analysis (cov-run-desktop).  \r\n"
+                      + "Examples:\r\n"
+                      + "\r\n"
+                      + "| File Name | Pattern    | Will be included |\r\n"
+                      + "| --------- | ---------- | ---------------- |\r\n"
+                      + "| test.java | *.java     | Yes              |\r\n"
+                      + "| test.java | *.jpg      | No               |\r\n"
+                      + "| test.java | test.*     | Yes              |\r\n"
+                      + "| test.java | test.????  | Yes              |\r\n"
+                      + "| test.java | test.????? | No               |")
     private final String changeSetExclusionPatterns;
+
+    @HelpMarkdown("Specify a comma separated list of filename patterns that you would like to explicitly excluded from the Jenkins change set.  \r\n"
+                      + "The pattern is applied to the $CHANGE_SET environment variable, and will affect which files are analyzed in an incremental analysis (cov-run-desktop).  \r\n"
+                      + "Examples:\r\n"
+                      + "\r\n"
+                      + "| File Name | Pattern    | Will be excluded |\r\n"
+                      + "| --------- | ---------- | ---------------- |\r\n"
+                      + "| test.java | *.java     | Yes              |\r\n"
+                      + "| test.java | *.jpg      | No               |\r\n"
+                      + "| test.java | test.*     | Yes              |\r\n"
+                      + "| test.java | test.????  | Yes              |\r\n"
+                      + "| test.java | test.????? | No               |")
     private final String changeSetInclusionPatterns;
 
     @DataBoundConstructor

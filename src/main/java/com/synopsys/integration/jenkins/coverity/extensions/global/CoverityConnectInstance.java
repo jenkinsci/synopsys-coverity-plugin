@@ -40,6 +40,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
+import com.synopsys.integration.jenkins.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -53,7 +54,12 @@ import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> {
+    @HelpMarkdown("Specify the URL for your Coverity Connect instance.  \r\n"
+                      + "Populates the $COV_HOST and $COV_PORT environment variables")
     private final String url;
+
+    @HelpMarkdown("Specify credentials for authenticating with your Coverity Connect instance.  \r\n"
+                      + "**Note:** \"Username with password\" is the only kind of credentials supported.")
     private final String credentialId;
 
     @DataBoundConstructor

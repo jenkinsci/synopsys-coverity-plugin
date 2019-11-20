@@ -39,6 +39,7 @@ import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
@@ -85,18 +86,33 @@ import hudson.util.ListBoxModel;
 
 public class CoverityBuildStep extends Builder {
     public static final String FAILURE_MESSAGE = "Unable to perform Synopsys Coverity static analysis: ";
-    private final OnCommandFailure onCommandFailure;
+
+    @HelpMarkdown("Specify which Synopsys Coverity connect instance to run this job against.  \r\n"
+                      + "The resulting Synopsys Coverity connect instance URL is stored in the $COV_URL environment variable, and will affect both the full and incremental analysis.")
+    private final String coverityInstanceUrl;
     private final CoverityRunConfiguration coverityRunConfiguration;
+
+    @HelpMarkdown("Specify the name of the Coverity project.  \r\n"
+                      + "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis.")
     private final String projectName;
+
+    @HelpMarkdown("Specify the name of the Coverity stream that you would like to use for the commands.  \r\n"
+                      + "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis.")
     private final String streamName;
+
     private final CheckForIssuesInView checkForIssuesInView;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
-    private final String coverityInstanceUrl;
-    private JenkinsCoverityLogger logger;
+
+    @HelpMarkdown("Specify the action to take if a Coverity static analysis command fails.")
+    private final OnCommandFailure onCommandFailure;
 
     // Any field set by a DataBoundSetter should be explicitly declared as @Nullable to avoid accidental NPEs -- rotte 10/21/2019
     @Nullable
+    @HelpMarkdown("Specify the clean up action to perform on a successful execution.  \r\n"
+                      + "Will either persist or delete the intermediate directory created by the specified capture type.")
     private CleanUpAction cleanUpAction;
+
+    private JenkinsCoverityLogger logger;
 
     @DataBoundConstructor
     public CoverityBuildStep(final String coverityInstanceUrl, final String onCommandFailure, final String projectName, final String streamName, final CheckForIssuesInView checkForIssuesInView,

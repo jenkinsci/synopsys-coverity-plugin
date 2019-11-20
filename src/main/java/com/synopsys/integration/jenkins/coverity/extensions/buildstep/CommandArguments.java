@@ -29,16 +29,59 @@ import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.synopsys.integration.jenkins.HelpMarkdown;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 
 public class CommandArguments extends AbstractDescribableImpl<CommandArguments> {
+    @HelpMarkdown("Specify additional arguments to apply to the invocation of the cov-build command. Affects the **Build** capture type.\r\n"
+                      + "\r\n"
+                      + "**Note:**  \r\n"
+                      + "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.\r\n"
+                      + "* --dir ${WORKSPACE}/idir\r\n"
+                      + "* *Source Argument (build command)*")
     private final String covBuildArguments;
+
+    @HelpMarkdown("Specify additional arguments to apply to the invocation of the cov-analyze command. Affects the **Full Analysis** analysis type.\r\n"
+                      + "\r\n"
+                      + "**Note:**  \r\n"
+                      + "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.\r\n"
+                      + "* --dir ${WORKSPACE}/idir")
     private final String covAnalyzeArguments;
+
+    @HelpMarkdown("Specify additional arguments to apply to the invocation of the cov-run-desktop command. Affects the **Incremental Analysis** analysis type.\r\n"
+                      + "\r\n"
+                      + "**Note:**  \r\n"
+                      + "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.\r\n"
+                      + "* --dir ${WORKSPACE}/idir\r\n"
+                      + "* --url ${COV_URL}\r\n"
+                      + "* --stream ${COV_STREAM}\r\n"
+                      + "* ${CHANGE_SET}")
     private final String covRunDesktopArguments;
+
+    @HelpMarkdown("Specify additional arguments to apply to the invocation of the cov-commit-defects command. Affects <strong>all</strong> analysis types.\r\n"
+                      + "\r\n"
+                      + "**Note:**  \r\n"
+                      + "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.\r\n"
+                      + "* --dir ${WORKSPACE}/idir\r\n"
+                      + "* --url ${COV_URL}\r\n"
+                      + "* --stream ${COVERITY_STREAM}\r\n"
+    )
     private final String covCommitDefectsArguments;
+
+    @HelpMarkdown("Specify additional arguments to apply to the invocation of the cov-capture command. Affects the **Buildless Capture (Project)** and **Buildless Capture (SCM)** capture types.  \r\n"
+                      + "The following options are automatically provided and should not be specified as an argument here. If you wish to override any of the provided arguments, select the 'Run custom Coverity commands' run configuration.\r\n"
+                      + "\r\n"
+                      + "With the **Buildless Capture (Project)** capture type, the following arguments are automatically provided:\r\n"
+                      + "* --project-dir *Source Argument (project directory)*\r\n"
+                      + "* --dir ${WORKSPACE}/idir\r\n"
+                      + "\r\n"
+                      + "With the **Buildless Capture (SCM)** capture type, the following arguments are automatically provided:\r\n"
+                      + "* --scm-url *Source Argument (scm url)*\r\n"
+                      + "* --dir ${WORKSPACE}/idir")
     private final String covCaptureArguments;
 
     @DataBoundConstructor

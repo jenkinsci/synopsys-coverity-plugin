@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.HelpMarkdown;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
@@ -86,17 +87,24 @@ import jenkins.tasks.SimpleBuildWrapper;
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     public static final String FAILURE_MESSAGE = "Unable to inject Coverity Environment: ";
 
+    @HelpMarkdown("Specify which Synopsys Coverity connect instance to run this job against.")
     private final String coverityInstanceUrl;
     private final String coverityPassphrase;
 
     // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
     @Nullable
+    @HelpMarkdown("Specify the name of the Coverity project.  \r\n"
+                      + "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis.")
     private String projectName;
 
     @Nullable
+    @HelpMarkdown("Specify the name of the Coverity stream that you would like to use for the commands.  \r\n"
+                      + "The resulting stream name is stored in the $COV_STREAM environment variable, and will affect both the full and incremental analysis.")
     private String streamName;
 
     @Nullable
+    @HelpMarkdown("Specify the name of the Coverity view that you would like to check for issues.  \r\n"
+                      + "The resulting view name is stored in the $COV_VIEW environment variable, and affects checking for issues in both the full and incremental analysis, if configured.")
     private String viewName;
 
     @Nullable

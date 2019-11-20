@@ -26,6 +26,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.jenkins.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -37,8 +38,10 @@ import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
 
 public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssuesInView> {
-    private static final long serialVersionUID = 850747793907762852L;
+    @HelpMarkdown("Specify the name of the Coverity view that you would like to check for issues.  \r\n"
+                      + "The resulting view name is stored in the $COV_VIEW environment variable, and affects checking for issues in both the full and incremental analysis, if configured.")
     private final String viewName;
+    @HelpMarkdown("Specify the build status to set if issues are found in the configured view.")
     private final BuildStatus buildStatusForIssues;
 
     @DataBoundConstructor
