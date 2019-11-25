@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.synopsys.integration.jenkins.HelpMarkdown;
+import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;

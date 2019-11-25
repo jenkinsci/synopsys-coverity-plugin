@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
-import com.synopsys.integration.jenkins.HelpMarkdown;
+import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;

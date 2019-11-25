@@ -40,7 +40,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.cloudbees.plugins.credentials.matchers.IdMatcher;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.config.CoverityServerConfigBuilder;
-import com.synopsys.integration.jenkins.HelpMarkdown;
+import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 

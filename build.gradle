@@ -1,5 +1,3 @@
-import com.synopsys.integration.jenkins.coverity.GenerateJelly
-
 import java.nio.file.Paths
 
 buildscript {
@@ -96,18 +94,5 @@ task renameFile {
     }
 }
 
-task generateJelly(type: GenerateJelly) {
-    def resourcesDir = project.sourceSets.main.resources.srcDirs.first()
-    pathToExtensionResourcesPackage = "$resourcesDir/com/synopsys/integration/jenkins/coverity/extensions/"
-    pathToJellyJson = "$resourcesDir/templates/coverity/jelly/"
-    outputPathToJson = ['buildstep/CoverityBuildStep'               : 'buildStep.json',
-                        'buildstep/SimpleCoverityRunConfiguration'  : 'simpleRunConfiguration.json',
-                        'buildstep/AdvancedCoverityRunConfiguration': 'advancedRunConfiguration.json',
-                        'global/CoverityGlobalConfig'               : 'globalConfig.json',
-                        'pipeline/CheckForIssuesStep'               : 'checkForIssuesStep.json',
-                        'wrap/CoverityEnvironmentWrapper'           : 'environmentWrapper.json',]
-}
-
-compileJava.dependsOn generateJelly
 jpi.finalizedBy renameFile
 artifactoryPublish.mustRunAfter renameFile

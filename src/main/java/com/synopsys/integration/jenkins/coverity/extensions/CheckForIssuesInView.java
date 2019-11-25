@@ -26,7 +26,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.jenkins.HelpMarkdown;
+import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.log.Slf4jIntLogger;

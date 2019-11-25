@@ -32,7 +32,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.synopsys.integration.coverity.executable.SynopsysEnvironmentVariable;
-import com.synopsys.integration.jenkins.HelpMarkdown;
+import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 
 import hudson.Extension;

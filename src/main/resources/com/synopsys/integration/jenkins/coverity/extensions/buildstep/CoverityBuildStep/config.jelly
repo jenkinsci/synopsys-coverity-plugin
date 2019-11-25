@@ -1,0 +1,61 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <script src="${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js"/>
+    <script type="text/javascript">setRootURL("${app.rootUrl}");</script>
+
+    <f:entry field="coverityInstanceUrl" title="Coverity instance">
+        <f:select id="coverityInstanceUrlBuildStepId"/>
+    </f:entry>
+
+    <f:entry field="projectName" title="Coverity project">
+        <f:combobox id="projectNameBuildStepId"/>
+    </f:entry>
+
+    <f:entry field="streamName" title="Coverity stream">
+        <f:combobox id="streamNameBuildStepId"/>
+    </f:entry>
+
+    <f:optionalBlock checked="${instance.checkForIssuesInView != null}" field="checkForIssuesInView" title="Check for issues">
+        <j:scope>
+            <j:set var="descriptor" value="${descriptor.getPropertyType(instance,'checkForIssuesInView').getApplicableDescriptors().get(0)}"/>
+            <j:set var="instance" value="${instance.checkForIssuesInView}"/>
+            <j:set var="it" value="${it.checkForIssuesInView}"/>
+            <f:entry field="viewName" title="Coverity view">
+                <f:select id="viewNameBuildStepId"/>
+            </f:entry>
+            <f:entry field="buildStatusForIssues" title="Build status if issues are present">
+                <f:select id="buildStatusForIssuesBuildStepId"/>
+            </f:entry>
+        </j:scope>
+    </f:optionalBlock>
+
+    <f:optionalBlock checked="${instance.configureChangeSetPatterns != null}" field="configureChangeSetPatterns" title="Customize change set">
+        <j:scope>
+            <j:set var="descriptor" value="${descriptor.getPropertyType(instance,'configureChangeSetPatterns').getApplicableDescriptors().get(0)}"/>
+            <j:set var="instance" value="${instance.configureChangeSetPatterns}"/>
+            <j:set var="it" value="${it.configureChangeSetPatterns}"/>
+            <f:entry field="changeSetInclusionPatterns" title="Change set inclusion patterns">
+                <f:textbox id="changeSetInclusionPatternsBuildStepId"/>
+            </f:entry>
+            <f:entry field="changeSetExclusionPatterns" title="Change set exclusion patterns">
+                <f:textbox id="changeSetExclusionPatternsBuildStepId"/>
+            </f:entry>
+        </j:scope>
+    </f:optionalBlock>
+
+    <f:entry>
+        <div style="float:right">
+            <input type="button" value="Refresh Coverity projects, streams, and views" class="yui-button ${attrs.clazz}"
+                   onclick="loadProjectsThenStreams('coverityInstanceUrlBuildStepId', 'projectNameBuildStepId', 'streamNameBuildStepId', 'com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityBuildStep');loadViews('coverityInstanceUrlBuildStepId', 'viewNameBuildStepId', 'com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView');"/>
+        </div>
+    </f:entry>
+
+    <f:dropdownDescriptorSelector field="coverityRunConfiguration" title="Coverity run configuration" default="${instance.defaultCoverityRunConfiguration}"/>
+
+    <f:entry field="onCommandFailure" title="On command failure">
+        <f:select id="onCommandFailureBuildStepId"/>
+    </f:entry>
+
+    <f:entry field="cleanUpAction" title="On successful execution">
+        <f:select id="cleanUpActionBuildStepId"/>
+    </f:entry>
+</j:jelly>

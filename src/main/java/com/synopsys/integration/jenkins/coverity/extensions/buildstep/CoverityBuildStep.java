@@ -39,7 +39,7 @@ import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.jenkins.HelpMarkdown;
+import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
@@ -90,7 +90,6 @@ public class CoverityBuildStep extends Builder {
     @HelpMarkdown("Specify which Synopsys Coverity connect instance to run this job against.  \r\n"
                       + "The resulting Synopsys Coverity connect instance URL is stored in the $COV_URL environment variable, and will affect both the full and incremental analysis.")
     private final String coverityInstanceUrl;
-    private final CoverityRunConfiguration coverityRunConfiguration;
 
     @HelpMarkdown("Specify the name of the Coverity project.  \r\n"
                       + "The resulting project name is stored in the $COV_PROJECT environment variable, and will affect both the full and incremental analysis.")
@@ -101,7 +100,10 @@ public class CoverityBuildStep extends Builder {
     private final String streamName;
 
     private final CheckForIssuesInView checkForIssuesInView;
+
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
+
+    private final CoverityRunConfiguration coverityRunConfiguration;
 
     @HelpMarkdown("Specify the action to take if a Coverity static analysis command fails.")
     private final OnCommandFailure onCommandFailure;

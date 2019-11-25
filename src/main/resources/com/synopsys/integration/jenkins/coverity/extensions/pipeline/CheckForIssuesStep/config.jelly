@@ -1,0 +1,27 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <script src="${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js"/>
+    <script type="text/javascript">setRootURL("${app.rootUrl}");</script>
+
+    <f:entry field="coverityInstanceUrl" title="Coverity instance">
+        <f:select id="coverityInstanceUrlCheckIssuesId"/>
+    </f:entry>
+
+    <f:entry field="projectName" title="Coverity project">
+        <f:select id="projectNameCheckIssuesId"/>
+    </f:entry>
+
+    <f:entry field="viewName" title="Coverity view">
+        <f:select id="viewNameCheckIssuesId"/>
+    </f:entry>
+
+    <f:entry field="returnIssueCount" title="Return issue count">
+        <f:checkbox id="returnIssueCountCheckIssuesId"/>
+    </f:entry>
+
+    <f:entry>
+        <div style="float:right">
+            <input type="button" value="Refresh Coverity projects and views" class="yui-button ${attrs.clazz}"
+                   onclick="loadProjects('coverityInstanceUrlCheckIssuesId', 'projectNameCheckIssuesId', 'com.synopsys.integration.jenkins.coverity.extensions.pipeline.CheckForIssuesStep');loadViews('coverityInstanceUrlCheckIssuesId', 'viewNameCheckIssuesId', 'com.synopsys.integration.jenkins.coverity.extensions.pipeline.CheckForIssuesStep');"/>
+        </div>
+    </f:entry>
+</j:jelly>

@@ -25,7 +25,7 @@ package com.synopsys.integration.jenkins.coverity.extensions;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
-import com.synopsys.integration.jenkins.HelpMarkdown;
+import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
 
 import hudson.Extension;

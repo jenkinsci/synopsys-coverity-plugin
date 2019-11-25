@@ -1,0 +1,13 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry>
+        <f:repeatable field="commands" add="Add command" minimum="1">
+            <table style="width:100%" id="commandsId">
+                <f:entry field="command" title="Command">
+                    <f:textbox/>
+                </f:entry>
+            </table>
+
+            <f:repeatableDeleteButton value="Delete command"/>
+        </f:repeatable>
+    </f:entry>
+</j:jelly>
