@@ -30,14 +30,14 @@ def snapshotBinary = file(libsDirectory.resolve("${project.getName()}-${project.
 
 project.afterEvaluate {
     // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluated
-    /* List<String> repoNames = new ArrayList()
+    List<String> repoNames = new ArrayList()
     repoNames.addAll(project.repositories.getNames())
     for (String repoName : repoNames) {
         if (repoName.contains('MavenLocal')) {
             def repoToRemove = project.repositories.findByName(repoName)
             project.repositories.remove(repoToRemove)
         }
-    } */
+    }
 }
 
 repositories {
@@ -74,11 +74,12 @@ jenkinsPlugin {
 }
 
 dependencies {
-    jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
+    annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
 
     implementation 'com.synopsys.integration:coverity-common:0.5.0'
-    annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1-SNAPSHOT'
-    implementation 'com.synopsys.integration:jenkins-common:0.0.1-SNAPSHOT'
+    implementation 'com.synopsys.integration:jenkins-common:0.0.1'
+
+    jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
