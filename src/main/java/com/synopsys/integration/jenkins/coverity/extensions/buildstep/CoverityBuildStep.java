@@ -39,10 +39,11 @@ import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
@@ -50,7 +51,6 @@ import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPa
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.GetCoverityCommands;
@@ -58,13 +58,13 @@ import com.synopsys.integration.jenkins.coverity.stepworkflow.GetIssuesInView;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.ProcessChangeLogSets;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.RunCoverityCommands;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.SetUpCoverityEnvironment;
-import com.synopsys.integration.jenkins.stepworkflow.RemoteSubStep;
-import com.synopsys.integration.jenkins.stepworkflow.ValidateCoverityInstallation;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.ValidateCoverityInstallation;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.stepworkflow.StepWorkflow;
 import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
 import com.synopsys.integration.stepworkflow.SubStep;
+import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStep;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;
@@ -114,7 +114,7 @@ public class CoverityBuildStep extends Builder {
                       + "Will either persist or delete the intermediate directory created by the specified capture type.")
     private CleanUpAction cleanUpAction;
 
-    private JenkinsCoverityLogger logger;
+    private CoverityJenkinsIntLogger logger;
 
     @DataBoundConstructor
     public CoverityBuildStep(final String coverityInstanceUrl, final String onCommandFailure, final String projectName, final String streamName, final CheckForIssuesInView checkForIssuesInView,
@@ -183,7 +183,7 @@ public class CoverityBuildStep extends Builder {
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         intEnvironmentVariables.putAll(build.getEnvironment(listener));
-        logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
+        logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
         final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
 
         if (Result.ABORTED.equals(build.getResult())) {
@@ -373,11 +373,11 @@ public class CoverityBuildStep extends Builder {
         }
 
         public ListBoxModel doFillOnCommandFailureItems() {
-            return FieldHelper.getListBoxModelOf(OnCommandFailure.values());
+            return JenkinsSelectBoxEnum.toListBoxModel(OnCommandFailure.values());
         }
 
         public ListBoxModel doFillCleanUpActionItems() {
-            return FieldHelper.getListBoxModelOf(CleanUpAction.values());
+            return JenkinsSelectBoxEnum.toListBoxModel(CleanUpAction.values());
         }
 
     }

@@ -43,9 +43,9 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
@@ -54,14 +54,14 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelpe
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CreateMissingProjectsAndStreams;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.ProcessChangeLogSets;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.SetUpCoverityEnvironment;
-import com.synopsys.integration.jenkins.stepworkflow.RemoteSubStep;
-import com.synopsys.integration.jenkins.stepworkflow.ValidateCoverityInstallation;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.ValidateCoverityInstallation;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.stepworkflow.StepWorkflow;
 import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
 import com.synopsys.integration.stepworkflow.SubStep;
+import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStep;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;
@@ -177,7 +177,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         intEnvironmentVariables.putAll(initialEnvironment);
-        final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
+        final CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
         final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
         if (Result.ABORTED.equals(build.getResult())) {
             throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
@@ -232,7 +232,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response, thread, threadClassLoader));
     }
 
-    private void afterSetUp(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Object> response, final Thread thread, final ClassLoader threadClassLoader) throws IOException {
+    private void afterSetUp(final CoverityJenkinsIntLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Object> response, final Thread thread, final ClassLoader threadClassLoader) throws IOException {
         try {
             if (!response.wasSuccessful()) {
                 throw response.getException();

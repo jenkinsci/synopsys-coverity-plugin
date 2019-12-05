@@ -23,6 +23,7 @@
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -115,7 +116,8 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
     private List<ProjectDataObj> getProjects(final String coverityConnectUrl) throws CoverityIntegrationException, InterruptedException {
         final CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
         final ProjectStreamCache projectStreamCache = getCache(coverityConnectUrl);
-        return projectStreamCache.getData(coverityConnectInstance);
+        final List<ProjectDataObj> projectDataObjs = projectStreamCache.getData(coverityConnectInstance);
+        return projectDataObjs != null ? projectDataObjs : Collections.emptyList();
     }
 
     private List<StreamDataObj> getStreams(final String coverityConnectUrl, final String projectName) throws CoverityIntegrationException, InterruptedException {

@@ -22,7 +22,9 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-public enum CleanUpAction implements CoveritySelectBoxEnum {
+import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
+
+public enum CleanUpAction implements JenkinsSelectBoxEnum {
     PERSIST_INTERMEDIATE_DIRECTORY("Persist the intermediate directory"),
     DELETE_INTERMEDIATE_DIRECTORY("Clean up the intermediate directory");
 

@@ -20,13 +20,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
-import static hudson.model.Items.XSTREAM;
+import org.jenkinsci.remoting.Role;
+import org.jenkinsci.remoting.RoleChecker;
 
-public class SerializationHelper {
-    public static void migrateFieldFrom(final String oldName, final Class clazz, final String newName) {
-        XSTREAM.aliasField(oldName, clazz, newName);
-        XSTREAM.aliasField(newName, clazz, newName);
+import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
+
+import hudson.remoting.Callable;
+
+public abstract class CoverityRemoteCallable<T> implements Callable<T, IntegrationException> {
+    private static final long serialVersionUID = -4096882757092525358L;
+    protected final CoverityJenkinsIntLogger logger;
+
+    public CoverityRemoteCallable(final CoverityJenkinsIntLogger logger) {
+        this.logger = logger;
+    }
+
+    @Override
+    public abstract T call() throws IntegrationException;
+
+    @Override
+    public void checkRoles(final RoleChecker checker) throws SecurityException {
+        checker.check(this, new Role(this.getClass()));
     }
 }

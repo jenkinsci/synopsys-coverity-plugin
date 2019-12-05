@@ -22,9 +22,11 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
+import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
+
 import hudson.model.Result;
 
-public enum BuildStatus implements CoveritySelectBoxEnum {
+public enum BuildStatus implements JenkinsSelectBoxEnum {
     SUCCESS("Success (Log issues only)", Result.SUCCESS),
     FAILURE("Failure", Result.FAILURE),
     UNSTABLE("Unstable", Result.UNSTABLE);

@@ -22,7 +22,9 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-public enum OnCommandFailure implements CoveritySelectBoxEnum {
+import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
+
+public enum OnCommandFailure implements JenkinsSelectBoxEnum {
     SKIP_REMAINING_COMMANDS("Skip any remaining commands"),
     EXECUTE_REMAINING_COMMANDS("Continue executing any remaining commands");
 

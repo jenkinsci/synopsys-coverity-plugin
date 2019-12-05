@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.stepworkflow;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -33,9 +33,10 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 
 import com.synopsys.integration.coverity.CoverityVersion;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
+import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStepResponse;
 
 public class ValidateCoverityInstallation extends CoverityRemoteCallable<RemoteSubStepResponse<Serializable>> {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_PACIFIC;
@@ -43,7 +44,7 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<RemoteS
     private final String coverityToolHome;
     private final Boolean validateVersion;
 
-    public ValidateCoverityInstallation(final JenkinsCoverityLogger logger, final Boolean validateVersion, final String coverityToolHome) {
+    public ValidateCoverityInstallation(final CoverityJenkinsIntLogger logger, final Boolean validateVersion, final String coverityToolHome) {
         super(logger);
         this.coverityToolHome = coverityToolHome;
         this.validateVersion = validateVersion;

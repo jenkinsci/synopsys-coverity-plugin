@@ -27,11 +27,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
-import com.synopsys.integration.jenkins.stepworkflow.CoverityRemoteToolRunner;
 import com.synopsys.integration.stepworkflow.AbstractConsumingSubStep;
 import com.synopsys.integration.stepworkflow.SubStepResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -39,13 +38,14 @@ import com.synopsys.integration.util.IntEnvironmentVariables;
 import hudson.remoting.VirtualChannel;
 
 public class RunCoverityCommands extends AbstractConsumingSubStep<List<List<String>>> {
-    private final JenkinsCoverityLogger logger;
+    private final CoverityJenkinsIntLogger logger;
     private final IntEnvironmentVariables intEnvironmentVariables;
     private final String remoteWorkingDirectory;
     private final OnCommandFailure onCommandFailure;
     private final VirtualChannel virtualChannel;
 
-    public RunCoverityCommands(final JenkinsCoverityLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final String remoteWorkingDirectory, final OnCommandFailure onCommandFailure, final VirtualChannel virtualChannel) {
+    public RunCoverityCommands(final CoverityJenkinsIntLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final String remoteWorkingDirectory, final OnCommandFailure onCommandFailure,
+        final VirtualChannel virtualChannel) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.remoteWorkingDirectory = remoteWorkingDirectory;

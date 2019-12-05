@@ -31,7 +31,7 @@ import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.stepworkflow.AbstractSupplyingSubStep;
 import com.synopsys.integration.stepworkflow.SubStepResponse;
@@ -41,9 +41,9 @@ public class GetIssuesInView extends AbstractSupplyingSubStep<Integer> {
     private final ViewService viewService;
     private final String projectName;
     private final String viewName;
-    private final JenkinsCoverityLogger logger;
+    private final CoverityJenkinsIntLogger logger;
 
-    public GetIssuesInView(final JenkinsCoverityLogger logger, final ConfigurationServiceWrapper configurationServiceWrapper, final ViewService viewService, final String projectName, final String viewName) {
+    public GetIssuesInView(final CoverityJenkinsIntLogger logger, final ConfigurationServiceWrapper configurationServiceWrapper, final ViewService viewService, final String projectName, final String viewName) {
         this.logger = logger;
         this.configurationServiceWrapper = configurationServiceWrapper;
         this.viewService = viewService;

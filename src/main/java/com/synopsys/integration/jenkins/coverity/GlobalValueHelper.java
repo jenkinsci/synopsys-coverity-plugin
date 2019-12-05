@@ -33,47 +33,16 @@ import java.util.concurrent.Executors;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.CoverityPhoneHomeHelper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 
-import hudson.Plugin;
-import hudson.PluginWrapper;
-import hudson.util.VersionNumber;
 import jenkins.model.GlobalConfiguration;
-import jenkins.model.Jenkins;
 
 public class GlobalValueHelper {
-    public static final String UNKNOWN_VERSION = "UNKNOWN_VERSION";
-
-    public static String getPluginVersion() {
-        String pluginVersion = UNKNOWN_VERSION;
-        final Jenkins jenkins = Jenkins.getInstanceOrNull();
-        if (jenkins != null) {
-            // Jenkins still active
-            final Plugin p = jenkins.getPlugin("synopsys-coverity");
-            if (p != null) {
-                // plugin found
-                final PluginWrapper pw = p.getWrapper();
-                if (pw != null) {
-                    pluginVersion = pw.getVersion();
-                }
-            }
-        }
-        return pluginVersion;
-    }
-
-    public static String getJenkinsVersion() {
-        final VersionNumber versionNumber = Jenkins.getVersion();
-        if (versionNumber == null) {
-            return UNKNOWN_VERSION;
-        } else {
-            return versionNumber.toString();
-        }
-    }
-
     public static Optional<CoverityConnectInstance> getCoverityInstanceWithUrl(final IntLogger logger, final String coverityInstanceUrl) {
         final List<CoverityConnectInstance> coverityInstances = getCoverityGlobalConfig().getCoverityConnectInstances();
         if (null == coverityInstances || coverityInstances.isEmpty()) {
@@ -123,8 +92,8 @@ public class GlobalValueHelper {
 
             final Map<String, String> metaData = new HashMap<>();
             final CoverityPhoneHomeHelper coverityPhoneHomeHelper = CoverityPhoneHomeHelper.createAsynchronousPhoneHomeHelper(webServiceFactory, webServiceFactory.createConfigurationService(), executor);
-            metaData.put("jenkins.version", getJenkinsVersion());
-            phoneHomeResponse = coverityPhoneHomeHelper.handlePhoneHome("synopsys-coverity", getPluginVersion(), metaData);
+            metaData.put("jenkins.version", JenkinsVersionHelper.getJenkinsVersion());
+            phoneHomeResponse = coverityPhoneHomeHelper.handlePhoneHome("synopsys-coverity", JenkinsVersionHelper.getPluginVersion("synopsys-coverity"), metaData);
         } catch (final Exception e) {
             logger.debug(e.getMessage(), e);
         } finally {

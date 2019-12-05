@@ -28,17 +28,17 @@ import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceEx
 import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.stepworkflow.AbstractExecutingSubStep;
 import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 public class CreateMissingProjectsAndStreams extends AbstractExecutingSubStep {
-    private final JenkinsCoverityLogger logger;
+    private final CoverityJenkinsIntLogger logger;
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final String projectName;
     private final String streamName;
 
-    public CreateMissingProjectsAndStreams(final JenkinsCoverityLogger logger, final ConfigurationServiceWrapper configurationServiceWrapper, final String projectName, final String streamName) {
+    public CreateMissingProjectsAndStreams(final CoverityJenkinsIntLogger logger, final ConfigurationServiceWrapper configurationServiceWrapper, final String projectName, final String streamName) {
         this.logger = logger;
         this.configurationServiceWrapper = configurationServiceWrapper;
         this.projectName = projectName;

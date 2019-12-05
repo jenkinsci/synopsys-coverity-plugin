@@ -22,7 +22,7 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
-import com.synopsys.integration.jenkins.coverity.extensions.CoveritySelectBoxEnum;
+import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
 
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -35,7 +35,7 @@ public abstract class CoverityRunConfiguration extends AbstractDescribableImpl<C
         return (RunConfigurationDescriptor) super.getDescriptor();
     }
 
-    public enum RunConfigurationType implements CoveritySelectBoxEnum {
+    public enum RunConfigurationType implements JenkinsSelectBoxEnum {
         SIMPLE("Run default Coverity workflow"),
         ADVANCED("Run custom Coverity commands");
 

@@ -28,11 +28,11 @@ import javax.annotation.Nullable;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
 import com.synopsys.integration.jenkins.SerializationHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.FieldHelper;
 
 import hudson.Extension;
 import hudson.util.ListBoxModel;
@@ -174,11 +174,11 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
         }
 
         public ListBoxModel doFillCoverityCaptureTypeItems() {
-            return FieldHelper.getListBoxModelOf(CoverityCaptureType.values());
+            return JenkinsSelectBoxEnum.toListBoxModel(CoverityCaptureType.values());
         }
 
         public ListBoxModel doFillCoverityAnalysisTypeItems() {
-            return FieldHelper.getListBoxModelOf(CoverityAnalysisType.values());
+            return JenkinsSelectBoxEnum.toListBoxModel(CoverityAnalysisType.values());
         }
 
         @Override

@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
@@ -47,11 +47,11 @@ import com.synopsys.integration.util.IntEnvironmentVariables;
 import hudson.Util;
 
 public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<String>>> {
-    private final JenkinsCoverityLogger logger;
+    private final CoverityJenkinsIntLogger logger;
     private final IntEnvironmentVariables intEnvironmentVariables;
     private final CoverityRunConfiguration coverityRunConfiguration;
 
-    public GetCoverityCommands(final JenkinsCoverityLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final CoverityRunConfiguration coverityRunConfiguration) {
+    public GetCoverityCommands(final CoverityJenkinsIntLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final CoverityRunConfiguration coverityRunConfiguration) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.coverityRunConfiguration = coverityRunConfiguration;

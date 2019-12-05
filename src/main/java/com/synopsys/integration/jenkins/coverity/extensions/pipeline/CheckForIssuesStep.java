@@ -48,9 +48,9 @@ import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
@@ -226,7 +226,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         protected Integer run() throws Exception {
             final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
             intEnvironmentVariables.putAll(envVars);
-            final JenkinsCoverityLogger logger = JenkinsCoverityLogger.initializeLogger(listener, intEnvironmentVariables);
+            final CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
 
             final Thread thread = Thread.currentThread();
             final ClassLoader threadClassLoader = thread.getContextClassLoader();
@@ -269,7 +269,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
                 "Coverity issue check failed because required parameter " + parameterName + " was not set. Please set " + parameterName + " or populate $" + environmentVariable.toString() + " with the desired value.");
         }
 
-        private Integer afterRun(final JenkinsCoverityLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Integer> response, final Boolean returnIssueCount, final Thread thread,
+        private Integer afterRun(final CoverityJenkinsIntLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Integer> response, final Boolean returnIssueCount, final Thread thread,
             final ClassLoader threadClassLoader) throws Exception {
             try {
                 if (response.wasSuccessful()) {

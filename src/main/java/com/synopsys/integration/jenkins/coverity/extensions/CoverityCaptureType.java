@@ -22,7 +22,9 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-public enum CoverityCaptureType implements CoveritySelectBoxEnum {
+import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
+
+public enum CoverityCaptureType implements JenkinsSelectBoxEnum {
     COV_BUILD("Build"),
     COV_CAPTURE_PROJECT("Buildless Capture (Project)"),
     COV_CAPTURE_SCM("Buildless Capture (SCM)");

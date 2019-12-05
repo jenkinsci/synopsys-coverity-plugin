@@ -20,7 +20,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package com.synopsys.integration.jenkins.stepworkflow;
+package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -34,7 +34,7 @@ import com.synopsys.integration.coverity.exception.ExecutableException;
 import com.synopsys.integration.coverity.exception.ExecutableRunnerException;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.executable.ExecutableManager;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityLogger;
+import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 
 public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
@@ -45,7 +45,7 @@ public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
 
     private final String workingDirectoryPath;
 
-    public CoverityRemoteToolRunner(final JenkinsCoverityLogger logger, final String coverityToolHome, final List<String> arguments, final String workingDirectoryPath, final HashMap<String, String> environmentVariables) {
+    public CoverityRemoteToolRunner(final CoverityJenkinsIntLogger logger, final String coverityToolHome, final List<String> arguments, final String workingDirectoryPath, final HashMap<String, String> environmentVariables) {
         super(logger);
         this.environmentVariables = environmentVariables;
         this.coverityToolHome = coverityToolHome;
@@ -60,7 +60,7 @@ public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
         final Integer exitCode;
         final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
         try (final PrintStream errorStream = new PrintStream(errorOutputStream, true, "UTF-8")) {
-            final PrintStream jenkinsPrintStream = logger.getJenkinsListener().getLogger();
+            final PrintStream jenkinsPrintStream = logger.getTaskListener().getLogger();
             exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, errorStream);
         } catch (final UnsupportedEncodingException | ExecutableException | ExecutableRunnerException e) {
             throw new CoverityJenkinsException(e);
