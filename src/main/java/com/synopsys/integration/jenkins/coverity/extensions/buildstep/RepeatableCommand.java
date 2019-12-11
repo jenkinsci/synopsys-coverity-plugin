@@ -41,8 +41,6 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 
 public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand> {
-    private static final String JENKINS_INTERMEDIATE_DIRECTORY = "${WORKSPACE}/idir";
-
     @HelpMarkdown("Provide the Coverity command you want to run.  \r\n"
                       + "The command should start with the name of the Coverity command you want to run. Ex: cov-build, cov-analyze, etc.  \r\n"
                       + "For examples and a list of the available environment variables that can be used, refer to [the Command Examples documentation](https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/623024/Coverity+Command+Examples)")
@@ -55,7 +53,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
 
     public static RepeatableCommand COV_BUILD(final String buildCommand, final String arguments) {
         final List<String> commandPieces = Arrays.asList("cov-build",
-            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            Argument.DIR.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY),
             arguments,
             buildCommand);
 
@@ -64,7 +62,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
 
     public static RepeatableCommand COV_ANALYZE(final String arguments) {
         final List<String> commandPieces = Arrays.asList("cov-analyze",
-            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            Argument.DIR.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY),
             arguments);
 
         return constructCommand(commandPieces);
@@ -72,7 +70,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
 
     public static RepeatableCommand COV_RUN_DESKTOP(final String arguments, final String filePaths) {
         final List<String> commandPieces = Arrays.asList("cov-run-desktop",
-            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            Argument.DIR.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY),
             Argument.URL.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_URL),
             Argument.STREAM.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM),
             arguments,
@@ -83,7 +81,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
 
     public static RepeatableCommand COV_COMMIT_DEFECTS(final String arguments) {
         final List<String> commandPieces = Arrays.asList("cov-commit-defects",
-            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            Argument.DIR.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY),
             Argument.URL.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_URL),
             Argument.STREAM.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM),
             arguments);
@@ -94,7 +92,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     public static RepeatableCommand COV_CAPTURE_PROJECT(final String projectDir, final String arguments) {
         final List<String> commandPieces = Arrays.asList("cov-capture",
             Argument.PROJECT_DIR.toString(), projectDir,
-            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            Argument.DIR.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY),
             arguments
         );
 
@@ -104,7 +102,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
     public static RepeatableCommand COV_CAPTURE_SCM(final String scmUrl, final String arguments) {
         final List<String> commandPieces = Arrays.asList("cov-capture",
             Argument.SCM_URL.toString(), scmUrl,
-            Argument.DIR.toString(), JENKINS_INTERMEDIATE_DIRECTORY,
+            Argument.DIR.toString(), generateExpansionString(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY),
             arguments
         );
 

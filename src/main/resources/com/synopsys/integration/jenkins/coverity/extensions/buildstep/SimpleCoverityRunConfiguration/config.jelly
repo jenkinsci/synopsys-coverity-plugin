@@ -1,26 +1,38 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:entry field="coverityCaptureType" title="Capture type">
         <f:select default="${instance.getDefaultCoverityCaptureType}"/>
-    </f:entry><f:entry field="sourceArgument" title="Source argument">
+    </f:entry>
+    <f:entry field="sourceArgument" title="Source argument">
         <f:textbox/>
-    </f:entry><f:entry field="coverityAnalysisType" title="Analysis type">
+    </f:entry>
+    <f:entry field="coverityAnalysisType" title="Analysis type">
         <f:select default="${instance.getDefaultCoverityAnalysisType}"/>
-    </f:entry><f:advanced>
+    </f:entry>
+    <f:advanced>
         <f:entry field="changeSetAnalysisThreshold" title="Change set threshold">
             <f:textbox clazz="number" checkmethod="post"/>
-        </f:entry><f:entry field="customWorkingDirectory" title="Custom Coverity working directory path">
+        </f:entry>
+        <f:entry field="customWorkingDirectory" title="Custom Coverity working directory path">
             <f:textbox/>
-        </f:entry><f:optionalBlock checked="${instance.commandArguments != null}" field="commandArguments" title="Provide command-specific arguments">
+        </f:entry>
+        <f:optionalBlock checked="${instance.commandArguments != null}" field="commandArguments" title="Provide command-specific arguments">
             <j:scope>
-                <j:set var="descriptor" value="${descriptor.getPropertyType(instance,'commandArguments').getApplicableDescriptors().get(0)}"/><j:set var="instance" value="${instance.commandArguments}"/><j:set var="it" value="${it.commandArguments}"/><f:entry field="covBuildArguments" title="cov-build">
+                <j:set var="descriptor" value="${descriptor.getPropertyType(instance,'commandArguments').getApplicableDescriptors().get(0)}"/>
+                <j:set var="instance" value="${instance.commandArguments}"/>
+                <j:set var="it" value="${it.commandArguments}"/>
+                <f:entry field="covBuildArguments" title="cov-build">
                     <f:textbox/>
-                </f:entry><f:entry field="covCaptureArguments" title="cov-capture">
+                </f:entry>
+                <f:entry field="covCaptureArguments" title="cov-capture">
                     <f:textbox/>
-                </f:entry><f:entry field="covAnalyzeArguments" title="cov-analyze">
+                </f:entry>
+                <f:entry field="covAnalyzeArguments" title="cov-analyze">
                     <f:textbox/>
-                </f:entry><f:entry field="covRunDesktopArguments" title="cov-run-desktop">
+                </f:entry>
+                <f:entry field="covRunDesktopArguments" title="cov-run-desktop">
                     <f:textbox/>
-                </f:entry><f:entry field="covCommitDefectsArguments" title="cov-commit-defects">
+                </f:entry>
+                <f:entry field="covCommitDefectsArguments" title="cov-commit-defects">
                     <f:textbox/>
                 </f:entry>
             </j:scope>
