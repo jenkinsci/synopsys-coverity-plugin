@@ -87,6 +87,14 @@ public class CoverityConnectUrlFieldHelper extends FieldHelper {
         final String username = coverityConnectInstance.getCoverityUsername().orElse(null);
         final String password = coverityConnectInstance.getCoverityPassword().orElse(null);
 
+        return testConnectionTo(url, username, password);
+    }
+
+    public FormValidation testConnectionTo(final String url, final String username, final String password) {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        thread.setContextClassLoader(this.getClass().getClassLoader());
+
         try {
             final CoverityServerConfig coverityServerConfig = CoverityServerConfig.newBuilder().setUrl(url)
                                                                   .setUsername(username)
@@ -113,6 +121,8 @@ public class CoverityConnectUrlFieldHelper extends FieldHelper {
             return FormValidation.error(e, e.getMessage());
         } catch (final Exception e) {
             return FormValidation.error(e, String.format("An unexpected error occurred when attempting to connect to %s%s%s: %s", url, System.lineSeparator(), e.getClass().getSimpleName(), e.getMessage()));
+        } finally {
+            thread.setContextClassLoader(threadClassLoader);
         }
     }
 

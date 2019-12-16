@@ -175,6 +175,10 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        thread.setContextClassLoader(this.getClass().getClassLoader());
+
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         intEnvironmentVariables.putAll(initialEnvironment);
         final CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
@@ -199,10 +203,6 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         if (virtualChannel == null) {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
-
-        final Thread thread = Thread.currentThread();
-        final ClassLoader threadClassLoader = thread.getContextClassLoader();
-        thread.setContextClassLoader(this.getClass().getClassLoader());
 
         final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
         final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;

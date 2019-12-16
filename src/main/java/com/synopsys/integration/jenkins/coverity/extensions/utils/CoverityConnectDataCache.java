@@ -26,7 +26,6 @@ import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -37,7 +36,6 @@ import com.synopsys.integration.log.IntLogger;
 public abstract class CoverityConnectDataCache<T> {
     public static final int CACHE_TIME_IN_MINUTES = 5;
     protected final IntLogger logger;
-    private AtomicBoolean retrievingNow = new AtomicBoolean(false);
     private Semaphore semaphore = new Semaphore(1);
     private Instant lastTimeRetrieved = null;
     private T cachedData = null;
@@ -62,9 +60,12 @@ public abstract class CoverityConnectDataCache<T> {
 
     public void refresh(final CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
         semaphore.acquire();
+        final Thread thread = Thread.currentThread();
+        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        thread.setContextClassLoader(this.getClass().getClassLoader());
+
         try {
             logger.info("Refreshing connection to Coverity Connect instance...");
-            retrievingNow.set(true);
 
             final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig();
             final WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
@@ -78,6 +79,7 @@ public abstract class CoverityConnectDataCache<T> {
             logger.error("[ERROR] Could not refresh connection to Coverity Connect instance. Please confirm you have a valid URL.");
             logger.trace("Stack trace:", e);
         } finally {
+            thread.setContextClassLoader(threadClassLoader);
             semaphore.release();
         }
     }

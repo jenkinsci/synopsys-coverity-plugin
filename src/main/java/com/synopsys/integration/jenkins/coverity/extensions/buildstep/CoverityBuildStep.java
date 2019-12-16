@@ -181,6 +181,10 @@ public class CoverityBuildStep extends Builder {
 
     @Override
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        thread.setContextClassLoader(this.getClass().getClassLoader());
+
         final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         intEnvironmentVariables.putAll(build.getEnvironment(listener));
         logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
@@ -207,10 +211,6 @@ public class CoverityBuildStep extends Builder {
         if (virtualChannel == null) {
             throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
         }
-
-        final Thread thread = Thread.currentThread();
-        final ClassLoader threadClassLoader = thread.getContextClassLoader();
-        thread.setContextClassLoader(this.getClass().getClassLoader());
 
         final boolean isSimpleMode = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
         final String customWorkingDirectory = isSimpleMode ? ((SimpleCoverityRunConfiguration) coverityRunConfiguration).getCustomWorkingDirectory() : null;
