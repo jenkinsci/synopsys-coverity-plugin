@@ -23,7 +23,6 @@
 package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,9 +35,8 @@ import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
-import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStepResponse;
 
-public class ValidateCoverityInstallation extends CoverityRemoteCallable<RemoteSubStepResponse<Serializable>> {
+public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean> {
     public static final CoverityVersion MINIMUM_SUPPORTED_VERSION = CoverityVersion.VERSION_PACIFIC;
     private static final long serialVersionUID = -460886461718309214L;
     private final String coverityToolHome;
@@ -50,7 +48,7 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<RemoteS
         this.validateVersion = validateVersion;
     }
 
-    public RemoteSubStepResponse<Serializable> call() throws CoverityJenkinsException {
+    public Boolean call() throws CoverityJenkinsException {
         if (StringUtils.isBlank(coverityToolHome)) {
             throw new CoverityJenkinsException(String.format("Cannot find Coverity installation, %s is not set.", JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()));
         }
@@ -84,7 +82,7 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<RemoteS
             throw new CoverityJenkinsException(String.format("%s was not found", pathToBinDirectory.toString()));
         }
 
-        return RemoteSubStepResponse.SUCCESS();
+        return true;
     }
 
     /*

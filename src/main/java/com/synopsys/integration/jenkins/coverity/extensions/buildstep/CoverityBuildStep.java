@@ -39,7 +39,6 @@ import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
-import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
@@ -59,6 +58,7 @@ import com.synopsys.integration.jenkins.coverity.stepworkflow.ProcessChangeLogSe
 import com.synopsys.integration.jenkins.coverity.stepworkflow.RunCoverityCommands;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.SetUpCoverityEnvironment;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.ValidateCoverityInstallation;
+import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
 import com.synopsys.integration.stepworkflow.StepWorkflow;

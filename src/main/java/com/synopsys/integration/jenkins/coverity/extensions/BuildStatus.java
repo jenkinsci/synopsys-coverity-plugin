@@ -22,7 +22,7 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
+import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
 
 import hudson.model.Result;
 

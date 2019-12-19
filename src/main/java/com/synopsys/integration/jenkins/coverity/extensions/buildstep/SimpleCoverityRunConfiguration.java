@@ -28,11 +28,11 @@ import javax.annotation.Nullable;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import com.synopsys.integration.jenkins.JenkinsSelectBoxEnum;
-import com.synopsys.integration.jenkins.SerializationHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
+import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
+import com.synopsys.integration.jenkins.extensions.SerializationHelper;
 
 import hudson.Extension;
 import hudson.util.ListBoxModel;
