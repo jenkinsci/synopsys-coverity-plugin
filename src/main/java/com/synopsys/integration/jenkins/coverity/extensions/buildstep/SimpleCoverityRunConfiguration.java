@@ -68,7 +68,7 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
 
     // Any field set by a DataBoundSetter should be explicitly declared as @Nullable to avoid accidental NPEs -- rotte 11/13/2019
     @Nullable
-    @HelpMarkdown("The fully qualified path to a directory in which to run the cov-build or cov-capture command and create the idir.")
+    @HelpMarkdown("The fully qualified path to a directory in which to run the cov-build or cov-capture command.")
     private String customWorkingDirectory;
 
     @Nullable
