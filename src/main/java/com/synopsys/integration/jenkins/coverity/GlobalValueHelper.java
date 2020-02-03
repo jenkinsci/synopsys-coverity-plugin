@@ -1,7 +1,7 @@
 /**
  * synopsys-coverity
  *
- * Copyright (c) 2019 Synopsys, Inc.
+ * Copyright (c) 2020 Synopsys, Inc.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -44,7 +44,12 @@ import jenkins.model.GlobalConfiguration;
 
 public class GlobalValueHelper {
     public static Optional<CoverityConnectInstance> getCoverityInstanceWithUrl(final IntLogger logger, final String coverityInstanceUrl) {
-        final List<CoverityConnectInstance> coverityInstances = getCoverityGlobalConfig().getCoverityConnectInstances();
+        final CoverityGlobalConfig coverityGlobalConfig = getCoverityGlobalConfig();
+        if (coverityGlobalConfig == null) {
+            return Optional.empty();
+        }
+
+        final List<CoverityConnectInstance> coverityInstances = coverityGlobalConfig.getCoverityConnectInstances();
         if (null == coverityInstances || coverityInstances.isEmpty()) {
             logger.error("[ERROR] No Coverity Connect instances are configured in the Jenkins system config.");
         } else {
