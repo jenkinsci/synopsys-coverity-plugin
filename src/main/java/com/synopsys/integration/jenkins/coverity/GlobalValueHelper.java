@@ -39,6 +39,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeResponse;
+import com.synopsys.integration.phonehome.request.PhoneHomeRequestBody;
 
 import jenkins.model.GlobalConfiguration;
 
@@ -97,8 +98,8 @@ public class GlobalValueHelper {
 
             final Map<String, String> metaData = new HashMap<>();
             final CoverityPhoneHomeHelper coverityPhoneHomeHelper = CoverityPhoneHomeHelper.createAsynchronousPhoneHomeHelper(webServiceFactory, webServiceFactory.createConfigurationService(), executor);
-            metaData.put("jenkins.version", JenkinsVersionHelper.getJenkinsVersion());
-            phoneHomeResponse = coverityPhoneHomeHelper.handlePhoneHome("synopsys-coverity", JenkinsVersionHelper.getPluginVersion("synopsys-coverity"), metaData);
+            metaData.put("jenkins.version", JenkinsVersionHelper.getJenkinsVersion().orElse(PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE));
+            phoneHomeResponse = coverityPhoneHomeHelper.handlePhoneHome("synopsys-coverity", JenkinsVersionHelper.getPluginVersion("synopsys-coverity").orElse(PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE), metaData);
         } catch (final Exception e) {
             logger.debug(e.getMessage(), e);
         } finally {

@@ -78,12 +78,13 @@ dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
 
     implementation 'com.synopsys.integration:coverity-common:0.5.0'
-    implementation 'com.synopsys.integration:jenkins-common:0.1.4'
+    implementation 'com.synopsys.integration:jenkins-common:0.1.8'
 
     // Must be compatible with the versions declared in Jenkins Common
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
     jenkinsPlugins 'org.jenkins-ci.plugins:plain-credentials:1.0'
 
+    optionalJenkinsPlugins 'io.jenkins.plugins:warnings-ng:8.1.0'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-cps:2.23'
