@@ -22,14 +22,19 @@
  */
 package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
+import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME;
+
 import java.net.MalformedURLException;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
+import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.function.ThrowingConsumer;
+import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
@@ -54,16 +59,22 @@ public class CoverityWorkflowStepFactory {
     private final EnvVars envVars;
     private final Launcher launcher;
     private final TaskListener listener;
-    private final FilePath workspace;
     private final String coverityServerUrl;
+    private final String workspaceRemotePath;
 
-    // These fields are lazily initialized; inside this class: use getOrCreate...() to get these values
+    // These fields are lazily initialized; inside this class: use the suppliers that guarantee an initialized value
     private IntEnvironmentVariables _intEnvironmentVariables = null;
+    private final Supplier<IntEnvironmentVariables> initializedIntEnvrionmentVariables = this::getOrCreateEnvironmentVariables;
     private CoverityJenkinsIntLogger _logger = null;
+    private final Supplier<CoverityJenkinsIntLogger> initializedLogger = this::getOrCreateLogger;
     private WebServiceFactory _webServiceFactory = null;
+    private final ThrowingSupplier<WebServiceFactory, AbortException> initializedWebServiceFactory = this::getOrCreateWebServiceFactory;
+    private FilePath _intermediateDirectory = null;
+    private final Supplier<FilePath> initializedIntermediateDirectory = this::getOrCreateIntermediateDirectory;
 
-    public CoverityWorkflowStepFactory(final FilePath workspace, final EnvVars envVars, final Launcher launcher, final TaskListener listener, final String coverityServerUrl) {
-        this.workspace = workspace;
+
+    public CoverityWorkflowStepFactory(final String workspaceRemotePath, final EnvVars envVars, final Launcher launcher, final TaskListener listener, final String coverityServerUrl) {
+        this.workspaceRemotePath = workspaceRemotePath;
         this.envVars = envVars;
         this.launcher = launcher;
         this.listener = listener;
@@ -71,8 +82,7 @@ public class CoverityWorkflowStepFactory {
     }
 
     public CreateMissingProjectsAndStreams createStepCreateMissingProjectsAndStreams(final String projectName, final String streamName) throws AbortException {
-        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
-        final WebServiceFactory webServiceFactory = getOrCreateWebServiceFactory();
+        final WebServiceFactory webServiceFactory = initializedWebServiceFactory.get();
         final ConfigurationServiceWrapper configurationServiceWrapper;
         try {
             configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
@@ -80,20 +90,16 @@ public class CoverityWorkflowStepFactory {
             throw new AbortException("Coverity cannot be executed: '" + coverityServerUrl + WebServiceFactory.CONFIGURATION_SERVICE_V9_WSDL + "' is a malformed URL");
         }
 
-        return new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
+        return new CreateMissingProjectsAndStreams(initializedLogger.get(), configurationServiceWrapper, projectName, streamName);
     }
 
     // TODO: Remove Jenkins extension object?
     public GetCoverityCommands createStepGetCoverityCommands(final CoverityRunConfiguration coverityRunConfiguration) {
-        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
-        final IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
-
-        return new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
+        return new GetCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityRunConfiguration);
     }
 
     public GetIssuesInView createStepGetIssuesInView(final String projectName, final String viewName) throws AbortException {
-        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
-        final WebServiceFactory webServiceFactory = getOrCreateWebServiceFactory();
+        final WebServiceFactory webServiceFactory = initializedWebServiceFactory.get();
         final ConfigurationServiceWrapper configurationServiceWrapper;
         try {
             configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
@@ -102,39 +108,39 @@ public class CoverityWorkflowStepFactory {
         }
         final ViewService viewService = webServiceFactory.createViewService();
 
-        return new GetIssuesInView(logger, configurationServiceWrapper, viewService, projectName, viewName);
+        return new GetIssuesInView(initializedLogger.get(), configurationServiceWrapper, viewService, projectName, viewName);
     }
 
     // TODO: Remove Jenkins extension object?
     public ProcessChangeLogSets createStepProcessChangeLogSets(final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
-        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
-
-        return new ProcessChangeLogSets(logger, changeLogSets, configureChangeSetPatterns);
+        return new ProcessChangeLogSets(initializedLogger.get(), changeLogSets, configureChangeSetPatterns);
     }
 
     // TODO: Remove Jenkins extension object?
     public RunCoverityCommands createStepRunCoverityCommands(final OnCommandFailure onCommandFailure) {
-        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
-        final IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
-        final VirtualChannel virtualChannel = launcher.getChannel();
-        final String remoteWorkingDirectory = workspace.getRemote();
-
-        return new RunCoverityCommands(logger, intEnvironmentVariables, remoteWorkingDirectory, onCommandFailure, virtualChannel);
-    }
-
-    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(final String projectName, final String streamName, final String viewName, final String intermediateDirectory) {
-        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
-        final IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
-
-        return new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityServerUrl, projectName, streamName, viewName, intermediateDirectory);
-    }
-
-    public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(final Boolean validateversion, final String coverityToolHome) {
-        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
         final VirtualChannel virtualChannel = launcher.getChannel();
 
-        final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(logger, validateversion, coverityToolHome);
+        return new RunCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), workspaceRemotePath, onCommandFailure, virtualChannel);
+    }
+
+    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(final String projectName, final String streamName, final String viewName) {
+        final String remoteIntermediateDirectory = initializedIntermediateDirectory.get().getRemote();
+
+        return new SetUpCoverityEnvironment(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityServerUrl, projectName, streamName, viewName, remoteIntermediateDirectory);
+    }
+
+    public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(final CoverityRunConfiguration.RunConfigurationType coverityRunConfigurationType) {
+        final VirtualChannel virtualChannel = launcher.getChannel();
+        final boolean shouldValidateVersion = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfigurationType);
+        final String coverityToolHome = initializedIntEnvrionmentVariables.get().getValue(COVERITY_TOOL_HOME.toString());
+
+        final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(initializedLogger.get(), shouldValidateVersion, coverityToolHome);
         return RemoteSubStep.of(virtualChannel, validateCoverityInstallation);
+    }
+
+    public SubStep<Object, Object> createStepCleanUpIntermediateDirectory() {
+        final FilePath intermediateDirectory = initializedIntermediateDirectory.get();
+        return SubStep.ofExecutor(intermediateDirectory::deleteRecursive);
     }
 
     public SubStep<Integer, Object> createStepWithConsumer(final ThrowingConsumer<Integer, RuntimeException> consumer) {
@@ -176,8 +182,24 @@ public class CoverityWorkflowStepFactory {
 
             final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig();
             _webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
+            try {
+                _webServiceFactory.connect();
+            } catch (final CoverityIntegrationException e) {
+                throw new AbortException("Coverity cannot be executed: An error occurred when connecting to Coverity Connect. Please ensure that you can connect properly.");
+            } catch (final MalformedURLException e) {
+                throw new AbortException("Coverity cannot be executed: '" + coverityServerUrl + WebServiceFactory.CONFIGURATION_SERVICE_V9_WSDL + "' is a malformed URL");
+            }
         }
         return _webServiceFactory;
+    }
+
+    public FilePath getOrCreateIntermediateDirectory() {
+        if (_intermediateDirectory == null) {
+            final VirtualChannel virtualChannel = launcher.getChannel();
+            _intermediateDirectory = new FilePath(virtualChannel, workspaceRemotePath).child("idir");
+        }
+
+        return _intermediateDirectory;
     }
 
 }

@@ -12,7 +12,10 @@ import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.phonehome.request.CoverityPhoneHomeRequestFactory;
 import com.synopsys.integration.phonehome.request.PhoneHomeRequestBody;
 import com.synopsys.integration.phonehome.request.PhoneHomeRequestBodyBuilder;
+import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
 import com.synopsys.integration.stepworkflow.jenkins.JenkinsStepWorkflow;
+
+import hudson.AbortException;
 
 public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow<T> {
     protected final WebServiceFactory webServiceFactory;
@@ -20,6 +23,18 @@ public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow
     public CoverityJenkinsStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final WebServiceFactory webServiceFactory) {
         super(jenkinsIntLogger);
         this.webServiceFactory = webServiceFactory;
+    }
+
+    @Override
+    public StepWorkflowResponse<T> perform() throws AbortException {
+        final Thread thread = Thread.currentThread();
+        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        try {
+            thread.setContextClassLoader(this.getClass().getClassLoader());
+            return super.perform();
+        } finally {
+            thread.setContextClassLoader(threadClassLoader);
+        }
     }
 
     protected PhoneHomeRequestBodyBuilder createPhoneHomeBuilder() {
