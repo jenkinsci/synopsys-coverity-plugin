@@ -216,7 +216,6 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         final FilePath intermediateDirectory = new FilePath(workspace, "idir");
         final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-
         final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(logger, false, coverityToolHome);
         final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
         final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName, intermediateDirectory.getRemote());

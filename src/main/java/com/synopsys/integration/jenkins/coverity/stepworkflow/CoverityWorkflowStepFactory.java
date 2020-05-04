@@ -27,6 +27,7 @@ import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironme
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
@@ -123,8 +124,7 @@ public class CoverityWorkflowStepFactory {
         return new SetUpCoverityEnvironment(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityServerUrl, projectName, streamName, viewName, remoteIntermediateDirectory);
     }
 
-    public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(final CoverityRunConfiguration.RunConfigurationType coverityRunConfigurationType) throws AbortException {
-        final boolean shouldValidateVersion = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfigurationType);
+    public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(final boolean shouldValidateVersion) throws AbortException {
         final String coverityToolHome = initializedIntEnvrionmentVariables.get().getValue(COVERITY_TOOL_HOME.toString());
 
         final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(initializedLogger.get(), shouldValidateVersion, coverityToolHome);
@@ -134,6 +134,11 @@ public class CoverityWorkflowStepFactory {
     public SubStep<Object, Object> createStepCleanUpIntermediateDirectory(final String workspaceRemotePath) throws AbortException {
         final FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
         return SubStep.ofExecutor(intermediateDirectory::deleteRecursive);
+    }
+
+    public SubStep<Object, Object> createStepPopulateEnvVars(final BiConsumer<String, String> environmentPopulator) {
+        final IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
+        return SubStep.ofExecutor(() -> intEnvironmentVariables.getVariables().forEach(environmentPopulator));
     }
 
     public CoverityJenkinsIntLogger getOrCreateLogger() {

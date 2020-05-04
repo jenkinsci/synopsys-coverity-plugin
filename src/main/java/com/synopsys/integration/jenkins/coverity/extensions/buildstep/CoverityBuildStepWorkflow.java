@@ -92,8 +92,9 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
     protected StepWorkflow<Object> buildWorkflow() throws AbortException {
         final String viewName = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getViewName).orElse(StringUtils.EMPTY);
         final BuildStatus buildStatus = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getBuildStatusForIssues).orElse(BuildStatus.SUCCESS);
+        final boolean shouldValidateVersion = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
 
-        return StepWorkflow.first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(coverityRunConfiguration.getRunConFigurationType()))
+        return StepWorkflow.first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(shouldValidateVersion))
                    .then(coverityWorkflowStepFactory.createStepProcessChangeLogSets(build.getChangeSets(), configureChangeSetPatterns))
                    .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, projectName, streamName))
