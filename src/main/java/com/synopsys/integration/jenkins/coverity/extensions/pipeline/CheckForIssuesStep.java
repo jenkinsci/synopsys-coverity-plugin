@@ -44,27 +44,23 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
-import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.GetIssuesInView;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.phonehome.PhoneHomeResponse;
-import com.synopsys.integration.stepworkflow.StepWorkflow;
-import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Launcher;
 import hudson.Util;
+import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -211,28 +207,26 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
     }
 
-    public class Execution extends SynchronousNonBlockingStepExecution {
+    public class Execution extends SynchronousNonBlockingStepExecution<Integer> {
         private static final long serialVersionUID = -5807577350749324767L;
-        private transient TaskListener listener;
-        private transient EnvVars envVars;
+        private final transient TaskListener listener;
+        private final transient EnvVars envVars;
+        private final transient Node node;
+        private final transient Launcher launcher;
 
         protected Execution(@Nonnull final StepContext context) throws InterruptedException, IOException {
             super(context);
             listener = context.get(TaskListener.class);
             envVars = context.get(EnvVars.class);
+            node = context.get(Node.class);
+            launcher = context.get(Launcher.class);
         }
 
         @Override
         protected Integer run() throws Exception {
-            final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
-            intEnvironmentVariables.putAll(envVars);
-            final CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
-
-            final Thread thread = Thread.currentThread();
-            final ClassLoader threadClassLoader = thread.getContextClassLoader();
-            thread.setContextClassLoader(this.getClass().getClassLoader());
-
-            final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
+            final CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(envVars, node, launcher, listener);
+            final CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
+            final IntEnvironmentVariables intEnvironmentVariables = coverityWorkflowStepFactory.getOrCreateEnvironmentVariables();
             final String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
             final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
 
@@ -241,58 +235,26 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
             final String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
             final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
+            final WebServiceFactory webServiceFactory = coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl);
 
-            final WebServiceFactory webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, resolvedCoverityInstanceUrl);
-            webServiceFactory.connect();
-            final ViewService viewService = webServiceFactory.createViewService();
-            final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-
-            final GetIssuesInView getIssuesInView = new GetIssuesInView(logger, configurationServiceWrapper, viewService, resolvedProjectName, resolvedViewName);
-            return StepWorkflow.just(getIssuesInView)
-                       .run()
-                       .handleResponse(response -> afterRun(logger, phoneHomeResponse, response, getReturnIssueCount(), thread, threadClassLoader));
-
+            final CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, webServiceFactory, coverityWorkflowStepFactory, resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName,
+                returnIssueCount);
+            return checkForIssuesStepWorkflow.perform();
         }
 
-        private String getRequiredValueOrDie(final String pipelineParamter, final String parameterName, final JenkinsCoverityEnvironmentVariable environmentVariable, final Function<String, String> environmentVariableGetter)
-            throws CoverityJenkinsException {
+        private String getRequiredValueOrDie(final String pipelineParamter, final String parameterName, final JenkinsCoverityEnvironmentVariable environmentVariable, final Function<String, String> getter) throws AbortException {
             if (StringUtils.isNotBlank(pipelineParamter)) {
                 return pipelineParamter;
             }
 
-            final String valueFromEnvironmentVariable = environmentVariableGetter.apply(environmentVariable.toString());
+            final String valueFromEnvironmentVariable = getter.apply(environmentVariable.toString());
             if (StringUtils.isNotBlank(valueFromEnvironmentVariable)) {
                 return valueFromEnvironmentVariable;
             }
 
-            throw new CoverityJenkinsException(
+            throw new AbortException(
                 "Coverity issue check failed because required parameter " + parameterName + " was not set. Please set " + parameterName + " or populate $" + environmentVariable.toString() + " with the desired value.");
         }
 
-        private Integer afterRun(final CoverityJenkinsIntLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Integer> response, final Boolean returnIssueCount, final Thread thread,
-            final ClassLoader threadClassLoader) throws Exception {
-            try {
-                if (response.wasSuccessful()) {
-                    final Integer defectCount = response.getData();
-                    if (defectCount > 0) {
-                        final String defectMessage = String.format("[Coverity] Found %s issues in view.", defectCount);
-                        if (Boolean.TRUE.equals(returnIssueCount)) {
-                            logger.error(defectMessage);
-                        } else {
-                            throw new CoverityJenkinsException(defectMessage);
-                        }
-                    }
-                    return defectCount;
-                } else {
-                    throw response.getException();
-                }
-            } finally {
-                if (null != phoneHomeResponse) {
-                    phoneHomeResponse.getImmediateResult();
-                }
-                thread.setContextClassLoader(threadClassLoader);
-            }
-
-        }
     }
 }

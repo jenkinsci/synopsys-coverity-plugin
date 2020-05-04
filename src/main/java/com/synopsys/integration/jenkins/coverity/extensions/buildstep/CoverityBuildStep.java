@@ -156,14 +156,13 @@ public class CoverityBuildStep extends Builder {
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
         final String remoteWorkingDirectoryPath = computeRemoteWorkingDirectory(coverityRunConfiguration, build.getWorkspace(), build.getProject());
 
-        final CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(remoteWorkingDirectoryPath, build.getEnvironment(listener), launcher, listener, coverityInstanceUrl);
-        final WebServiceFactory webServiceFactory = coverityWorkflowStepFactory.getOrCreateWebServiceFactory();
+        final CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(build.getEnvironment(listener), build.getBuiltOn(), launcher, listener);
+        final WebServiceFactory webServiceFactory = coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl);
         final JenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-        final CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(logger, webServiceFactory, coverityWorkflowStepFactory, build, projectName, streamName, coverityRunConfiguration, configureChangeSetPatterns,
-            checkForIssuesInView, onCommandFailure, cleanUpAction);
+        final CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(logger, webServiceFactory, coverityWorkflowStepFactory, build, remoteWorkingDirectoryPath, coverityInstanceUrl, projectName, streamName,
+            coverityRunConfiguration, configureChangeSetPatterns, checkForIssuesInView, onCommandFailure, cleanUpAction);
 
-        return coverityBuildStepWorkflow.perform()
-                   .handleResponse(response -> coverityBuildStepWorkflow.afterPerform(response, build));
+        return coverityBuildStepWorkflow.perform();
     }
 
     private String computeRemoteWorkingDirectory(final CoverityRunConfiguration coverityRunConfiguration, final FilePath buildWorkspace, final AbstractProject<?, ?> project) {
