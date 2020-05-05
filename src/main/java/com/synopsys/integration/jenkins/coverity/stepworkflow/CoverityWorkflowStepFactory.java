@@ -192,6 +192,10 @@ public class CoverityWorkflowStepFactory {
 
     public VirtualChannel getOrCreateVirtualChannel() throws AbortException {
         if (_virtualChannel == null) {
+            if (launcher == null && node == null) {
+                throw new AbortException();
+            }
+
             _virtualChannel = Optional.ofNullable(launcher.getChannel())
                                   .orElseGet(node::getChannel);
 

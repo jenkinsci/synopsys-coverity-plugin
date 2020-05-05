@@ -25,7 +25,9 @@ package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -38,9 +40,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
@@ -51,20 +51,10 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.CreateMissingProjectsAndStreams;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.ProcessChangeLogSets;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.SetUpCoverityEnvironment;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.ValidateCoverityInstallation;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.phonehome.PhoneHomeResponse;
-import com.synopsys.integration.stepworkflow.StepWorkflow;
-import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
-import com.synopsys.integration.stepworkflow.SubStep;
-import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStep;
-import com.synopsys.integration.util.IntEnvironmentVariables;
 
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -73,10 +63,8 @@ import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Node;
-import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.ComboBoxModel;
@@ -85,8 +73,6 @@ import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
-    public static final String FAILURE_MESSAGE = "Unable to inject Coverity Environment: ";
-
     @HelpMarkdown("Specify which Synopsys Coverity connect instance to run this job against.")
     private final String coverityInstanceUrl;
     private final String coverityPassphrase;
@@ -175,77 +161,30 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
-        final Thread thread = Thread.currentThread();
-        final ClassLoader threadClassLoader = thread.getContextClassLoader();
-        thread.setContextClassLoader(this.getClass().getClassLoader());
-
-        final IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
-        intEnvironmentVariables.putAll(initialEnvironment);
-        final CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
-        final PhoneHomeResponse phoneHomeResponse = GlobalValueHelper.phoneHome(logger, coverityInstanceUrl);
-        if (Result.ABORTED.equals(build.getResult())) {
-            throw new AbortException(FAILURE_MESSAGE + "The build was aborted.");
-        }
-
+        final Node node = Optional.ofNullable(workspace.toComputer())
+                              .map(Computer::getNode)
+                              .orElse(null);
         final RunWrapper runWrapper = new RunWrapper(build, true);
 
-        final Computer computer = workspace.toComputer();
-        if (computer == null) {
-            throw new AbortException(FAILURE_MESSAGE + "This workspace does not represent a FilePath on a particular Computer.");
-        }
-
-        final Node node = computer.getNode();
-        if (node == null) {
-            throw new AbortException(FAILURE_MESSAGE + "Could not access workspace's node to inject Coverity environment.");
-        }
-
-        final VirtualChannel virtualChannel = node.getChannel();
-        if (virtualChannel == null) {
-            throw new AbortException(FAILURE_MESSAGE + "Configured node \"" + node.getDisplayName() + "\" is either not connected or offline.");
-        }
-
-        final String coverityToolHome = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
-        final List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets;
-        final WebServiceFactory webServiceFactory;
+        final CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(initialEnvironment, node, launcher, listener);
+        final CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
+        final WebServiceFactory webServiceFactory = coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl);
+        List<ChangeLogSet<?>> changeLogSets;
         try {
-            changeSets = runWrapper.getChangeSets();
-            webServiceFactory = GlobalValueHelper.createWebServiceFactoryFromUrl(logger, coverityInstanceUrl);
+            changeLogSets = runWrapper.getChangeSets();
         } catch (final Exception e) {
-            throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
+            logger.warn(String.format("WARNING: Synopsys Coverity for Jenkins could not determine the change set, %s will be empty and %s will be 0.",
+                JenkinsCoverityEnvironmentVariable.CHANGE_SET,
+                JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE));
+
+            changeLogSets = Collections.emptyList();
         }
 
-        final FilePath intermediateDirectory = new FilePath(workspace, "idir");
-        final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-        final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(logger, false, coverityToolHome);
-        final ProcessChangeLogSets processChangeSet = new ProcessChangeLogSets(logger, changeSets, configureChangeSetPatterns);
-        final SetUpCoverityEnvironment setUpCoverityEnvironment = new SetUpCoverityEnvironment(logger, intEnvironmentVariables, coverityInstanceUrl, projectName, streamName, viewName, intermediateDirectory.getRemote());
-        final CreateMissingProjectsAndStreams createMissingProjectsAndStreamsStep = new CreateMissingProjectsAndStreams(logger, configurationServiceWrapper, projectName, streamName);
-
-        StepWorkflow
-            .first(RemoteSubStep.of(virtualChannel, validateCoverityInstallation))
-            .then(processChangeSet)
-            .then(setUpCoverityEnvironment)
-            .then(SubStep.ofExecutor(() -> intEnvironmentVariables.getVariables().forEach(context::env)))
-            .andSometimes(createMissingProjectsAndStreamsStep).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
-            .run()
-            .consumeResponse(response -> afterSetUp(logger, phoneHomeResponse, response, thread, threadClassLoader));
-    }
-
-    private void afterSetUp(final CoverityJenkinsIntLogger logger, final PhoneHomeResponse phoneHomeResponse, final StepWorkflowResponse<Object> response, final Thread thread, final ClassLoader threadClassLoader) throws IOException {
-        try {
-            if (!response.wasSuccessful()) {
-                throw response.getException();
-            }
-        } catch (final IntegrationException e) {
-            logger.debug(null, e);
-            throw new AbortException(FAILURE_MESSAGE + e.getMessage());
-        } catch (final Exception e) {
-            throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
-        } finally {
-            if (null != phoneHomeResponse) {
-                phoneHomeResponse.getImmediateResult();
-            }
-            thread.setContextClassLoader(threadClassLoader);
+        final CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(logger, webServiceFactory, coverityWorkflowStepFactory, context, workspace.getRemote(),
+            coverityInstanceUrl, projectName, streamName, viewName, createMissingProjectsAndStreams, changeLogSets, configureChangeSetPatterns);
+        final Boolean environmentInjectedSuccessfully = coverityEnvironmentWrapperStepWorkflow.perform();
+        if (Boolean.TRUE.equals(environmentInjectedSuccessfully)) {
+            logger.info("Coverity environment injected successfully.");
         }
     }
 

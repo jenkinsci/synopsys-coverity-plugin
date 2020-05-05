@@ -68,7 +68,6 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
         this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
-    @Override
     protected StepWorkflow<Object> buildWorkflow() throws AbortException {
         return StepWorkflow
                    .first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(false))
@@ -79,8 +78,7 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
                    .build();
     }
 
-    @Override
-    public Boolean perform() throws Exception {
+    public Boolean perform() throws IOException {
         final StepWorkflowResponse<Object> response = runWorkflow();
         try {
             if (!response.wasSuccessful()) {
