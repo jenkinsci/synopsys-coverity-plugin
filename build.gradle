@@ -66,7 +66,7 @@ artifactory {
 jenkinsPlugin {
     // Must be compatible with the version declared in Jenkins Common
     coreVersion = '2.60.1'
-    displayName = 'Synopsys Coverity Plugin'
+    displayName = 'Synopsys Coverity plugin'
     url = 'https://wiki.jenkins.io/display/JENKINS/Synopsys+Coverity+Plugin'
     gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
 
