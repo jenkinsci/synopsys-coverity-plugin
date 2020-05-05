@@ -28,6 +28,7 @@ import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnaly
 import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType.THRESHOLD;
 import static com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration.RunConfigurationType.ADVANCED;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,9 +36,14 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
+import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
+import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
@@ -116,6 +122,26 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         try {
             if (!wasSuccessful) {
                 throw stepWorkflowResponse.getException();
+            }
+
+            if (checkForIssuesInView != null) {
+                final String viewName = checkForIssuesInView.getViewName();
+                final ViewService viewService = webServiceFactory.createViewService();
+                final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
+                final String viewId = viewService.getViews().entrySet().stream()
+                                          .filter(entry -> entry.getValue() != null)
+                                          .filter(entry -> entry.getValue().equals(viewName))
+                                          .findFirst()
+                                          .map(Map.Entry::getKey)
+                                          .map(String::valueOf)
+                                          .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for view \"%s\". It either does not exist or the current user does not have access to it.", viewName)));
+
+                final String projectId = configurationServiceWrapper.getProjectByExactName(projectName)
+                                             .map(ProjectDataObj::getProjectKey)
+                                             .map(String::valueOf)
+                                             .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for project \"%s\". It either does not exist or the current user does not have access to it.", projectName)));
+
+                build.addAction(new IssueReportAction(coverityInstanceUrl + "/" + "reports.htm#v" + viewId + "/p" + projectId));
             }
         } catch (final InterruptedException e) {
             logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
