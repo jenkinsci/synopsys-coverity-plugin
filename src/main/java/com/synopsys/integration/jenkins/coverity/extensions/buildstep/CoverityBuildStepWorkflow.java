@@ -28,7 +28,6 @@ import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnaly
 import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType.THRESHOLD;
 import static com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration.RunConfigurationType.ADVANCED;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -36,14 +35,12 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 
-import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
-import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
+import com.synopsys.integration.coverity.api.rest.ViewContents;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
-import com.synopsys.integration.coverity.ws.view.ViewService;
+import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
-import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
@@ -108,7 +105,7 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
                    .then(coverityWorkflowStepFactory.createStepRunCoverityCommands(coverityInstanceUrl, onCommandFailure))
                    .butOnlyIf(coverityWorkflowStepFactory.getOrCreateEnvironmentVariables(), intEnvironmentVariables -> this.shouldRunCoverityCommands(intEnvironmentVariables, coverityRunConfiguration))
                    .andSometimes(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, projectName, viewName))
-                   .then(SubStep.ofConsumer(issueCount -> failOnIssuesPresent(issueCount, build, projectName, viewName, buildStatus)))
+                   .then(SubStep.ofConsumer(viewReportWrapper -> handleIssues(viewReportWrapper, build, projectName, viewName, buildStatus)))
                    .butOnlyIf(checkForIssuesInView, Objects::nonNull)
                    .andSometimes(coverityWorkflowStepFactory.createStepCleanUpIntermediateDirectory(workspaceRemotePath))
                    .butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
@@ -122,26 +119,6 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         try {
             if (!wasSuccessful) {
                 throw stepWorkflowResponse.getException();
-            }
-
-            if (checkForIssuesInView != null) {
-                final String viewName = checkForIssuesInView.getViewName();
-                final ViewService viewService = webServiceFactory.createViewService();
-                final ConfigurationServiceWrapper configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-                final String viewId = viewService.getViews().entrySet().stream()
-                                          .filter(entry -> entry.getValue() != null)
-                                          .filter(entry -> entry.getValue().equals(viewName))
-                                          .findFirst()
-                                          .map(Map.Entry::getKey)
-                                          .map(String::valueOf)
-                                          .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for view \"%s\". It either does not exist or the current user does not have access to it.", viewName)));
-
-                final String projectId = configurationServiceWrapper.getProjectByExactName(projectName)
-                                             .map(ProjectDataObj::getProjectKey)
-                                             .map(String::valueOf)
-                                             .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for project \"%s\". It either does not exist or the current user does not have access to it.", projectName)));
-
-                build.addAction(new IssueReportAction(coverityInstanceUrl + "/" + "reports.htm#v" + viewId + "/p" + projectId));
             }
         } catch (final InterruptedException e) {
             logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
@@ -178,14 +155,19 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         return true;
     }
 
-    private void failOnIssuesPresent(final Integer defectCount, final AbstractBuild<?, ?> build, final String projectName, final String viewName, final BuildStatus buildStatusOnIssues) {
+    private void handleIssues(final ViewReportWrapper viewReportWrapper, final AbstractBuild<?, ?> build, final String projectName, final String viewName, final BuildStatus buildStatusOnIssues) {
         logger.alwaysLog("Checking for issues in view");
         logger.alwaysLog("-- Build state for issues in the view: " + buildStatusOnIssues.getDisplayName());
         logger.alwaysLog("-- Coverity project name: " + projectName);
         logger.alwaysLog("-- Coverity view name: " + viewName);
 
+        final ViewContents viewContents = viewReportWrapper.getViewContents();
+        final String viewReportUrl = viewReportWrapper.getViewReportUrl();
+        final int defectCount = viewContents.getTotalRows().intValue();
+
         if (defectCount > 0) {
-            logger.alwaysLog(String.format("[Coverity] Found %s issues in view.", defectCount));
+            logger.alwaysLog(String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl));
+            build.addAction(new IssueReportAction(defectCount, viewReportUrl));
             logger.alwaysLog("Setting build status to " + buildStatusOnIssues.getResult().toString());
             build.setResult(buildStatusOnIssues.getResult());
         }

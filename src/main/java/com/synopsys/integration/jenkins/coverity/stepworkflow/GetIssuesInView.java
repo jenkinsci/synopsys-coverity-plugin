@@ -23,20 +23,22 @@
 package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import java.io.IOException;
-import java.util.Map;
 
+import com.synopsys.integration.coverity.api.rest.View;
 import com.synopsys.integration.coverity.api.rest.ViewContents;
 import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceException_Exception;
 import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
+import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
-import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.stepworkflow.AbstractSupplyingSubStep;
 import com.synopsys.integration.stepworkflow.SubStepResponse;
 
-public class GetIssuesInView extends AbstractSupplyingSubStep<Integer> {
+import hudson.AbortException;
+
+public class GetIssuesInView extends AbstractSupplyingSubStep<ViewReportWrapper> {
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final ViewService viewService;
     private final String projectName;
@@ -51,42 +53,25 @@ public class GetIssuesInView extends AbstractSupplyingSubStep<Integer> {
         this.viewName = viewName;
     }
 
-    public SubStepResponse<Integer> run() {
+    public SubStepResponse<ViewReportWrapper> run() {
         try {
             logger.alwaysLog(String.format("Checking for issues in project \"%s\", view \"%s\".", projectName, viewName));
-            final String projectId = getProjectIdFromName(projectName);
-            final String viewId = getViewIdFromName(viewName);
+            final ProjectDataObj project = configurationServiceWrapper.getProjectByExactName(projectName)
+                                               .orElseThrow(() -> new AbortException("Coverity Issues could not be retrieved: No project with name " + projectName + " could be found. "
+                                                                                         + "It either does not exist or the credentials configured in the Jenkins system configuration are insufficient to access it."));
 
-            final int defectCount;
+            final View view = viewService.getViewByExactName(viewName)
+                                  .orElseThrow(() -> new AbortException("Coverity Issues could not be retrieved: No view with name " + viewName + " could be found. "
+                                                                            + "It either does not exist or the credentials configured in the Jenkins system configuration are insufficient to access it."));
 
-            final ViewContents viewContents = viewService.getViewContents(projectId, viewId, 1, 0);
-            if (null == viewContents) {
-                defectCount = 0;
-            } else {
-                defectCount = viewContents.getTotalRows().intValue();
-            }
+            final ViewContents viewContents = viewService.getViewContents(project, view, 1, 0);
+            final String viewReportUrl = viewService.getProjectViewReportUrl(project, view);
+            final ViewReportWrapper viewReportWrapper = new ViewReportWrapper(viewContents, viewReportUrl);
 
-            return SubStepResponse.SUCCESS(defectCount);
+            return SubStepResponse.SUCCESS(viewReportWrapper);
         } catch (final IOException | IntegrationException | CovRemoteServiceException_Exception e) {
             return SubStepResponse.FAILURE(e);
         }
-    }
-
-    private String getProjectIdFromName(final String projectName) throws CoverityJenkinsException, CovRemoteServiceException_Exception {
-        return configurationServiceWrapper.getProjectByExactName(projectName)
-                   .map(ProjectDataObj::getProjectKey)
-                   .map(String::valueOf)
-                   .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for project \"%s\". It either does not exist or the current user does not have access to it.", projectName)));
-    }
-
-    private String getViewIdFromName(final String viewName) throws IntegrationException, IOException {
-        return viewService.getViews().entrySet().stream()
-                   .filter(entry -> entry.getValue() != null)
-                   .filter(entry -> entry.getValue().equals(viewName))
-                   .findFirst()
-                   .map(Map.Entry::getKey)
-                   .map(String::valueOf)
-                   .orElseThrow(() -> new CoverityJenkinsException(String.format("Could not find the Id for view \"%s\". It either does not exist or the current user does not have access to it.", viewName)));
     }
 
 }

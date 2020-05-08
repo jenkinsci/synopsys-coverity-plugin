@@ -23,11 +23,13 @@
 package com.synopsys.integration.jenkins.coverity.extensions.pipeline;
 
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.stepworkflow.StepWorkflow;
+import com.synopsys.integration.stepworkflow.SubStep;
 
 import hudson.AbortException;
 
@@ -50,20 +52,28 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
 
     @Override
     protected StepWorkflow<Integer> buildWorkflow() throws AbortException {
-        return StepWorkflow.just(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, projectName, viewName));
+        return StepWorkflow.first(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, projectName, viewName))
+                   .then(SubStep.ofFunction(this::getDefectCount))
+                   .build();
     }
 
     @Override
     public Integer perform() throws Exception {
-        final Integer defectCount = runWorkflow().getDataOrThrowException();
+        return runWorkflow().getDataOrThrowException();
+    }
+
+    private Integer getDefectCount(final ViewReportWrapper viewReportWrapper) throws CoverityJenkinsException {
+        final int defectCount = viewReportWrapper.getViewContents().getTotalRows().intValue();
+
         if (defectCount > 0) {
-            final String defectMessage = String.format("[Coverity] Found %s issues in view.", defectCount);
+            final String defectMessage = String.format("[Coverity] Found %s issues: %s", defectCount, viewReportWrapper.getViewReportUrl());
             if (Boolean.TRUE.equals(returnIssueCount)) {
                 logger.error(defectMessage);
             } else {
                 throw new CoverityJenkinsException(defectMessage);
             }
         }
+
         return defectCount;
     }
 
