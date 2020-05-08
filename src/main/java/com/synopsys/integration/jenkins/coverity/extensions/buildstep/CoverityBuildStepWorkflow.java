@@ -35,9 +35,12 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.synopsys.integration.coverity.api.rest.ViewContents;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
+import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
@@ -102,7 +105,7 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
                    .then(coverityWorkflowStepFactory.createStepRunCoverityCommands(coverityInstanceUrl, onCommandFailure))
                    .butOnlyIf(coverityWorkflowStepFactory.getOrCreateEnvironmentVariables(), intEnvironmentVariables -> this.shouldRunCoverityCommands(intEnvironmentVariables, coverityRunConfiguration))
                    .andSometimes(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, projectName, viewName))
-                   .then(SubStep.ofConsumer(issueCount -> failOnIssuesPresent(issueCount, build, projectName, viewName, buildStatus)))
+                   .then(SubStep.ofConsumer(viewReportWrapper -> handleIssues(viewReportWrapper, build, projectName, viewName, buildStatus)))
                    .butOnlyIf(checkForIssuesInView, Objects::nonNull)
                    .andSometimes(coverityWorkflowStepFactory.createStepCleanUpIntermediateDirectory(workspaceRemotePath))
                    .butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
@@ -152,14 +155,19 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         return true;
     }
 
-    private void failOnIssuesPresent(final Integer defectCount, final AbstractBuild<?, ?> build, final String projectName, final String viewName, final BuildStatus buildStatusOnIssues) {
+    private void handleIssues(final ViewReportWrapper viewReportWrapper, final AbstractBuild<?, ?> build, final String projectName, final String viewName, final BuildStatus buildStatusOnIssues) {
         logger.alwaysLog("Checking for issues in view");
         logger.alwaysLog("-- Build state for issues in the view: " + buildStatusOnIssues.getDisplayName());
         logger.alwaysLog("-- Coverity project name: " + projectName);
         logger.alwaysLog("-- Coverity view name: " + viewName);
 
+        final ViewContents viewContents = viewReportWrapper.getViewContents();
+        final String viewReportUrl = viewReportWrapper.getViewReportUrl();
+        final int defectCount = viewContents.getTotalRows().intValue();
+
         if (defectCount > 0) {
-            logger.alwaysLog(String.format("[Coverity] Found %s issues in view.", defectCount));
+            logger.alwaysLog(String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl));
+            build.addAction(new IssueReportAction(defectCount, viewReportUrl));
             logger.alwaysLog("Setting build status to " + buildStatusOnIssues.getResult().toString());
             build.setResult(buildStatusOnIssues.getResult());
         }
