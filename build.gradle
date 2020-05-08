@@ -14,7 +14,7 @@ plugins {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '2.3.2-SNAPSHOT'
+version = '2.4.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
