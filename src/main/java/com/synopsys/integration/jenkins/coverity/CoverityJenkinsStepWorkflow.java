@@ -29,6 +29,7 @@ import com.synopsys.integration.coverity.api.ws.configuration.LicenseDataObj;
 import com.synopsys.integration.coverity.api.ws.configuration.VersionDataObj;
 import com.synopsys.integration.coverity.config.CoverityHttpClient;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.phonehome.request.CoverityPhoneHomeRequestFactory;
@@ -40,19 +41,23 @@ import com.synopsys.integration.stepworkflow.jenkins.JenkinsStepWorkflow;
 import hudson.AbortException;
 
 public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow<T> {
-    protected final WebServiceFactory webServiceFactory;
+    protected final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier;
+    protected WebServiceFactory webServiceFactory;
 
-    public CoverityJenkinsStepWorkflow(final JenkinsIntLogger logger, final WebServiceFactory webServiceFactory) {
+    public CoverityJenkinsStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier) {
         super(logger);
-        this.webServiceFactory = webServiceFactory;
+        // Due to special classloading handling, it's better to get a supplier here that we use to fetch the Factory in our override of runWorkflow(). --rotte MAY 2020
+        this.webServiceFactorySupplier = webServiceFactorySupplier;
     }
 
     @Override
     public StepWorkflowResponse<T> runWorkflow() throws AbortException {
+        // Coverity Common uses JAX-WS, which requires special classloading handling for Jenkins instances running Java 9+ --rotte MAY 2020
         final Thread thread = Thread.currentThread();
         final ClassLoader threadClassLoader = thread.getContextClassLoader();
         try {
             thread.setContextClassLoader(this.getClass().getClassLoader());
+            webServiceFactory = webServiceFactorySupplier.get();
             return super.runWorkflow();
         } finally {
             thread.setContextClassLoader(threadClassLoader);

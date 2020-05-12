@@ -24,6 +24,7 @@ package com.synopsys.integration.jenkins.coverity.extensions.pipeline;
 
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
+import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
@@ -40,9 +41,9 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
     private final String viewName;
     private final Boolean returnIssueCount;
 
-    public CheckForIssuesStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final WebServiceFactory webServiceFactory, final CoverityWorkflowStepFactory coverityWorkflowStepFactory, final String coverityInstanceUrl,
-        final String projectName, final String viewName, final Boolean returnIssueCount) {
-        super(jenkinsIntLogger, webServiceFactory);
+    public CheckForIssuesStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
+        final String coverityInstanceUrl, final String projectName, final String viewName, final Boolean returnIssueCount) {
+        super(jenkinsIntLogger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.projectName = projectName;

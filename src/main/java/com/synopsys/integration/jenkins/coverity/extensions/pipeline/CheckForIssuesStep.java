@@ -44,7 +44,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
@@ -235,10 +234,9 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
             final String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
             final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
-            final WebServiceFactory webServiceFactory = coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl);
 
-            final CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, webServiceFactory, coverityWorkflowStepFactory, resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName,
-                returnIssueCount);
+            final CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl), coverityWorkflowStepFactory,
+                resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName, returnIssueCount);
             return checkForIssuesStepWorkflow.perform();
         }
 

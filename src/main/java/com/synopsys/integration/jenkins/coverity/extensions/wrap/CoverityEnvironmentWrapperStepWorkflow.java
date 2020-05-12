@@ -27,6 +27,7 @@ import java.util.List;
 
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
@@ -52,10 +53,10 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     private final List<ChangeLogSet<?>> changeSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
-    public CoverityEnvironmentWrapperStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final WebServiceFactory webServiceFactory, final CoverityWorkflowStepFactory coverityWorkflowStepFactory, final SimpleBuildWrapper.Context context,
-        final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final String viewName, final Boolean createMissingProjectsAndStreams, final List<ChangeLogSet<?>> changeSets,
-        final ConfigureChangeSetPatterns configureChangeSetPatterns) {
-        super(jenkinsIntLogger, webServiceFactory);
+    public CoverityEnvironmentWrapperStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
+        final SimpleBuildWrapper.Context context, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final String viewName, final Boolean createMissingProjectsAndStreams,
+        final List<ChangeLogSet<?>> changeSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        super(jenkinsIntLogger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.context = context;
         this.workspaceRemotePath = workspaceRemotePath;
