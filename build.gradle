@@ -10,11 +10,11 @@ buildscript {
 }
 
 plugins {
-    id 'org.jenkins-ci.jpi' version '0.36.2'
+    id 'org.jenkins-ci.jpi' version '0.38.0'
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '2.3.2-SNAPSHOT'
+version = '2.4.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
@@ -84,7 +84,6 @@ dependencies {
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
     jenkinsPlugins 'org.jenkins-ci.plugins:plain-credentials:1.0'
 
-    optionalJenkinsPlugins 'io.jenkins.plugins:warnings-ng:8.1.0'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-cps:2.23'

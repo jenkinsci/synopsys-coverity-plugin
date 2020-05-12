@@ -39,6 +39,7 @@ import com.synopsys.integration.coverity.api.rest.ViewContents;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.exception.IntegrationException;
+import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
@@ -73,11 +74,10 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
     private final String workspaceRemotePath;
     private final String coverityInstanceUrl;
 
-    public CoverityBuildStepWorkflow(final JenkinsIntLogger logger, final WebServiceFactory webServiceFactory, final CoverityWorkflowStepFactory coverityWorkflowStepFactory, final AbstractBuild<?, ?> build,
-        final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final CoverityRunConfiguration coverityRunConfiguration,
-        final ConfigureChangeSetPatterns configureChangeSetPatterns, final CheckForIssuesInView checkForIssuesInView, final OnCommandFailure onCommandFailure,
-        final CleanUpAction cleanUpAction) {
-        super(logger, webServiceFactory);
+    public CoverityBuildStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
+        final AbstractBuild<?, ?> build, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final CoverityRunConfiguration coverityRunConfiguration,
+        final ConfigureChangeSetPatterns configureChangeSetPatterns, final CheckForIssuesInView checkForIssuesInView, final OnCommandFailure onCommandFailure, final CleanUpAction cleanUpAction) {
+        super(logger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.build = build;
         this.workspaceRemotePath = workspaceRemotePath;
@@ -102,7 +102,7 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
                    .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, projectName, streamName))
                    .andSometimes(coverityWorkflowStepFactory.createStepGetCoverityCommands(coverityRunConfiguration))
-                   .then(coverityWorkflowStepFactory.createStepRunCoverityCommands(coverityInstanceUrl, onCommandFailure))
+                   .then(coverityWorkflowStepFactory.createStepRunCoverityCommands(workspaceRemotePath, onCommandFailure))
                    .butOnlyIf(coverityWorkflowStepFactory.getOrCreateEnvironmentVariables(), intEnvironmentVariables -> this.shouldRunCoverityCommands(intEnvironmentVariables, coverityRunConfiguration))
                    .andSometimes(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, projectName, viewName))
                    .then(SubStep.ofConsumer(viewReportWrapper -> handleIssues(viewReportWrapper, build, projectName, viewName, buildStatus)))

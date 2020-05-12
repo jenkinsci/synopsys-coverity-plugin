@@ -40,7 +40,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
@@ -168,7 +167,6 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         final CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(initialEnvironment, node, launcher, listener);
         final CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-        final WebServiceFactory webServiceFactory = coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl);
         List<ChangeLogSet<?>> changeLogSets;
         try {
             changeLogSets = runWrapper.getChangeSets();
@@ -180,8 +178,8 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             changeLogSets = Collections.emptyList();
         }
 
-        final CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(logger, webServiceFactory, coverityWorkflowStepFactory, context, workspace.getRemote(),
-            coverityInstanceUrl, projectName, streamName, viewName, createMissingProjectsAndStreams, changeLogSets, configureChangeSetPatterns);
+        final CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl),
+            coverityWorkflowStepFactory, context, workspace.getRemote(), coverityInstanceUrl, projectName, streamName, viewName, createMissingProjectsAndStreams, changeLogSets, configureChangeSetPatterns);
         final Boolean environmentInjectedSuccessfully = coverityEnvironmentWrapperStepWorkflow.perform();
         if (Boolean.TRUE.equals(environmentInjectedSuccessfully)) {
             logger.info("Coverity environment injected successfully.");
