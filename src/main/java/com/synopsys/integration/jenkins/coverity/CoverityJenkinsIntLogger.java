@@ -34,17 +34,21 @@ import hudson.model.TaskListener;
 public class CoverityJenkinsIntLogger extends JenkinsIntLogger implements Serializable {
     private static final long serialVersionUID = 7672279347652895598L;
 
-    public CoverityJenkinsIntLogger(final TaskListener jenkinsTaskListener, final LogLevel logLevel, final String pluginVersion) {
+    private CoverityJenkinsIntLogger(final TaskListener jenkinsTaskListener, final LogLevel logLevel) {
         super(jenkinsTaskListener);
         this.setLogLevel(logLevel);
-        this.alwaysLog("Running Synopsys Coverity version: " + pluginVersion);
     }
 
     public static CoverityJenkinsIntLogger initializeLogger(final TaskListener jenkinsLogger, final IntEnvironmentVariables intEnvironmentVariables) {
         final String logLevelString = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.LOG_LEVEL.toString());
         final LogLevel logLevel = LogLevel.fromString(logLevelString);
-        final String pluginVersion = JenkinsVersionHelper.getPluginVersion("synopsys-coverity");
-        return new CoverityJenkinsIntLogger(jenkinsLogger, logLevel, pluginVersion);
+        final CoverityJenkinsIntLogger logger = new CoverityJenkinsIntLogger(jenkinsLogger, logLevel);
+
+        final String versionString = JenkinsVersionHelper.getPluginVersion("synopsys-coverity")
+                                         .map(version -> String.format("Running Synopsys Coverity version: %s", version))
+                                         .orElse("Running Synopsys Coverity");
+        logger.alwaysLog(versionString);
+        return logger;
     }
 
     @Override

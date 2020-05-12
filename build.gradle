@@ -10,11 +10,11 @@ buildscript {
 }
 
 plugins {
-    id 'org.jenkins-ci.jpi' version '0.36.2'
+    id 'org.jenkins-ci.jpi' version '0.38.0'
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '2.3.2-SNAPSHOT'
+version = '2.4.0-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.blackducksoftware.integration.solution'
@@ -66,7 +66,7 @@ artifactory {
 jenkinsPlugin {
     // Must be compatible with the version declared in Jenkins Common
     coreVersion = '2.60.1'
-    displayName = 'Synopsys Coverity Plugin'
+    displayName = 'Synopsys Coverity plugin'
     url = 'https://wiki.jenkins.io/display/JENKINS/Synopsys+Coverity+Plugin'
     gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
 
@@ -77,8 +77,8 @@ jenkinsPlugin {
 dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
 
-    implementation 'com.synopsys.integration:coverity-common:0.5.0'
-    implementation 'com.synopsys.integration:jenkins-common:0.1.4'
+    implementation 'com.synopsys.integration:coverity-common:0.6.0'
+    implementation 'com.synopsys.integration:jenkins-common:0.1.10'
 
     // Must be compatible with the versions declared in Jenkins Common
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
