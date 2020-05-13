@@ -31,6 +31,7 @@ import com.synopsys.integration.coverity.config.CoverityHttpClient;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.JenkinsVersionHelper;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.phonehome.request.CoverityPhoneHomeRequestFactory;
 import com.synopsys.integration.phonehome.request.PhoneHomeRequestBody;
@@ -41,10 +42,10 @@ import com.synopsys.integration.stepworkflow.jenkins.JenkinsStepWorkflow;
 import hudson.AbortException;
 
 public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow<T> {
-    protected final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier;
+    protected final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier;
     protected WebServiceFactory webServiceFactory;
 
-    public CoverityJenkinsStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier) {
+    public CoverityJenkinsStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier) {
         super(logger);
         // Due to special classloading handling, it's better to get a supplier here that we use to fetch the Factory in our override of runWorkflow(). --rotte MAY 2020
         this.webServiceFactorySupplier = webServiceFactorySupplier;

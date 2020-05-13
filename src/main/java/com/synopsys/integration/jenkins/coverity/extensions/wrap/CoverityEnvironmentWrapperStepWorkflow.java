@@ -29,6 +29,7 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
@@ -53,7 +54,8 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     private final List<ChangeLogSet<?>> changeSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
-    public CoverityEnvironmentWrapperStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
+    public CoverityEnvironmentWrapperStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
+        final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
         final SimpleBuildWrapper.Context context, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final String viewName, final Boolean createMissingProjectsAndStreams,
         final List<ChangeLogSet<?>> changeSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         super(jenkinsIntLogger, webServiceFactorySupplier);

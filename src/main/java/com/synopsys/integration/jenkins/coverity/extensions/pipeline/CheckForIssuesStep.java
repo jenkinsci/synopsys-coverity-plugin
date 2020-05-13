@@ -60,6 +60,7 @@ import hudson.Extension;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.Node;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -212,6 +213,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         private final transient EnvVars envVars;
         private final transient Node node;
         private final transient Launcher launcher;
+        private final transient Run<?, ?> run;
 
         protected Execution(@Nonnull final StepContext context) throws InterruptedException, IOException {
             super(context);
@@ -219,6 +221,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
             envVars = context.get(EnvVars.class);
             node = context.get(Node.class);
             launcher = context.get(Launcher.class);
+            run = context.get(Run.class);
         }
 
         @Override
@@ -235,8 +238,8 @@ public class CheckForIssuesStep extends Step implements Serializable {
             final String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
             final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
-            final CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl), coverityWorkflowStepFactory,
-                resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName, returnIssueCount);
+            final CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl), coverityWorkflowStepFactory,
+                resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName, returnIssueCount, run);
             return checkForIssuesStepWorkflow.perform();
         }
 

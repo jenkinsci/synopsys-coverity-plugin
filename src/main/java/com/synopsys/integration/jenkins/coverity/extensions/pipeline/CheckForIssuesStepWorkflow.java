@@ -26,6 +26,8 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
+import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
@@ -33,6 +35,7 @@ import com.synopsys.integration.stepworkflow.StepWorkflow;
 import com.synopsys.integration.stepworkflow.SubStep;
 
 import hudson.AbortException;
+import hudson.model.Run;
 
 public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Integer> {
     private final CoverityWorkflowStepFactory coverityWorkflowStepFactory;
@@ -40,15 +43,17 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
     private final String projectName;
     private final String viewName;
     private final Boolean returnIssueCount;
+    private final Run<?, ?> run;
 
-    public CheckForIssuesStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
-        final String coverityInstanceUrl, final String projectName, final String viewName, final Boolean returnIssueCount) {
+    public CheckForIssuesStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
+        final CoverityWorkflowStepFactory coverityWorkflowStepFactory, final String coverityInstanceUrl, final String projectName, final String viewName, final Boolean returnIssueCount, final Run<?, ?> run) {
         super(jenkinsIntLogger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.projectName = projectName;
         this.viewName = viewName;
         this.returnIssueCount = returnIssueCount;
+        this.run = run;
     }
 
     @Override
@@ -64,10 +69,12 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
     }
 
     private Integer getDefectCount(final ViewReportWrapper viewReportWrapper) throws CoverityJenkinsException {
+        final String viewReportUrl = viewReportWrapper.getViewReportUrl();
         final int defectCount = viewReportWrapper.getViewContents().getTotalRows().intValue();
+        final String defectMessage = String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl);
+        run.addAction(new IssueReportAction(defectCount, viewReportUrl));
 
         if (defectCount > 0) {
-            final String defectMessage = String.format("[Coverity] Found %s issues: %s", defectCount, viewReportWrapper.getViewReportUrl());
             if (Boolean.TRUE.equals(returnIssueCount)) {
                 logger.error(defectMessage);
             } else {

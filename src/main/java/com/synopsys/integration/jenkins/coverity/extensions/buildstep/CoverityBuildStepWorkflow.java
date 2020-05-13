@@ -42,6 +42,7 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
@@ -74,7 +75,7 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
     private final String workspaceRemotePath;
     private final String coverityInstanceUrl;
 
-    public CoverityBuildStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, AbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
+    public CoverityBuildStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
         final AbstractBuild<?, ?> build, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final CoverityRunConfiguration coverityRunConfiguration,
         final ConfigureChangeSetPatterns configureChangeSetPatterns, final CheckForIssuesInView checkForIssuesInView, final OnCommandFailure onCommandFailure, final CleanUpAction cleanUpAction) {
         super(logger, webServiceFactorySupplier);
@@ -164,10 +165,10 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         final ViewContents viewContents = viewReportWrapper.getViewContents();
         final String viewReportUrl = viewReportWrapper.getViewReportUrl();
         final int defectCount = viewContents.getTotalRows().intValue();
+        build.addAction(new IssueReportAction(defectCount, viewReportUrl));
+        logger.alwaysLog(String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl));
 
         if (defectCount > 0) {
-            logger.alwaysLog(String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl));
-            build.addAction(new IssueReportAction(defectCount, viewReportUrl));
             logger.alwaysLog("Setting build status to " + buildStatusOnIssues.getResult().toString());
             build.setResult(buildStatusOnIssues.getResult());
         }
