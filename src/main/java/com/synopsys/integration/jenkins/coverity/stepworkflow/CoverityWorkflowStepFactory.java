@@ -30,6 +30,9 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.synopsys.integration.coverity.authentication.AuthenticationKeyFile;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
@@ -44,6 +47,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRu
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.rest.credentials.Credentials;
 import com.synopsys.integration.stepworkflow.SubStep;
 import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStep;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -119,10 +123,20 @@ public class CoverityWorkflowStepFactory {
 
     public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(final String workspaceRemotePath, final String coverityServerUrl, final String projectName, final String streamName, final String viewName)
         throws CoverityJenkinsAbortException {
+        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
         final FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
         final String remoteIntermediateDirectory = intermediateDirectory.getRemote();
 
-        return new SetUpCoverityEnvironment(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityServerUrl, projectName, streamName, viewName, remoteIntermediateDirectory);
+        // TODO: You'd think you can just get the credentials from the instance, but that's been abstracted so it works with authkeys-- what we actually need is a way to get the auth key file?
+        // Possibly worthwhile to abstract the logic for obtaining the passphrase, since getting the username will always be just getting the credentials.getUsername
+        final Credentials credentials = getCoverityConnectInstanceFromUrl(coverityServerUrl).getCoverityServerCredentials(logger);
+        final Optional<AuthenticationKeyFile> authenticationKeyFile = Optional.empty(); //CoverityConnectInstance.getAuthKeyFile()
+        final String coverityUsername = authenticationKeyFile.map(authKeyFile -> authKeyFile.username)
+                                            .orElse(credentials.getUsername().orElse(StringUtils.EMPTY));
+        final String coverityPassphrase = authenticationKeyFile.map(authKeyFile -> authKeyFile.key)
+                                              .orElse(credentials.getPassword().orElse(StringUtils.EMPTY));
+
+        return new SetUpCoverityEnvironment(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityServerUrl, coverityUsername, coverityPassphrase, projectName, streamName, viewName, remoteIntermediateDirectory);
     }
 
     public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(final boolean shouldValidateVersion) throws CoverityJenkinsAbortException {
@@ -158,8 +172,7 @@ public class CoverityWorkflowStepFactory {
         return _intEnvironmentVariables;
     }
 
-    public WebServiceFactory getWebServiceFactoryFromUrl(final String coverityServerUrl) throws CoverityJenkinsAbortException {
-        final JenkinsIntLogger logger = getOrCreateLogger();
+    public CoverityConnectInstance getCoverityConnectInstanceFromUrl(final String coverityServerUrl) throws CoverityJenkinsAbortException {
         final CoverityGlobalConfig coverityGlobalConfig = GlobalConfiguration.all().get(CoverityGlobalConfig.class);
         if (coverityGlobalConfig == null) {
             throw new CoverityJenkinsAbortException("No Coverity global configuration detected in the Jenkins system configuration.");
@@ -168,13 +181,20 @@ public class CoverityWorkflowStepFactory {
         if (coverityConnectInstances.isEmpty()) {
             throw new CoverityJenkinsAbortException("No Coverity connect instances are configured in the Jenkins system configuration.");
         }
-        final CoverityConnectInstance coverityConnectInstance = coverityConnectInstances.stream()
-                                                                    .filter(instance -> instance.getUrl().equals(coverityServerUrl))
-                                                                    .findFirst()
-                                                                    .orElseThrow(
-                                                                        () -> new CoverityJenkinsAbortException("No Coverity conect instance with the url '" + coverityServerUrl + "' could be  found in the Jenkins system configuration."));
 
-        final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig();
+        return coverityConnectInstances.stream()
+                   .filter(instance -> instance.getUrl().equals(coverityServerUrl))
+                   .findFirst()
+                   .orElseThrow(
+                       () -> new CoverityJenkinsAbortException("No Coverity conect instance with the url '" + coverityServerUrl + "' could be  found in the Jenkins system configuration."));
+
+    }
+
+    public WebServiceFactory getWebServiceFactoryFromUrl(final String coverityServerUrl) throws CoverityJenkinsAbortException {
+        final CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
+        final JenkinsIntLogger logger = getOrCreateLogger();
+
+        final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger);
         final WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
         try {
             webServiceFactory.connect();

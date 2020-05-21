@@ -55,8 +55,8 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
     public CoverityEnvironmentWrapperStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
-        final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
-        final SimpleBuildWrapper.Context context, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final String viewName, final Boolean createMissingProjectsAndStreams,
+        final CoverityWorkflowStepFactory coverityWorkflowStepFactory, final SimpleBuildWrapper.Context context, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName,
+        final String viewName, final Boolean createMissingProjectsAndStreams,
         final List<ChangeLogSet<?>> changeSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
         super(jenkinsIntLogger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;

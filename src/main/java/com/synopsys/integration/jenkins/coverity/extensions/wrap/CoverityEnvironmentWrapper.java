@@ -46,13 +46,13 @@ import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
+import com.synopsys.integration.rest.credentials.Credentials;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -102,7 +102,8 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     public CoverityEnvironmentWrapper(final String coverityInstanceUrl) {
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentIntLogger(), coverityInstanceUrl)
-                                      .flatMap(CoverityConnectInstance::getCoverityPassword)
+                                      .map(coverityConnectInstance -> coverityConnectInstance.getCoverityServerCredentials(new SilentIntLogger()))
+                                      .flatMap(Credentials::getPassword)
                                       .orElse(StringUtils.EMPTY);
     }
 

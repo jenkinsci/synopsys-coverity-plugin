@@ -67,7 +67,7 @@ public abstract class CoverityConnectDataCache<T> {
         try {
             logger.info("Refreshing connection to Coverity Connect instance...");
 
-            final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig();
+            final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger);
             final WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
             webServiceFactory.connect();
 
