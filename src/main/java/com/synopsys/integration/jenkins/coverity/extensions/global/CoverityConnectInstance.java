@@ -22,11 +22,16 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.global;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jenkinsci.plugins.plaincredentials.impl.FileCredentialsImpl;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
@@ -35,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -93,6 +99,32 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
     public Credentials getCoverityServerCredentials(IntLogger logger) {
         SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, Jenkins.getInstance());
         return synopsysCoverityCredentialsHelper.getIntegrationCredentialsById(credentialId);
+    }
+
+    public Optional<String> getUsername(IntLogger logger) {
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, Jenkins.getInstance());
+        return synopsysCoverityCredentialsHelper.getCoverityUsernameById(credentialId);
+    }
+
+    public Optional<String> getPassphrase() {
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = SynopsysCoverityCredentialsHelper.silentHelper(Jenkins.getInstance());
+        return synopsysCoverityCredentialsHelper.getCoverityPassphraseById(credentialId);
+    }
+
+    public Optional<String> getAuthenticationKeyFileContents(IntLogger logger) throws CoverityJenkinsAbortException {
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, Jenkins.getInstance());
+        Optional<FileCredentialsImpl> authenticationKeyFileCredentials = synopsysCoverityCredentialsHelper.getAuthenticationKeyFileCredentialsById(credentialId);
+        String contents = null;
+
+        if (authenticationKeyFileCredentials.isPresent()) {
+            try (InputStream inputStream = authenticationKeyFileCredentials.get().getContent()) {
+                contents = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new CoverityJenkinsAbortException("Authentication Key File could not be read from the Synopsys Coverity for Jenkins global configuration.");
+            }
+        }
+
+        return Optional.ofNullable(contents);
     }
 
     public boolean isEmpty() {

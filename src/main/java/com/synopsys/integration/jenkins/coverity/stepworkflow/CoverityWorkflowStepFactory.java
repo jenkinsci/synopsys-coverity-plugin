@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.synopsys.integration.coverity.authentication.AuthenticationKeyFile;
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
@@ -47,7 +46,6 @@ import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRu
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-import com.synopsys.integration.rest.credentials.Credentials;
 import com.synopsys.integration.stepworkflow.SubStep;
 import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStep;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -121,20 +119,29 @@ public class CoverityWorkflowStepFactory {
         return new RunCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), workspaceRemotePath, onCommandFailure, initializedVirtualChannel.get());
     }
 
+    public SubStep<Object, Object> createStepCopyAuthenticationKeyFile(final String workspaceRemotePath, final String coverityServerUrl) throws CoverityJenkinsAbortException {
+        final CoverityJenkinsIntLogger logger = getOrCreateLogger();
+        final CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
+        Optional<String> authKeyContents = coverityConnectInstance.getAuthenticationKeyFileContents(logger);
+        FilePath filePath = new FilePath(initializedVirtualChannel.get(), workspaceRemotePath).child("auth-key.txt");
+
+        // TODO: Verify that this does what we need
+        return SubStep.ofExecutor(() -> {
+            if (authKeyContents.isPresent()) {
+                filePath.createTextTempFile("auth-key", ".txt", authKeyContents.get());
+            }
+        });
+    }
+
     public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(final String workspaceRemotePath, final String coverityServerUrl, final String projectName, final String streamName, final String viewName)
         throws CoverityJenkinsAbortException {
         final CoverityJenkinsIntLogger logger = getOrCreateLogger();
         final FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
         final String remoteIntermediateDirectory = intermediateDirectory.getRemote();
 
-        // TODO: You'd think you can just get the credentials from the instance, but that's been abstracted so it works with authkeys-- what we actually need is a way to get the auth key file?
-        // Possibly worthwhile to abstract the logic for obtaining the passphrase, since getting the username will always be just getting the credentials.getUsername
-        final Credentials credentials = getCoverityConnectInstanceFromUrl(coverityServerUrl).getCoverityServerCredentials(logger);
-        final Optional<AuthenticationKeyFile> authenticationKeyFile = Optional.empty(); //CoverityConnectInstance.getAuthKeyFile()
-        final String coverityUsername = authenticationKeyFile.map(authKeyFile -> authKeyFile.username)
-                                            .orElse(credentials.getUsername().orElse(StringUtils.EMPTY));
-        final String coverityPassphrase = authenticationKeyFile.map(authKeyFile -> authKeyFile.key)
-                                              .orElse(credentials.getPassword().orElse(StringUtils.EMPTY));
+        final CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
+        String coverityUsername = coverityConnectInstance.getUsername(logger).orElse(StringUtils.EMPTY);
+        String coverityPassphrase = coverityConnectInstance.getPassphrase().orElse(StringUtils.EMPTY);
 
         return new SetUpCoverityEnvironment(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityServerUrl, coverityUsername, coverityPassphrase, projectName, streamName, viewName, remoteIntermediateDirectory);
     }

@@ -43,6 +43,7 @@ import com.synopsys.integration.rest.credentials.CredentialsBuilder;
 
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper {
@@ -51,12 +52,12 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
     public static final CredentialsMatcher SUPPORTED_CREDENTIALS_TYPES = CredentialsMatchers.anyOf(AUTH_KEY_FILE_CREDENTIALS, CredentialsMatchers.instanceOf(USERNAME_PASSWORD_CREDENTIALS_CLASS));
     private final IntLogger logger;
 
-    public SynopsysCoverityCredentialsHelper(final IntLogger logger, final Jenkins jenkins) {
+    public SynopsysCoverityCredentialsHelper(IntLogger logger, Jenkins jenkins) {
         super(jenkins);
         this.logger = logger;
     }
 
-    public static SynopsysCoverityCredentialsHelper silentHelper(final Jenkins jenkins) {
+    public static SynopsysCoverityCredentialsHelper silentHelper(Jenkins jenkins) {
         return new SynopsysCoverityCredentialsHelper(new SilentIntLogger(), jenkins);
     }
 
@@ -67,12 +68,23 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
                    .includeMatchingAs(ACL.SYSTEM, Jenkins.getInstance(), StandardUsernamePasswordCredentials.class, Collections.emptyList(), SUPPORTED_CREDENTIALS_TYPES);
     }
 
-    public Optional<FileCredentialsImpl> getAuthenticationKeyFileCredentialsById(final String credentialsId) {
+    public Optional<FileCredentialsImpl> getAuthenticationKeyFileCredentialsById(String credentialsId) {
         return getCredentialsById(AUTH_KEY_FILE_CREDENTIALS_CLASS, credentialsId);
     }
 
+    public Optional<String> getCoverityUsernameById(String credentialsId) {
+        return getIntegrationCredentialsById(credentialsId)
+                   .getUsername();
+    }
+
+    public Optional<String> getCoverityPassphraseById(String credentialsId) {
+        return getUsernamePasswordCredentialsById(credentialsId)
+                   .map(UsernamePasswordCredentialsImpl::getPassword)
+                   .map(Secret::getPlainText);
+    }
+
     @Override
-    public com.synopsys.integration.rest.credentials.Credentials getIntegrationCredentialsById(final String credentialsId) {
+    public com.synopsys.integration.rest.credentials.Credentials getIntegrationCredentialsById(String credentialsId) {
         Optional<UsernamePasswordCredentialsImpl> possibleUsernamePasswordCredentials = getUsernamePasswordCredentialsById(credentialsId);
         Optional<FileCredentialsImpl> possibleAuthKeyCredentials = getAuthenticationKeyFileCredentialsById(credentialsId);
         CredentialsBuilder credentialsBuilder = com.synopsys.integration.rest.credentials.Credentials.newBuilder();
