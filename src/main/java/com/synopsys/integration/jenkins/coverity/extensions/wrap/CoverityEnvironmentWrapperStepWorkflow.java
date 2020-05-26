@@ -54,10 +54,9 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     private final List<ChangeLogSet<?>> changeSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
-    public CoverityEnvironmentWrapperStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
-        final CoverityWorkflowStepFactory coverityWorkflowStepFactory, final SimpleBuildWrapper.Context context, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName,
-        final String viewName, final Boolean createMissingProjectsAndStreams,
-        final List<ChangeLogSet<?>> changeSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public CoverityEnvironmentWrapperStepWorkflow(JenkinsIntLogger jenkinsIntLogger, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier, CoverityWorkflowStepFactory coverityWorkflowStepFactory,
+        SimpleBuildWrapper.Context context, String workspaceRemotePath, String coverityInstanceUrl, String projectName, String streamName, String viewName, Boolean createMissingProjectsAndStreams, List<ChangeLogSet<?>> changeSets,
+        ConfigureChangeSetPatterns configureChangeSetPatterns) {
         super(jenkinsIntLogger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.context = context;
@@ -74,6 +73,7 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     protected StepWorkflow<Object> buildWorkflow() throws AbortException {
         return StepWorkflow
                    .first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(false))
+                   .then(coverityWorkflowStepFactory.createStepCopyAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl))
                    .then(coverityWorkflowStepFactory.createStepProcessChangeLogSets(changeSets, configureChangeSetPatterns))
                    .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepPopulateEnvVars(context::env))
@@ -82,15 +82,15 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     }
 
     public Boolean perform() throws IOException {
-        final StepWorkflowResponse<Object> response = runWorkflow();
+        StepWorkflowResponse<Object> response = runWorkflow();
         try {
             if (!response.wasSuccessful()) {
                 throw response.getException();
             }
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             logger.debug(null, e);
             throw new AbortException(FAILURE_MESSAGE + e.getMessage());
-        } catch (final Exception e) {
+        } catch (Exception e) {
             throw new IOException(FAILURE_MESSAGE + e.getMessage(), e);
         }
 

@@ -41,18 +41,20 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<List<Stri
     private final String coverityInstanceUrl;
     private final String coverityUsername;
     private final String coverityPassword;
+    private final String coverityPassphraseFilePath;
     private final String projectName;
     private final String streamName;
     private final String viewName;
     private final String intermediateDirectoryPath;
 
-    public SetUpCoverityEnvironment(final IntLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final String coverityInstanceUrl, final String coverityUsername, final String coverityPassword, final String projectName,
-        final String streamName, final String viewName, final String intermediateDirectoryPath) {
+    public SetUpCoverityEnvironment(final IntLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final String coverityInstanceUrl, final String coverityUsername, final String coverityPassphrase,
+        final String coverityPassphraseFilePath, final String projectName, final String streamName, final String viewName, final String intermediateDirectoryPath) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.coverityUsername = coverityUsername;
-        this.coverityPassword = coverityPassword;
+        this.coverityPassword = coverityPassphrase;
+        this.coverityPassphraseFilePath = coverityPassphraseFilePath;
         this.projectName = projectName;
         this.streamName = streamName;
         this.viewName = viewName;
@@ -71,6 +73,7 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<List<Stri
         intEnvironmentVariables.put("PATH+COVERITYTOOLBIN", coverityToolHomeBin);
         intEnvironmentVariables.put(CoverityToolEnvironmentVariable.USER.toString(), coverityUsername);
         intEnvironmentVariables.put(CoverityToolEnvironmentVariable.PASSPHRASE.toString(), coverityPassword);
+        intEnvironmentVariables.put(CoverityToolEnvironmentVariable.PASSPHRASE_FILE.toString(), coverityPassphraseFilePath);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_URL.toString(), coverityInstanceUrl);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT.toString(), projectName);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM.toString(), streamName);

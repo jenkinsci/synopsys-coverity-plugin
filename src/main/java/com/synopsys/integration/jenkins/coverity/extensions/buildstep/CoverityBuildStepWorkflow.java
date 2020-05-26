@@ -75,9 +75,9 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
     private final String workspaceRemotePath;
     private final String coverityInstanceUrl;
 
-    public CoverityBuildStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier, final CoverityWorkflowStepFactory coverityWorkflowStepFactory,
-        final AbstractBuild<?, ?> build, final String workspaceRemotePath, final String coverityInstanceUrl, final String projectName, final String streamName, final CoverityRunConfiguration coverityRunConfiguration,
-        final ConfigureChangeSetPatterns configureChangeSetPatterns, final CheckForIssuesInView checkForIssuesInView, final OnCommandFailure onCommandFailure, final CleanUpAction cleanUpAction) {
+    public CoverityBuildStepWorkflow(JenkinsIntLogger logger, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier, CoverityWorkflowStepFactory coverityWorkflowStepFactory, AbstractBuild<?, ?> build,
+        String workspaceRemotePath, String coverityInstanceUrl, String projectName, String streamName, CoverityRunConfiguration coverityRunConfiguration, ConfigureChangeSetPatterns configureChangeSetPatterns,
+        CheckForIssuesInView checkForIssuesInView, OnCommandFailure onCommandFailure, CleanUpAction cleanUpAction) {
         super(logger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.build = build;
@@ -94,11 +94,12 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
 
     @Override
     protected StepWorkflow<Object> buildWorkflow() throws AbortException {
-        final String viewName = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getViewName).orElse(StringUtils.EMPTY);
-        final BuildStatus buildStatus = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getBuildStatusForIssues).orElse(BuildStatus.SUCCESS);
-        final boolean shouldValidateVersion = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
+        String viewName = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getViewName).orElse(StringUtils.EMPTY);
+        BuildStatus buildStatus = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getBuildStatusForIssues).orElse(BuildStatus.SUCCESS);
+        boolean shouldValidateVersion = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
 
         return StepWorkflow.first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(shouldValidateVersion))
+                   .then(coverityWorkflowStepFactory.createStepCopyAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl))
                    .then(coverityWorkflowStepFactory.createStepProcessChangeLogSets(build.getChangeSets(), configureChangeSetPatterns))
                    .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, projectName, streamName))
@@ -115,40 +116,40 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
 
     @Override
     public Boolean perform() throws AbortException {
-        final StepWorkflowResponse<Object> stepWorkflowResponse = this.runWorkflow();
-        final boolean wasSuccessful = stepWorkflowResponse.wasSuccessful();
+        StepWorkflowResponse<Object> stepWorkflowResponse = this.runWorkflow();
+        boolean wasSuccessful = stepWorkflowResponse.wasSuccessful();
         try {
             if (!wasSuccessful) {
                 throw stepWorkflowResponse.getException();
             }
-        } catch (final InterruptedException e) {
+        } catch (InterruptedException e) {
             logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
             build.setResult(Result.ABORTED);
             Thread.currentThread().interrupt();
-        } catch (final IntegrationException e) {
+        } catch (IntegrationException e) {
             this.handleException(build, Result.FAILURE, e);
-        } catch (final Exception e) {
+        } catch (Exception e) {
             this.handleException(build, Result.UNSTABLE, e);
         }
 
         return stepWorkflowResponse.wasSuccessful();
     }
 
-    private boolean shouldRunCoverityCommands(final IntEnvironmentVariables intEnvironmentVariables, final CoverityRunConfiguration coverityRunConfiguration) {
-        final boolean analysisIsIncremental;
+    private boolean shouldRunCoverityCommands(IntEnvironmentVariables intEnvironmentVariables, CoverityRunConfiguration coverityRunConfiguration) {
+        boolean analysisIsIncremental;
         if (ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
             analysisIsIncremental = false;
         } else {
-            final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityRunConfiguration;
-            final int changeSetSize;
+            SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityRunConfiguration;
+            int changeSetSize;
             changeSetSize = Integer.parseInt(intEnvironmentVariables.getValue(CHANGE_SET_SIZE.toString(), "0"));
-            final CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
-            final int changeSetThreshold = simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold();
+            CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
+            int changeSetThreshold = simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold();
 
             analysisIsIncremental = COV_RUN_DESKTOP.equals(coverityAnalysisType) || (THRESHOLD.equals(coverityAnalysisType) && changeSetSize < changeSetThreshold);
         }
 
-        final String changeSetString = intEnvironmentVariables.getValue(CHANGE_SET.toString());
+        String changeSetString = intEnvironmentVariables.getValue(CHANGE_SET.toString());
         if (analysisIsIncremental && StringUtils.isBlank(changeSetString)) {
             logger.alwaysLog("Skipping Synopsys Coverity static analysis because the analysis type was determined to be Incremental Analysis and the Jenkins $CHANGE_SET was empty.");
             return false;
@@ -156,15 +157,15 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         return true;
     }
 
-    private void handleIssues(final ViewReportWrapper viewReportWrapper, final AbstractBuild<?, ?> build, final String projectName, final String viewName, final BuildStatus buildStatusOnIssues) {
+    private void handleIssues(ViewReportWrapper viewReportWrapper, AbstractBuild<?, ?> build, String projectName, String viewName, BuildStatus buildStatusOnIssues) {
         logger.alwaysLog("Checking for issues in view");
         logger.alwaysLog("-- Build state for issues in the view: " + buildStatusOnIssues.getDisplayName());
         logger.alwaysLog("-- Coverity project name: " + projectName);
         logger.alwaysLog("-- Coverity view name: " + viewName);
 
-        final ViewContents viewContents = viewReportWrapper.getViewContents();
-        final String viewReportUrl = viewReportWrapper.getViewReportUrl();
-        final int defectCount = viewContents.getTotalRows().intValue();
+        ViewContents viewContents = viewReportWrapper.getViewContents();
+        String viewReportUrl = viewReportWrapper.getViewReportUrl();
+        int defectCount = viewContents.getTotalRows().intValue();
         build.addAction(new IssueReportAction(defectCount, viewReportUrl));
         logger.alwaysLog(String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl));
 
@@ -174,7 +175,7 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         }
     }
 
-    private void handleException(final AbstractBuild<?, ?> build, final Result result, final Exception e) {
+    private void handleException(AbstractBuild<?, ?> build, Result result, Exception e) {
         logger.error("[ERROR] " + e.getMessage());
         logger.debug(e.getMessage(), e);
         build.setResult(result);
