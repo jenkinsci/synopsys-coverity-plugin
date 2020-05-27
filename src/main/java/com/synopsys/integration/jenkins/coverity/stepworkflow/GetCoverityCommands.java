@@ -51,7 +51,7 @@ public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<Stri
     private final IntEnvironmentVariables intEnvironmentVariables;
     private final CoverityRunConfiguration coverityRunConfiguration;
 
-    public GetCoverityCommands(final CoverityJenkinsIntLogger logger, final IntEnvironmentVariables intEnvironmentVariables, final CoverityRunConfiguration coverityRunConfiguration) {
+    public GetCoverityCommands(CoverityJenkinsIntLogger logger, IntEnvironmentVariables intEnvironmentVariables, CoverityRunConfiguration coverityRunConfiguration) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.coverityRunConfiguration = coverityRunConfiguration;
@@ -60,13 +60,14 @@ public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<Stri
     public SubStepResponse<List<List<String>>> run() {
         logger.debug("Preparing Coverity commands");
         try {
-            final RepeatableCommand[] commands;
-            final int changeSetSize = Integer.valueOf(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString()));
+            RepeatableCommand[] commands;
+            int changeSetSize = Integer.parseInt(intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString()));
 
             if (CoverityRunConfiguration.RunConfigurationType.ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
                 commands = ((AdvancedCoverityRunConfiguration) coverityRunConfiguration).getCommands();
             } else {
-                commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration, changeSetSize);
+                String pathToAuthKeyFile = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH.toString());
+                commands = this.getSimpleModeCommands((SimpleCoverityRunConfiguration) coverityRunConfiguration, changeSetSize, pathToAuthKeyFile);
             }
 
             if (Arrays.stream(commands).map(RepeatableCommand::getCommand).allMatch(StringUtils::isBlank)) {
@@ -78,23 +79,23 @@ public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<Stri
                        .filter(StringUtils::isNotBlank)
                        .map(this::toParameters)
                        .collect(Collectors.collectingAndThen(Collectors.toList(), SubStepResponse::SUCCESS));
-        } catch (final CoverityJenkinsException e) {
+        } catch (CoverityJenkinsException e) {
             return SubStepResponse.FAILURE(e);
         }
     }
 
-    private RepeatableCommand[] getSimpleModeCommands(final SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, final int changeSetSize) throws CoverityJenkinsException {
-        final RepeatableCommand[] repeatableCommands = new RepeatableCommand[3];
+    private RepeatableCommand[] getSimpleModeCommands(SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, int changeSetSize, String pathToAuthKeyFile) throws CoverityJenkinsException {
+        RepeatableCommand[] repeatableCommands = new RepeatableCommand[3];
 
-        final CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();
-        final String covBuildArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovBuildArguments);
-        final String covCaptureArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovCaptureArguments);
-        final String covAnalyzeArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovAnalyzeArguments);
-        final String covRunDesktopArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovRunDesktopArguments);
-        final String covCommitDefectsArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovCommitDefectsArguments);
+        CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();
+        String covBuildArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovBuildArguments);
+        String covCaptureArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovCaptureArguments);
+        String covAnalyzeArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovAnalyzeArguments);
+        String covRunDesktopArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovRunDesktopArguments);
+        String covCommitDefectsArguments = getArgumentsIfAvailable(commandArguments, CommandArguments::getCovCommitDefectsArguments);
 
-        final CoverityCaptureType coverityCaptureType = simpleCoverityRunConfiguration.getCoverityCaptureType();
-        final String sourceArgument = simpleCoverityRunConfiguration.getSourceArgument();
+        CoverityCaptureType coverityCaptureType = simpleCoverityRunConfiguration.getCoverityCaptureType();
+        String sourceArgument = simpleCoverityRunConfiguration.getSourceArgument();
 
         if (coverityCaptureType == CoverityCaptureType.COV_CAPTURE_PROJECT) {
             repeatableCommands[0] = RepeatableCommand.COV_CAPTURE_PROJECT(sourceArgument, covCaptureArguments);
@@ -107,22 +108,22 @@ public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<Stri
             repeatableCommands[0] = RepeatableCommand.COV_BUILD(sourceArgument, covBuildArguments);
         }
 
-        final CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
+        CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
 
         if (coverityAnalysisType == CoverityAnalysisType.COV_ANALYZE || (coverityAnalysisType == CoverityAnalysisType.THRESHOLD && changeSetSize >= simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold())) {
             repeatableCommands[1] = RepeatableCommand.COV_ANALYZE(covAnalyzeArguments);
         } else if (coverityAnalysisType == CoverityAnalysisType.COV_RUN_DESKTOP || coverityAnalysisType == CoverityAnalysisType.THRESHOLD) {
-            repeatableCommands[1] = RepeatableCommand.COV_RUN_DESKTOP(covRunDesktopArguments, String.format("${%s}", JenkinsCoverityEnvironmentVariable.CHANGE_SET.toString()));
+            repeatableCommands[1] = RepeatableCommand.COV_RUN_DESKTOP(covRunDesktopArguments, pathToAuthKeyFile);
         } else {
             throw new CoverityJenkinsException("No valid Coverity analysis type specified");
         }
 
-        repeatableCommands[2] = RepeatableCommand.COV_COMMIT_DEFECTS(covCommitDefectsArguments);
+        repeatableCommands[2] = RepeatableCommand.COV_COMMIT_DEFECTS(covCommitDefectsArguments, pathToAuthKeyFile);
 
         return repeatableCommands;
     }
 
-    private String getArgumentsIfAvailable(final CommandArguments commandArguments, final Function<CommandArguments, String> getter) {
+    private String getArgumentsIfAvailable(CommandArguments commandArguments, Function<CommandArguments, String> getter) {
         if (commandArguments == null) {
             return StringUtils.EMPTY;
         } else {
@@ -130,7 +131,7 @@ public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<Stri
         }
     }
 
-    private List<String> toParameters(final String command) {
+    private List<String> toParameters(String command) {
         return Arrays.stream(Commandline.translateCommandline(command))
                    .map(parameter -> Util.replaceMacro(parameter, intEnvironmentVariables.getVariables()))
                    .collect(Collectors.toList());

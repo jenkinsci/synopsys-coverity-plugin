@@ -73,9 +73,8 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     protected StepWorkflow<Object> buildWorkflow() throws AbortException {
         return StepWorkflow
                    .first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(false))
-                   .then(coverityWorkflowStepFactory.createStepCopyAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl))
-                   .then(coverityWorkflowStepFactory.createStepProcessChangeLogSets(changeSets, configureChangeSetPatterns))
-                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
+                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl))
+                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(changeSets, configureChangeSetPatterns, workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepPopulateEnvVars(context::env))
                    .andSometimes(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, projectName, streamName)).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
                    .build();
@@ -97,4 +96,8 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
         return response.wasSuccessful();
     }
 
+    @Override
+    protected void cleanUp() throws CoverityJenkinsAbortException {
+        //TODO:
+    }
 }

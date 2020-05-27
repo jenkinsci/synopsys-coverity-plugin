@@ -23,6 +23,7 @@
 package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME;
+import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
 
 import java.net.MalformedURLException;
 import java.util.List;
@@ -30,7 +31,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -39,6 +40,7 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
@@ -110,44 +112,44 @@ public class CoverityWorkflowStepFactory {
     }
 
     // TODO: Remove Jenkins extension object?
-    public ProcessChangeLogSets createStepProcessChangeLogSets(List<ChangeLogSet<?>> changeLogSets, ConfigureChangeSetPatterns configureChangeSetPatterns) {
-        return new ProcessChangeLogSets(initializedLogger.get(), changeLogSets, configureChangeSetPatterns);
-    }
-
-    // TODO: Remove Jenkins extension object?
     public RunCoverityCommands createStepRunCoverityCommands(String workspaceRemotePath, OnCommandFailure onCommandFailure) throws CoverityJenkinsAbortException {
         return new RunCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), workspaceRemotePath, onCommandFailure, initializedVirtualChannel.get());
     }
 
-    public SubStep<Object, Object> createStepCopyAuthenticationKeyFile(String workspaceRemotePath, String coverityServerUrl) throws CoverityJenkinsAbortException {
-        CoverityJenkinsIntLogger logger = getOrCreateLogger();
+    public SubStep<Object, String> createStepCreateAuthenticationKeyFile(String workspaceRemotePath, String coverityServerUrl) throws CoverityJenkinsAbortException {
+        CoverityJenkinsIntLogger logger = initializedLogger.get();
         CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
         Optional<String> authKeyContents = coverityConnectInstance.getAuthenticationKeyFileContents(logger);
         FilePath workspace = new FilePath(initializedVirtualChannel.get(), workspaceRemotePath);
-        // TODO: Verify that this does what we need
-        return SubStep.ofExecutor(() -> {
+
+        return SubStep.ofSupplier(() -> {
             if (authKeyContents.isPresent()) {
-                workspace.createTextTempFile("auth-key", ".txt", authKeyContents.get());
+                FilePath authKeyFile = workspace.createTextTempFile("auth-key", ".txt", authKeyContents.get());
+                authKeyFile.chmod(0500);
+                return authKeyFile.getRemote();
             }
+            return null;
         });
     }
 
-    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(String workspaceRemotePath, String coverityServerUrl, String projectName, String streamName, String viewName)
-        throws CoverityJenkinsAbortException {
-        CoverityJenkinsIntLogger logger = getOrCreateLogger();
+    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(List<ChangeLogSet<?>> changeLogSets, ConfigureChangeSetPatterns configureChangeSetPatterns, String workspaceRemotePath, String coverityServerUrl, String projectName,
+        String streamName, String viewName) throws CoverityJenkinsAbortException {
+        CoverityJenkinsIntLogger logger = initializedLogger.get();
+        IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
+        VirtualChannel virtualChannel = initializedVirtualChannel.get();
+
         FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
         String remoteIntermediateDirectory = intermediateDirectory.getRemote();
 
         CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
-        String coverityUsername = coverityConnectInstance.getUsername(logger).orElse(StringUtils.EMPTY);
-        String coverityPassphrase = coverityConnectInstance.getPassphrase().orElse(StringUtils.EMPTY);
-        String coverityPassphraseFile = StringUtils.EMPTY;
-        if (coverityPassphrase.isEmpty() && !coverityUsername.isEmpty()) {
-            coverityPassphraseFile = new FilePath(initializedVirtualChannel.get(), workspaceRemotePath).child("auth-key.txt").getRemote();
-        }
+        String coverityUsername = coverityConnectInstance.getUsername(logger).orElse(null);
+        String coverityPassphrase = coverityConnectInstance.getPassphrase().orElse(null);
+        String coverityToolHomeBin = new FilePath(virtualChannel, intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()))
+                                         .child("bin")
+                                         .getRemote();
 
-        return new SetUpCoverityEnvironment(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityServerUrl, coverityUsername, coverityPassphrase, coverityPassphraseFile, projectName, streamName, viewName,
-            remoteIntermediateDirectory);
+        return new SetUpCoverityEnvironment(logger, intEnvironmentVariables, changeLogSets, configureChangeSetPatterns, coverityServerUrl, coverityUsername, coverityPassphrase, projectName, streamName, viewName,
+            remoteIntermediateDirectory, coverityToolHomeBin);
     }
 
     public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(boolean shouldValidateVersion) throws CoverityJenkinsAbortException {
@@ -160,6 +162,18 @@ public class CoverityWorkflowStepFactory {
     public SubStep<Object, Object> createStepCleanUpIntermediateDirectory(String workspaceRemotePath) throws CoverityJenkinsAbortException {
         FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
         return SubStep.ofExecutor(intermediateDirectory::deleteRecursive);
+    }
+
+    public SubStep<Object, Boolean> createStepCleanUpAuthenticationFile() throws CoverityJenkinsAbortException {
+        String authKeyPath = initializedIntEnvrionmentVariables.get().getValue(TEMPORARY_AUTH_KEY_PATH.toString());
+        VirtualChannel virtualChannel = initializedVirtualChannel.get();
+
+        return SubStep.ofSupplier(() -> {
+            if (StringUtils.isNotBlank(authKeyPath)) {
+                return new FilePath(virtualChannel, authKeyPath).delete();
+            }
+            return true;
+        });
     }
 
     public SubStep<Object, Object> createStepPopulateEnvVars(BiConsumer<String, String> environmentPopulator) {

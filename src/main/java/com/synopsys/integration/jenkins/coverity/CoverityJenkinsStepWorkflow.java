@@ -45,7 +45,7 @@ public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow
     protected final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier;
     protected WebServiceFactory webServiceFactory;
 
-    public CoverityJenkinsStepWorkflow(final JenkinsIntLogger logger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier) {
+    public CoverityJenkinsStepWorkflow(JenkinsIntLogger logger, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier) {
         super(logger);
         // Due to special classloading handling, it's better to get a supplier here that we use to fetch the Factory in our override of runWorkflow(). --rotte MAY 2020
         this.webServiceFactorySupplier = webServiceFactorySupplier;
@@ -54,48 +54,51 @@ public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow
     @Override
     public StepWorkflowResponse<T> runWorkflow() throws AbortException {
         // Coverity Common uses JAX-WS, which requires special classloading handling for Jenkins instances running Java 9+ --rotte MAY 2020
-        final Thread thread = Thread.currentThread();
-        final ClassLoader threadClassLoader = thread.getContextClassLoader();
+        Thread thread = Thread.currentThread();
+        ClassLoader threadClassLoader = thread.getContextClassLoader();
         try {
             thread.setContextClassLoader(this.getClass().getClassLoader());
             webServiceFactory = webServiceFactorySupplier.get();
             return super.runWorkflow();
         } finally {
+            this.cleanUp();
             thread.setContextClassLoader(threadClassLoader);
         }
     }
 
+    protected abstract void cleanUp() throws CoverityJenkinsAbortException;
+
     protected PhoneHomeRequestBodyBuilder createPhoneHomeBuilder() {
-        final CoverityPhoneHomeRequestFactory coverityPhoneHomeRequestFactory = new CoverityPhoneHomeRequestFactory("synopsys-coverity");
-        final CoverityHttpClient coverityHttpClient = webServiceFactory.getCoverityHttpClient();
+        CoverityPhoneHomeRequestFactory coverityPhoneHomeRequestFactory = new CoverityPhoneHomeRequestFactory("synopsys-coverity");
+        CoverityHttpClient coverityHttpClient = webServiceFactory.getCoverityHttpClient();
         String customerName;
         String cimVersion;
 
         try {
-            final ConfigurationService configurationService = webServiceFactory.createConfigurationService();
+            ConfigurationService configurationService = webServiceFactory.createConfigurationService();
             try {
-                final LicenseDataObj licenseDataObj = configurationService.getLicenseConfiguration();
+                LicenseDataObj licenseDataObj = configurationService.getLicenseConfiguration();
                 customerName = licenseDataObj.getCustomer();
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 logger.trace("Couldn't get the Coverity customer id: " + e.getMessage());
                 customerName = PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE;
             }
 
             try {
-                final VersionDataObj versionDataObj = configurationService.getVersion();
+                VersionDataObj versionDataObj = configurationService.getVersion();
                 cimVersion = versionDataObj.getExternalVersion();
-            } catch (final Exception e) {
+            } catch (Exception e) {
                 logger.trace("Couldn't get the Coverity version: " + e.getMessage());
                 cimVersion = PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE;
             }
-        } catch (final MalformedURLException e) {
+        } catch (MalformedURLException e) {
             logger.trace("Couldn't get the Coverity customer id: " + e.getMessage());
             logger.trace("Couldn't get the Coverity version: " + e.getMessage());
             cimVersion = PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE;
             customerName = PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE;
         }
 
-        final String pluginVersion = JenkinsVersionHelper.getPluginVersion("synopsys-coverity").orElse(PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE);
+        String pluginVersion = JenkinsVersionHelper.getPluginVersion("synopsys-coverity").orElse(PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE);
 
         return coverityPhoneHomeRequestFactory.create(customerName, coverityHttpClient.getBaseUrl(), pluginVersion, cimVersion);
     }

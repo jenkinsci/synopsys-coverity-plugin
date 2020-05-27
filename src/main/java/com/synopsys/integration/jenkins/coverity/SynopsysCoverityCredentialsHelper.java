@@ -27,12 +27,12 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Optional;
 
-import org.jenkinsci.plugins.plaincredentials.impl.FileCredentialsImpl;
+import org.jenkinsci.plugins.plaincredentials.FileCredentials;
 
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.synopsys.integration.coverity.authentication.AuthenticationKeyFile;
 import com.synopsys.integration.coverity.authentication.AuthenticationKeyFileUtility;
@@ -47,7 +47,7 @@ import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper {
-    public static final Class<FileCredentialsImpl> AUTH_KEY_FILE_CREDENTIALS_CLASS = FileCredentialsImpl.class;
+    public static final Class<FileCredentials> AUTH_KEY_FILE_CREDENTIALS_CLASS = FileCredentials.class;
     public static final CredentialsMatcher AUTH_KEY_FILE_CREDENTIALS = CredentialsMatchers.instanceOf(AUTH_KEY_FILE_CREDENTIALS_CLASS);
     public static final CredentialsMatcher SUPPORTED_CREDENTIALS_TYPES = CredentialsMatchers.anyOf(AUTH_KEY_FILE_CREDENTIALS, CredentialsMatchers.instanceOf(USERNAME_PASSWORD_CREDENTIALS_CLASS));
     private final IntLogger logger;
@@ -65,10 +65,10 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         return new StandardListBoxModel()
                    .includeEmptyValue()
-                   .includeMatchingAs(ACL.SYSTEM, Jenkins.getInstance(), StandardUsernamePasswordCredentials.class, Collections.emptyList(), SUPPORTED_CREDENTIALS_TYPES);
+                   .includeMatchingAs(ACL.SYSTEM, Jenkins.getInstance(), StandardCredentials.class, Collections.emptyList(), SUPPORTED_CREDENTIALS_TYPES);
     }
 
-    public Optional<FileCredentialsImpl> getAuthenticationKeyFileCredentialsById(String credentialsId) {
+    public Optional<FileCredentials> getAuthenticationKeyFileCredentialsById(String credentialsId) {
         return getCredentialsById(AUTH_KEY_FILE_CREDENTIALS_CLASS, credentialsId);
     }
 
@@ -86,7 +86,7 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
     @Override
     public com.synopsys.integration.rest.credentials.Credentials getIntegrationCredentialsById(String credentialsId) {
         Optional<UsernamePasswordCredentialsImpl> possibleUsernamePasswordCredentials = getUsernamePasswordCredentialsById(credentialsId);
-        Optional<FileCredentialsImpl> possibleAuthKeyCredentials = getAuthenticationKeyFileCredentialsById(credentialsId);
+        Optional<FileCredentials> possibleAuthKeyCredentials = getAuthenticationKeyFileCredentialsById(credentialsId);
         CredentialsBuilder credentialsBuilder = com.synopsys.integration.rest.credentials.Credentials.newBuilder();
 
         if (possibleUsernamePasswordCredentials.isPresent()) {
@@ -96,7 +96,7 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
         }
 
         if (possibleAuthKeyCredentials.isPresent()) {
-            FileCredentialsImpl fileCredentials = possibleAuthKeyCredentials.get();
+            FileCredentials fileCredentials = possibleAuthKeyCredentials.get();
             AuthenticationKeyFileUtility authenticationKeyFileUtility = AuthenticationKeyFileUtility.defaultUtility();
 
             try (InputStream keyFileInputStream = fileCredentials.getContent()) {

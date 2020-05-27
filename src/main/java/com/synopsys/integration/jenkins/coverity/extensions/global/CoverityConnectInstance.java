@@ -31,7 +31,7 @@ import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jenkinsci.plugins.plaincredentials.impl.FileCredentialsImpl;
+import org.jenkinsci.plugins.plaincredentials.FileCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
@@ -63,7 +63,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
     private final String credentialId;
 
     @DataBoundConstructor
-    public CoverityConnectInstance(final String url, final String credentialId) {
+    public CoverityConnectInstance(String url, String credentialId) {
         this.url = url;
         this.credentialId = credentialId;
     }
@@ -81,7 +81,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
         if (url != null) {
             try {
                 coverityUrl = new URL(url);
-            } catch (final MalformedURLException ignored) {
+            } catch (MalformedURLException ignored) {
                 // Handled by form validation in the global configuration
             }
         }
@@ -113,7 +113,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
 
     public Optional<String> getAuthenticationKeyFileContents(IntLogger logger) throws CoverityJenkinsAbortException {
         SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, Jenkins.getInstance());
-        Optional<FileCredentialsImpl> authenticationKeyFileCredentials = synopsysCoverityCredentialsHelper.getAuthenticationKeyFileCredentialsById(credentialId);
+        Optional<FileCredentials> authenticationKeyFileCredentials = synopsysCoverityCredentialsHelper.getAuthenticationKeyFileCredentialsById(credentialId);
         String contents = null;
 
         if (authenticationKeyFileCredentials.isPresent()) {
@@ -143,18 +143,18 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
         public DescriptorImpl() {
             super(CoverityConnectInstance.class);
             load();
-            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+            Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
         }
 
-        public FormValidation doCheckUrl(@QueryParameter("url") final String url) {
+        public FormValidation doCheckUrl(@QueryParameter("url") String url) {
             Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             if (StringUtils.isBlank(url)) {
                 return FormValidation.error("Please provide a URL for the Coverity Connect instance.");
             }
             try {
                 new URL(url);
-            } catch (final MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 return FormValidation.error(e, String.format("The provided URL for the Coverity Connect instance is not a valid URL. Error: %s", e.getMessage()));
             }
             return FormValidation.ok();
@@ -165,9 +165,9 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
         }
 
         @POST
-        public FormValidation doTestConnection(@QueryParameter("url") final String url, @QueryParameter("credentialId") final String credentialId) {
+        public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("credentialId") String credentialId) {
             Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-            final FormValidation urlValidation = doCheckUrl(url);
+            FormValidation urlValidation = doCheckUrl(url);
             if (!FormValidation.Kind.OK.equals(urlValidation.kind)) {
                 return urlValidation;
             }
@@ -176,7 +176,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
                 return FormValidation.error("Please specify the credentials for the Coverity Connect instance.");
             }
 
-            final CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId);
+            CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId);
             return coverityConnectUrlFieldHelper.testConnectionToCoverityInstance(coverityConnectInstance);
         }
     }

@@ -28,6 +28,7 @@ public enum JenkinsCoverityEnvironmentVariable implements SynopsysEnvironmentVar
     LOG_LEVEL("COVERITY_LOG_LEVEL"),
     CHANGE_SET("CHANGE_SET"),
     CHANGE_SET_SIZE("CHANGE_SET_SIZE"),
+    TEMPORARY_AUTH_KEY_PATH("COV_AUTH_KEY_PATH"),
     COVERITY_URL("COV_URL"),
     COVERITY_PROJECT("COV_PROJECT"),
     COVERITY_STREAM("COV_STREAM"),
@@ -37,12 +38,16 @@ public enum JenkinsCoverityEnvironmentVariable implements SynopsysEnvironmentVar
 
     private final String name;
 
-    JenkinsCoverityEnvironmentVariable(final String name) {
+    JenkinsCoverityEnvironmentVariable(String name) {
         this.name = name;
     }
 
     @Override
     public String toString() {
         return this.name;
+    }
+
+    public String expansionString() {
+        return String.format("${%s}", this.name);
     }
 }

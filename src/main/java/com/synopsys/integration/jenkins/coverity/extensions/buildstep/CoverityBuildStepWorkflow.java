@@ -99,9 +99,8 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         boolean shouldValidateVersion = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
 
         return StepWorkflow.first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(shouldValidateVersion))
-                   .then(coverityWorkflowStepFactory.createStepCopyAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl))
-                   .then(coverityWorkflowStepFactory.createStepProcessChangeLogSets(build.getChangeSets(), configureChangeSetPatterns))
-                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
+                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl))
+                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(build.getChangeSets(), configureChangeSetPatterns, workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, projectName, streamName))
                    .andSometimes(coverityWorkflowStepFactory.createStepGetCoverityCommands(coverityRunConfiguration))
                    .then(coverityWorkflowStepFactory.createStepRunCoverityCommands(workspaceRemotePath, onCommandFailure))
@@ -133,6 +132,13 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         }
 
         return stepWorkflowResponse.wasSuccessful();
+    }
+
+    @Override
+    public void cleanUp() throws CoverityJenkinsAbortException {
+        StepWorkflow.first(coverityWorkflowStepFactory.createStepCleanUpAuthenticationFile())
+            .andSometimes(coverityWorkflowStepFactory.createStepCleanUpIntermediateDirectory(workspaceRemotePath))
+            .butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals);
     }
 
     private boolean shouldRunCoverityCommands(IntEnvironmentVariables intEnvironmentVariables, CoverityRunConfiguration coverityRunConfiguration) {
