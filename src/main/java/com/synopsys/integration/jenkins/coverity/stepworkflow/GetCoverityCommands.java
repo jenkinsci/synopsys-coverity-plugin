@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tools.ant.types.Commandline;
 
-import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
@@ -40,6 +39,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArg
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
+import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.stepworkflow.AbstractSupplyingSubStep;
 import com.synopsys.integration.stepworkflow.SubStepResponse;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -47,11 +47,11 @@ import com.synopsys.integration.util.IntEnvironmentVariables;
 import hudson.Util;
 
 public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<String>>> {
-    private final CoverityJenkinsIntLogger logger;
+    private final IntLogger logger;
     private final IntEnvironmentVariables intEnvironmentVariables;
     private final CoverityRunConfiguration coverityRunConfiguration;
 
-    public GetCoverityCommands(CoverityJenkinsIntLogger logger, IntEnvironmentVariables intEnvironmentVariables, CoverityRunConfiguration coverityRunConfiguration) {
+    public GetCoverityCommands(IntLogger logger, IntEnvironmentVariables intEnvironmentVariables, CoverityRunConfiguration coverityRunConfiguration) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.coverityRunConfiguration = coverityRunConfiguration;
@@ -84,7 +84,7 @@ public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<Stri
         }
     }
 
-    private RepeatableCommand[] getSimpleModeCommands(SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, int changeSetSize, String pathToAuthKeyFile) throws CoverityJenkinsException {
+    public RepeatableCommand[] getSimpleModeCommands(SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, int changeSetSize, String pathToAuthKeyFile) throws CoverityJenkinsException {
         RepeatableCommand[] repeatableCommands = new RepeatableCommand[3];
 
         CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();
@@ -113,12 +113,12 @@ public class GetCoverityCommands extends AbstractSupplyingSubStep<List<List<Stri
         if (coverityAnalysisType == CoverityAnalysisType.COV_ANALYZE || (coverityAnalysisType == CoverityAnalysisType.THRESHOLD && changeSetSize >= simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold())) {
             repeatableCommands[1] = RepeatableCommand.COV_ANALYZE(covAnalyzeArguments);
         } else if (coverityAnalysisType == CoverityAnalysisType.COV_RUN_DESKTOP || coverityAnalysisType == CoverityAnalysisType.THRESHOLD) {
-            repeatableCommands[1] = RepeatableCommand.COV_RUN_DESKTOP(covRunDesktopArguments, pathToAuthKeyFile);
+            repeatableCommands[1] = RepeatableCommand.COV_RUN_DESKTOP(pathToAuthKeyFile, covRunDesktopArguments);
         } else {
             throw new CoverityJenkinsException("No valid Coverity analysis type specified");
         }
 
-        repeatableCommands[2] = RepeatableCommand.COV_COMMIT_DEFECTS(covCommitDefectsArguments, pathToAuthKeyFile);
+        repeatableCommands[2] = RepeatableCommand.COV_COMMIT_DEFECTS(pathToAuthKeyFile, covCommitDefectsArguments);
 
         return repeatableCommands;
     }
