@@ -66,7 +66,7 @@ public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow
         }
     }
 
-    protected abstract void cleanUp() throws CoverityJenkinsAbortException;
+    protected abstract void cleanUp() throws AbortException;
 
     protected PhoneHomeRequestBodyBuilder createPhoneHomeBuilder() {
         CoverityPhoneHomeRequestFactory coverityPhoneHomeRequestFactory = new CoverityPhoneHomeRequestFactory("synopsys-coverity");

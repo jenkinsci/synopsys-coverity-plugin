@@ -49,6 +49,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.stepworkflow.StepWorkflow;
@@ -108,8 +109,6 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
                    .andSometimes(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, projectName, viewName))
                    .then(SubStep.ofConsumer(viewReportWrapper -> handleIssues(viewReportWrapper, build, projectName, viewName, buildStatus)))
                    .butOnlyIf(checkForIssuesInView, Objects::nonNull)
-                   .andSometimes(coverityWorkflowStepFactory.createStepCleanUpIntermediateDirectory(workspaceRemotePath))
-                   .butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals)
                    .build();
     }
 
@@ -136,9 +135,12 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
 
     @Override
     public void cleanUp() throws CoverityJenkinsAbortException {
-        StepWorkflow.first(coverityWorkflowStepFactory.createStepCleanUpAuthenticationFile())
-            .andSometimes(coverityWorkflowStepFactory.createStepCleanUpIntermediateDirectory(workspaceRemotePath))
-            .butOnlyIf(cleanUpAction, CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY::equals);
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, coverityWorkflowStepFactory.getOrCreateVirtualChannel(), workspaceRemotePath, coverityWorkflowStepFactory.getOrCreateEnvironmentVariables());
+        cleanUpWorkflowService.cleanUpAuthenticationFile();
+
+        if (CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY.equals(cleanUpAction)) {
+            cleanUpWorkflowService.cleanUpIntermediateDirectory();
+        }
     }
 
     private boolean shouldRunCoverityCommands(IntEnvironmentVariables intEnvironmentVariables, CoverityRunConfiguration coverityRunConfiguration) {

@@ -64,6 +64,7 @@ dependencies {
 
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.6.2'
     testCompile 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+    testCompile 'org.mockito:mockito-junit-jupiter:3.3.3'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
     optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'

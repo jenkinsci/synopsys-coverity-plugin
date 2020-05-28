@@ -31,6 +31,7 @@ import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.stepworkflow.StepWorkflow;
@@ -97,7 +98,8 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     }
 
     @Override
-    protected void cleanUp() throws CoverityJenkinsAbortException {
-        //TODO:
+    protected void cleanUp() throws AbortException {
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, coverityWorkflowStepFactory.getOrCreateVirtualChannel(), workspaceRemotePath, coverityWorkflowStepFactory.getOrCreateEnvironmentVariables());
+        cleanUpWorkflowService.cleanUpAuthenticationFile();
     }
 }

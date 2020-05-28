@@ -23,15 +23,12 @@
 package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
 import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME;
-import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
 
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-
-import org.apache.commons.lang.StringUtils;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
@@ -157,23 +154,6 @@ public class CoverityWorkflowStepFactory {
 
         ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(initializedLogger.get(), shouldValidateVersion, coverityToolHome);
         return RemoteSubStep.of(initializedVirtualChannel.get(), validateCoverityInstallation);
-    }
-
-    public SubStep<Object, Object> createStepCleanUpIntermediateDirectory(String workspaceRemotePath) throws CoverityJenkinsAbortException {
-        FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
-        return SubStep.ofExecutor(intermediateDirectory::deleteRecursive);
-    }
-
-    public SubStep<Object, Boolean> createStepCleanUpAuthenticationFile() throws CoverityJenkinsAbortException {
-        String authKeyPath = initializedIntEnvrionmentVariables.get().getValue(TEMPORARY_AUTH_KEY_PATH.toString());
-        VirtualChannel virtualChannel = initializedVirtualChannel.get();
-
-        return SubStep.ofSupplier(() -> {
-            if (StringUtils.isNotBlank(authKeyPath)) {
-                return new FilePath(virtualChannel, authKeyPath).delete();
-            }
-            return true;
-        });
     }
 
     public SubStep<Object, Object> createStepPopulateEnvVars(BiConsumer<String, String> environmentPopulator) {
