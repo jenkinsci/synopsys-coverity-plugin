@@ -45,8 +45,8 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
     private final Boolean returnIssueCount;
     private final Run<?, ?> run;
 
-    public CheckForIssuesStepWorkflow(final JenkinsIntLogger jenkinsIntLogger, final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
-        final CoverityWorkflowStepFactory coverityWorkflowStepFactory, final String coverityInstanceUrl, final String projectName, final String viewName, final Boolean returnIssueCount, final Run<?, ?> run) {
+    public CheckForIssuesStepWorkflow(JenkinsIntLogger jenkinsIntLogger, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory, String coverityInstanceUrl, String projectName, String viewName, Boolean returnIssueCount, Run<?, ?> run) {
         super(jenkinsIntLogger, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.coverityInstanceUrl = coverityInstanceUrl;
@@ -68,10 +68,10 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
         return runWorkflow().getDataOrThrowException();
     }
 
-    private Integer getDefectCount(final ViewReportWrapper viewReportWrapper) throws CoverityJenkinsException {
-        final String viewReportUrl = viewReportWrapper.getViewReportUrl();
-        final int defectCount = viewReportWrapper.getViewContents().getTotalRows().intValue();
-        final String defectMessage = String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl);
+    private Integer getDefectCount(ViewReportWrapper viewReportWrapper) throws CoverityJenkinsException {
+        String viewReportUrl = viewReportWrapper.getViewReportUrl();
+        int defectCount = viewReportWrapper.getViewContents().getTotalRows().intValue();
+        String defectMessage = String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl);
         run.addAction(new IssueReportAction(defectCount, viewReportUrl));
 
         if (defectCount > 0) {
@@ -85,4 +85,8 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
         return defectCount;
     }
 
+    @Override
+    protected void cleanUp() throws CoverityJenkinsAbortException {
+        // Nothing to clean up
+    }
 }

@@ -102,7 +102,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     public CoverityEnvironmentWrapper(final String coverityInstanceUrl) {
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentIntLogger(), coverityInstanceUrl)
-                                      .flatMap(CoverityConnectInstance::getCoverityPassword)
+                                      .flatMap(CoverityConnectInstance::getPassphrase)
                                       .orElse(StringUtils.EMPTY);
     }
 

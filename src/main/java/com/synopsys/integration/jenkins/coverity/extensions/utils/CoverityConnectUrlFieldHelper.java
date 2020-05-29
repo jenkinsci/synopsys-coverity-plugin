@@ -36,6 +36,7 @@ import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.rest.client.ConnectionResult;
+import com.synopsys.integration.rest.credentials.Credentials;
 
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -84,21 +85,19 @@ public class CoverityConnectUrlFieldHelper extends FieldHelper {
 
     public FormValidation testConnectionToCoverityInstance(final CoverityConnectInstance coverityConnectInstance) {
         final String url = coverityConnectInstance.getCoverityURL().map(URL::toString).orElse(StringUtils.EMPTY);
-        final String username = coverityConnectInstance.getCoverityUsername().orElse(null);
-        final String password = coverityConnectInstance.getCoverityPassword().orElse(null);
+        final Credentials credentials = coverityConnectInstance.getCoverityServerCredentials(logger);
 
-        return testConnectionTo(url, username, password);
+        return testConnectionTo(url, credentials);
     }
 
-    public FormValidation testConnectionTo(final String url, final String username, final String password) {
+    public FormValidation testConnectionTo(final String url, final Credentials credentials) {
         final Thread thread = Thread.currentThread();
         final ClassLoader threadClassLoader = thread.getContextClassLoader();
         thread.setContextClassLoader(this.getClass().getClassLoader());
 
         try {
             final CoverityServerConfig coverityServerConfig = CoverityServerConfig.newBuilder().setUrl(url)
-                                                                  .setUsername(username)
-                                                                  .setPassword(password)
+                                                                  .setCredentials(credentials)
                                                                   .build();
 
             coverityServerConfig.createWebServiceFactory(logger).connect();

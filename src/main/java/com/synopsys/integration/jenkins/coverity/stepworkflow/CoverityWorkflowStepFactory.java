@@ -37,6 +37,7 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
+import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
@@ -70,19 +71,19 @@ public class CoverityWorkflowStepFactory {
     private VirtualChannel _virtualChannel = null;
     private final ThrowingSupplier<VirtualChannel, CoverityJenkinsAbortException> initializedVirtualChannel = this::getOrCreateVirtualChannel;
 
-    public CoverityWorkflowStepFactory(final EnvVars envVars, final Node node, final Launcher launcher, final TaskListener listener) {
+    public CoverityWorkflowStepFactory(EnvVars envVars, Node node, Launcher launcher, TaskListener listener) {
         this.envVars = envVars;
         this.node = node;
         this.launcher = launcher;
         this.listener = listener;
     }
 
-    public CreateMissingProjectsAndStreams createStepCreateMissingProjectsAndStreams(final String coverityServerUrl, final String projectName, final String streamName) throws CoverityJenkinsAbortException {
-        final WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(coverityServerUrl);
-        final ConfigurationServiceWrapper configurationServiceWrapper;
+    public CreateMissingProjectsAndStreams createStepCreateMissingProjectsAndStreams(String coverityServerUrl, String projectName, String streamName) throws CoverityJenkinsAbortException {
+        WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(coverityServerUrl);
+        ConfigurationServiceWrapper configurationServiceWrapper;
         try {
             configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-        } catch (final MalformedURLException malformedURLException) {
+        } catch (MalformedURLException malformedURLException) {
             throw CoverityJenkinsAbortException.fromMalformedUrlException(coverityServerUrl + WebServiceFactory.CONFIGURATION_SERVICE_V9_WSDL, malformedURLException);
         }
 
@@ -90,60 +91,78 @@ public class CoverityWorkflowStepFactory {
     }
 
     // TODO: Remove Jenkins extension object?
-    public GetCoverityCommands createStepGetCoverityCommands(final CoverityRunConfiguration coverityRunConfiguration) {
+    public GetCoverityCommands createStepGetCoverityCommands(CoverityRunConfiguration coverityRunConfiguration) {
         return new GetCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityRunConfiguration);
     }
 
-    public GetIssuesInView createStepGetIssuesInView(final String coverityServerUrl, final String projectName, final String viewName) throws CoverityJenkinsAbortException {
-        final WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(coverityServerUrl);
-        final ConfigurationServiceWrapper configurationServiceWrapper;
+    public GetIssuesInView createStepGetIssuesInView(String coverityServerUrl, String projectName, String viewName) throws CoverityJenkinsAbortException {
+        WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(coverityServerUrl);
+        ConfigurationServiceWrapper configurationServiceWrapper;
         try {
             configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
-        } catch (final MalformedURLException malformedURLException) {
+        } catch (MalformedURLException malformedURLException) {
             throw CoverityJenkinsAbortException.fromMalformedUrlException(coverityServerUrl + WebServiceFactory.CONFIGURATION_SERVICE_V9_WSDL, malformedURLException);
         }
-        final ViewService viewService = webServiceFactory.createViewService();
+        ViewService viewService = webServiceFactory.createViewService();
 
         return new GetIssuesInView(initializedLogger.get(), configurationServiceWrapper, viewService, projectName, viewName);
     }
 
     // TODO: Remove Jenkins extension object?
-    public ProcessChangeLogSets createStepProcessChangeLogSets(final List<ChangeLogSet<?>> changeLogSets, final ConfigureChangeSetPatterns configureChangeSetPatterns) {
-        return new ProcessChangeLogSets(initializedLogger.get(), changeLogSets, configureChangeSetPatterns);
-    }
-
-    // TODO: Remove Jenkins extension object?
-    public RunCoverityCommands createStepRunCoverityCommands(final String workspaceRemotePath, final OnCommandFailure onCommandFailure) throws CoverityJenkinsAbortException {
+    public RunCoverityCommands createStepRunCoverityCommands(String workspaceRemotePath, OnCommandFailure onCommandFailure) throws CoverityJenkinsAbortException {
         return new RunCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), workspaceRemotePath, onCommandFailure, initializedVirtualChannel.get());
     }
 
-    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(final String workspaceRemotePath, final String coverityServerUrl, final String projectName, final String streamName, final String viewName)
-        throws CoverityJenkinsAbortException {
-        final FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
-        final String remoteIntermediateDirectory = intermediateDirectory.getRemote();
+    public SubStep<Object, String> createStepCreateAuthenticationKeyFile(String workspaceRemotePath, String coverityServerUrl) throws CoverityJenkinsAbortException {
+        CoverityJenkinsIntLogger logger = initializedLogger.get();
+        CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
+        Optional<String> authKeyContents = coverityConnectInstance.getAuthenticationKeyFileContents(logger);
+        FilePath workspace = new FilePath(initializedVirtualChannel.get(), workspaceRemotePath);
 
-        return new SetUpCoverityEnvironment(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityServerUrl, projectName, streamName, viewName, remoteIntermediateDirectory);
+        return SubStep.ofSupplier(() -> {
+            if (authKeyContents.isPresent()) {
+                FilePath authKeyFile = workspace.createTextTempFile("auth-key", ".txt", authKeyContents.get());
+                authKeyFile.chmod(0500);
+                return authKeyFile.getRemote();
+            }
+            return null;
+        });
     }
 
-    public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(final boolean shouldValidateVersion) throws CoverityJenkinsAbortException {
-        final String coverityToolHome = initializedIntEnvrionmentVariables.get().getValue(COVERITY_TOOL_HOME.toString());
+    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(List<ChangeLogSet<?>> changeLogSets, ConfigureChangeSetPatterns configureChangeSetPatterns, String workspaceRemotePath, String coverityServerUrl, String projectName,
+        String streamName, String viewName) throws CoverityJenkinsAbortException {
+        CoverityJenkinsIntLogger logger = initializedLogger.get();
+        IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
+        VirtualChannel virtualChannel = initializedVirtualChannel.get();
 
-        final ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(initializedLogger.get(), shouldValidateVersion, coverityToolHome);
+        FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
+        String remoteIntermediateDirectory = intermediateDirectory.getRemote();
+
+        CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
+        String coverityUsername = coverityConnectInstance.getUsername(logger).orElse(null);
+        String coverityPassphrase = coverityConnectInstance.getPassphrase().orElse(null);
+        String coverityToolHomeBin = new FilePath(virtualChannel, intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()))
+                                         .child("bin")
+                                         .getRemote();
+
+        return new SetUpCoverityEnvironment(logger, intEnvironmentVariables, changeLogSets, configureChangeSetPatterns, coverityServerUrl, coverityUsername, coverityPassphrase, projectName, streamName, viewName,
+            remoteIntermediateDirectory, coverityToolHomeBin);
+    }
+
+    public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(boolean shouldValidateVersion) throws CoverityJenkinsAbortException {
+        String coverityToolHome = initializedIntEnvrionmentVariables.get().getValue(COVERITY_TOOL_HOME.toString());
+
+        ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(initializedLogger.get(), shouldValidateVersion, coverityToolHome);
         return RemoteSubStep.of(initializedVirtualChannel.get(), validateCoverityInstallation);
     }
 
-    public SubStep<Object, Object> createStepCleanUpIntermediateDirectory(final String workspaceRemotePath) throws CoverityJenkinsAbortException {
-        final FilePath intermediateDirectory = getIntermediateDirectory(workspaceRemotePath);
-        return SubStep.ofExecutor(intermediateDirectory::deleteRecursive);
-    }
-
-    public SubStep<Object, Object> createStepPopulateEnvVars(final BiConsumer<String, String> environmentPopulator) {
-        final IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
+    public SubStep<Object, Object> createStepPopulateEnvVars(BiConsumer<String, String> environmentPopulator) {
+        IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
         return SubStep.ofExecutor(() -> intEnvironmentVariables.getVariables().forEach(environmentPopulator));
     }
 
     public CoverityJenkinsIntLogger getOrCreateLogger() {
-        final IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
+        IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
         if (_logger == null) {
             _logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
         }
@@ -158,36 +177,42 @@ public class CoverityWorkflowStepFactory {
         return _intEnvironmentVariables;
     }
 
-    public WebServiceFactory getWebServiceFactoryFromUrl(final String coverityServerUrl) throws CoverityJenkinsAbortException {
-        final JenkinsIntLogger logger = getOrCreateLogger();
-        final CoverityGlobalConfig coverityGlobalConfig = GlobalConfiguration.all().get(CoverityGlobalConfig.class);
+    public CoverityConnectInstance getCoverityConnectInstanceFromUrl(String coverityServerUrl) throws CoverityJenkinsAbortException {
+        CoverityGlobalConfig coverityGlobalConfig = GlobalConfiguration.all().get(CoverityGlobalConfig.class);
         if (coverityGlobalConfig == null) {
             throw new CoverityJenkinsAbortException("No Coverity global configuration detected in the Jenkins system configuration.");
         }
-        final List<CoverityConnectInstance> coverityConnectInstances = coverityGlobalConfig.getCoverityConnectInstances();
+        List<CoverityConnectInstance> coverityConnectInstances = coverityGlobalConfig.getCoverityConnectInstances();
         if (coverityConnectInstances.isEmpty()) {
             throw new CoverityJenkinsAbortException("No Coverity connect instances are configured in the Jenkins system configuration.");
         }
-        final CoverityConnectInstance coverityConnectInstance = coverityConnectInstances.stream()
-                                                                    .filter(instance -> instance.getUrl().equals(coverityServerUrl))
-                                                                    .findFirst()
-                                                                    .orElseThrow(
-                                                                        () -> new CoverityJenkinsAbortException("No Coverity conect instance with the url '" + coverityServerUrl + "' could be  found in the Jenkins system configuration."));
 
-        final CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig();
-        final WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
+        return coverityConnectInstances.stream()
+                   .filter(instance -> instance.getUrl().equals(coverityServerUrl))
+                   .findFirst()
+                   .orElseThrow(
+                       () -> new CoverityJenkinsAbortException("No Coverity conect instance with the url '" + coverityServerUrl + "' could be  found in the Jenkins system configuration."));
+
+    }
+
+    public WebServiceFactory getWebServiceFactoryFromUrl(String coverityServerUrl) throws CoverityJenkinsAbortException {
+        CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
+        JenkinsIntLogger logger = getOrCreateLogger();
+
+        CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger);
+        WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
         try {
             webServiceFactory.connect();
-        } catch (final CoverityIntegrationException e) {
+        } catch (CoverityIntegrationException e) {
             throw new CoverityJenkinsAbortException("An error occurred when connecting to Coverity Connect. Please ensure that you can connect properly.");
-        } catch (final MalformedURLException e) {
+        } catch (MalformedURLException e) {
             throw CoverityJenkinsAbortException.fromMalformedUrlException(coverityServerUrl + WebServiceFactory.CONFIGURATION_SERVICE_V9_WSDL, e);
         }
 
         return webServiceFactory;
     }
 
-    public FilePath getIntermediateDirectory(final String workspaceRemotePath) throws CoverityJenkinsAbortException {
+    public FilePath getIntermediateDirectory(String workspaceRemotePath) throws CoverityJenkinsAbortException {
         return new FilePath(initializedVirtualChannel.get(), workspaceRemotePath).child("idir");
     }
 
