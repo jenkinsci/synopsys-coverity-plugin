@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,9 +51,12 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
+import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
+import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
+import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -99,7 +103,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     private Boolean createMissingProjectsAndStreams;
 
     @DataBoundConstructor
-    public CoverityEnvironmentWrapper(final String coverityInstanceUrl) {
+    public CoverityEnvironmentWrapper(String coverityInstanceUrl) {
         this.coverityInstanceUrl = coverityInstanceUrl;
         this.coverityPassphrase = GlobalValueHelper.getCoverityInstanceWithUrl(new SilentIntLogger(), coverityInstanceUrl)
                                       .flatMap(CoverityConnectInstance::getPassphrase)
@@ -114,7 +118,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setCreateMissingProjectsAndStreams(@QueryParameter("createMissingProjectsAndStreams") final Boolean createMissingProjectsAndStreams) {
+    public void setCreateMissingProjectsAndStreams(@QueryParameter("createMissingProjectsAndStreams") Boolean createMissingProjectsAndStreams) {
         this.createMissingProjectsAndStreams = createMissingProjectsAndStreams;
     }
 
@@ -127,7 +131,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setProjectName(@QueryParameter("projectName") final String projectName) {
+    public void setProjectName(@QueryParameter("projectName") String projectName) {
         this.projectName = projectName;
     }
 
@@ -136,7 +140,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setStreamName(@QueryParameter("streamName") final String streamName) {
+    public void setStreamName(@QueryParameter("streamName") String streamName) {
         this.streamName = streamName;
     }
 
@@ -145,7 +149,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setViewName(@QueryParameter("viewName") final String viewName) {
+    public void setViewName(@QueryParameter("viewName") String viewName) {
         this.viewName = viewName;
     }
 
@@ -154,23 +158,23 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @DataBoundSetter
-    public void setConfigureChangeSetPatterns(@QueryParameter("configureChangeSetPatterns") final ConfigureChangeSetPatterns configureChangeSetPatterns) {
+    public void setConfigureChangeSetPatterns(@QueryParameter("configureChangeSetPatterns") ConfigureChangeSetPatterns configureChangeSetPatterns) {
         this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
     @Override
-    public void setUp(final Context context, final Run<?, ?> build, final FilePath workspace, final Launcher launcher, final TaskListener listener, final EnvVars initialEnvironment) throws IOException, InterruptedException {
-        final Node node = Optional.ofNullable(workspace.toComputer())
-                              .map(Computer::getNode)
-                              .orElse(null);
-        final RunWrapper runWrapper = new RunWrapper(build, true);
+    public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
+        Node node = Optional.ofNullable(workspace.toComputer())
+                        .map(Computer::getNode)
+                        .orElse(null);
+        RunWrapper runWrapper = new RunWrapper(build, true);
 
-        final CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(initialEnvironment, node, launcher, listener);
-        final CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(initialEnvironment, node, launcher, listener);
+        CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
         List<ChangeLogSet<?>> changeLogSets;
         try {
             changeLogSets = runWrapper.getChangeSets();
-        } catch (final Exception e) {
+        } catch (Exception e) {
             logger.warn(String.format("WARNING: Synopsys Coverity for Jenkins could not determine the change set, %s will be empty and %s will be 0.",
                 JenkinsCoverityEnvironmentVariable.CHANGE_SET,
                 JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE));
@@ -178,12 +182,14 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             changeLogSets = Collections.emptyList();
         }
 
-        final CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl),
+        CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl),
             coverityWorkflowStepFactory, context, workspace.getRemote(), coverityInstanceUrl, projectName, streamName, viewName, createMissingProjectsAndStreams, changeLogSets, configureChangeSetPatterns);
-        final Boolean environmentInjectedSuccessfully = coverityEnvironmentWrapperStepWorkflow.perform();
+        Boolean environmentInjectedSuccessfully = coverityEnvironmentWrapperStepWorkflow.perform();
         if (Boolean.TRUE.equals(environmentInjectedSuccessfully)) {
             logger.info("Coverity environment injected successfully.");
         }
+
+        context.setDisposer(new DisposerImpl((HashMap<String, String>) coverityWorkflowStepFactory.getOrCreateEnvironmentVariables().getVariables()));
     }
 
     @Override
@@ -192,7 +198,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     @Override
-    public ConsoleLogFilter createLoggerDecorator(@Nonnull final Run<?, ?> build) {
+    public ConsoleLogFilter createLoggerDecorator(@Nonnull Run<?, ?> build) {
         return new FilterImpl(coverityPassphrase);
     }
 
@@ -207,7 +213,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             super(CoverityEnvironmentWrapper.class);
             load();
 
-            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+            Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
             viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
@@ -217,42 +223,42 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
-        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ComboBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ComboBoxModel doFillProjectNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
                 projectStreamFieldHelper.updateNow(coverityInstanceUrl);
             }
             return projectStreamFieldHelper.getProjectNamesForComboBox(coverityInstanceUrl);
         }
 
-        public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName) {
+        public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
-        public ComboBoxModel doFillStreamNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName) throws InterruptedException {
+        public ComboBoxModel doFillStreamNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) throws InterruptedException {
             return projectStreamFieldHelper.getStreamNamesForComboBox(coverityInstanceUrl, projectName);
         }
 
-        public FormValidation doCheckStreamName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("projectName") String projectName, final @QueryParameter("streamName") String streamName) {
+        public FormValidation doCheckStreamName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillViewNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
                 viewFieldHelper.updateNow(coverityInstanceUrl);
             }
             return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
-        public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+        public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
         @Override
-        public boolean isApplicable(final AbstractProject<?, ?> item) {
+        public boolean isApplicable(AbstractProject<?, ?> item) {
             return true;
         }
 
@@ -266,13 +272,31 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         private static final long serialVersionUID = 1787519634824445328L;
         private final String passwordToMask;
 
-        public FilterImpl(final String passwordToMask) {
+        public FilterImpl(String passwordToMask) {
             this.passwordToMask = passwordToMask;
         }
 
         @Override
-        public OutputStream decorateLogger(final Run ignored, final OutputStream logger) {
+        public OutputStream decorateLogger(Run ignored, OutputStream logger) {
             return new PasswordMaskingOutputStream(logger, passwordToMask);
+        }
+    }
+
+    private static class DisposerImpl extends SimpleBuildWrapper.Disposer {
+        private final HashMap<String, String> environmentVariables;
+
+        public DisposerImpl(HashMap<String, String> intEnvironmentVariables) {
+            this.environmentVariables = intEnvironmentVariables;
+        }
+
+        @Override
+        public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
+            IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
+            intEnvironmentVariables.putAll(environmentVariables);
+            JenkinsIntLogger logger = new JenkinsIntLogger(listener);
+            logger.setLogLevel(intEnvironmentVariables);
+            CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, workspace.getChannel(), workspace.getRemote(), intEnvironmentVariables);
+            cleanUpWorkflowService.cleanUpAuthenticationFile();
         }
     }
 

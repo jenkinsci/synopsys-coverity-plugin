@@ -30,7 +30,6 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
@@ -99,7 +98,7 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
 
     @Override
     protected void cleanUp() throws AbortException {
-        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, coverityWorkflowStepFactory.getOrCreateVirtualChannel(), workspaceRemotePath, coverityWorkflowStepFactory.getOrCreateEnvironmentVariables());
-        cleanUpWorkflowService.cleanUpAuthenticationFile();
+        // The CoverityEnvironmentWrapper needs to clean up later than other workflows, so we create a Disposer and attach it to the context instead.
     }
+
 }
