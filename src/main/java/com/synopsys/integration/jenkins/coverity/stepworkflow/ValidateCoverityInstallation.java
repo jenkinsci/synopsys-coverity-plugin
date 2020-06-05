@@ -42,7 +42,7 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean
     private final String coverityToolHome;
     private final Boolean validateVersion;
 
-    public ValidateCoverityInstallation(final CoverityJenkinsIntLogger logger, final Boolean validateVersion, final String coverityToolHome) {
+    public ValidateCoverityInstallation(CoverityJenkinsIntLogger logger, Boolean validateVersion, String coverityToolHome) {
         super(logger);
         this.coverityToolHome = coverityToolHome;
         this.validateVersion = validateVersion;
@@ -53,21 +53,21 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean
             throw new CoverityJenkinsException(String.format("Cannot find Coverity installation, %s is not set.", JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()));
         }
 
-        final Path pathToCoverityToolHome = Paths.get(coverityToolHome);
+        Path pathToCoverityToolHome = Paths.get(coverityToolHome);
 
         if (!Files.exists(pathToCoverityToolHome)) {
             throw new CoverityJenkinsException("The specified Analysis installation directory doesn't exist.");
         }
 
         if (Boolean.TRUE.equals(validateVersion)) {
-            final Path pathToAnalysisVersionFile = pathToCoverityToolHome.resolve("VERSION");
-            final Path pathToAnalysisVersionXml = pathToCoverityToolHome.resolve("VERSION.xml");
-            if (!Files.exists(pathToAnalysisVersionXml) || !Files.exists(pathToAnalysisVersionFile)) {
+            Path pathToAnalysisVersionFile = pathToCoverityToolHome.resolve("VERSION");
+            Path pathToAnalysisVersionXml = pathToCoverityToolHome.resolve("VERSION.xml");
+            if (Files.notExists(pathToAnalysisVersionXml) || Files.notExists(pathToAnalysisVersionFile)) {
                 throw new CoverityJenkinsException(String.format("%s and %s were not found.", pathToAnalysisVersionFile.toString(), pathToAnalysisVersionXml.toString()));
             }
 
             // check the version file value and validate it is greater than minimum version
-            final CoverityVersion coverityVersion = getVersion(pathToAnalysisVersionFile).orElse(null);
+            CoverityVersion coverityVersion = getVersion(pathToAnalysisVersionFile).orElse(null);
             if (coverityVersion == null) {
                 throw new CoverityJenkinsException("Could not determine the version of the Coverity analysis tool.");
             }
@@ -77,7 +77,7 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean
             }
         }
 
-        final Path pathToBinDirectory = pathToCoverityToolHome.resolve("bin");
+        Path pathToBinDirectory = pathToCoverityToolHome.resolve("bin");
         if (!Files.isDirectory(pathToBinDirectory)) {
             throw new CoverityJenkinsException(String.format("%s was not found", pathToBinDirectory.toString()));
         }
@@ -89,16 +89,16 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean
      * Gets the {@link CoverityVersion} given a static analysis tools home directory by finding the VERSION file,
      * then reading the version number
      */
-    private Optional<CoverityVersion> getVersion(final Path versionFile) throws CoverityJenkinsException {
+    private Optional<CoverityVersion> getVersion(Path versionFile) throws CoverityJenkinsException {
         final String versionPrefix = "externalVersion=";
-        try (final Stream<String> lines = Files.lines(versionFile)) {
+        try (Stream<String> lines = Files.lines(versionFile)) {
             return lines.filter(str -> str.startsWith(versionPrefix))
                        .map(str -> str.substring(versionPrefix.length()))
                        .map(CoverityVersion::parse)
                        .filter(Optional::isPresent)
                        .map(Optional::get)
                        .findFirst();
-        } catch (final IOException e) {
+        } catch (IOException e) {
             throw new CoverityJenkinsException("Could not validate the version of the COVERITY_TOOL_HOME", e);
         }
     }

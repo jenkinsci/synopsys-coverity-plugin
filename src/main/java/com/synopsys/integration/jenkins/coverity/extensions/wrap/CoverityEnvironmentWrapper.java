@@ -235,7 +235,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             return projectStreamFieldHelper.getProjectNamesForComboBox(coverityInstanceUrl);
         }
 
-        public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) {
+        public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
@@ -243,7 +243,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             return projectStreamFieldHelper.getStreamNamesForComboBox(coverityInstanceUrl, projectName);
         }
 
-        public FormValidation doCheckStreamName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
+        public FormValidation doCheckStreamName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
@@ -283,7 +283,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
     }
 
-    private static class DisposerImpl extends SimpleBuildWrapper.Disposer {
+    private static final class DisposerImpl extends SimpleBuildWrapper.Disposer {
         private final HashMap<String, String> environmentVariables;
 
         public DisposerImpl(HashMap<String, String> intEnvironmentVariables) {

@@ -200,6 +200,7 @@ public class RepeatableCommand extends AbstractDescribableImpl<RepeatableCommand
             this.text = text;
         }
 
+        @Override
         public String toString() {
             return this.text;
         }

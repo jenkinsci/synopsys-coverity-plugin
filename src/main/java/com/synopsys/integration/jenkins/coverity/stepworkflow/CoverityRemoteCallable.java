@@ -34,15 +34,12 @@ public abstract class CoverityRemoteCallable<T> implements Callable<T, Integrati
     private static final long serialVersionUID = -4096882757092525358L;
     protected final CoverityJenkinsIntLogger logger;
 
-    public CoverityRemoteCallable(final CoverityJenkinsIntLogger logger) {
+    public CoverityRemoteCallable(CoverityJenkinsIntLogger logger) {
         this.logger = logger;
     }
 
     @Override
-    public abstract T call() throws IntegrationException;
-
-    @Override
-    public void checkRoles(final RoleChecker checker) throws SecurityException {
+    public void checkRoles(RoleChecker checker) throws SecurityException {
         checker.check(this, new Role(this.getClass()));
     }
 }
