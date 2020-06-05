@@ -24,6 +24,7 @@ package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.CHANGE_SET;
 import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE;
+import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
 import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType.COV_RUN_DESKTOP;
 import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType.THRESHOLD;
 import static com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration.RunConfigurationType.ADVANCED;
@@ -58,8 +59,10 @@ import com.synopsys.integration.stepworkflow.SubStep;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;
+import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
+import hudson.remoting.VirtualChannel;
 
 public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Object> {
     private final CoverityWorkflowStepFactory coverityWorkflowStepFactory;
@@ -135,11 +138,18 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
 
     @Override
     public void cleanUp() throws CoverityJenkinsAbortException {
-        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, coverityWorkflowStepFactory.getOrCreateVirtualChannel(), workspaceRemotePath, coverityWorkflowStepFactory.getOrCreateEnvironmentVariables());
-        cleanUpWorkflowService.cleanUpAuthenticationFile();
+        IntEnvironmentVariables intEnvironmentVariables = coverityWorkflowStepFactory.getOrCreateEnvironmentVariables();
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger);
+        String authKeyPath = intEnvironmentVariables.getValue(TEMPORARY_AUTH_KEY_PATH.toString());
+        if (StringUtils.isNotBlank(authKeyPath)) {
+            VirtualChannel virtualChannel = coverityWorkflowStepFactory.getOrCreateVirtualChannel();
+            FilePath authKeyFile = new FilePath(virtualChannel, authKeyPath);
+            cleanUpWorkflowService.cleanUpAuthenticationFile(authKeyFile);
+        }
 
         if (CleanUpAction.DELETE_INTERMEDIATE_DIRECTORY.equals(cleanUpAction)) {
-            cleanUpWorkflowService.cleanUpIntermediateDirectory();
+            FilePath intermediateDirectory = coverityWorkflowStepFactory.getIntermediateDirectory(workspaceRemotePath);
+            cleanUpWorkflowService.cleanUpIntermediateDirectory(intermediateDirectory);
         }
     }
 

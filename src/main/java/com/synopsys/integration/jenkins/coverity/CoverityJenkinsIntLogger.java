@@ -34,29 +34,30 @@ import hudson.model.TaskListener;
 public class CoverityJenkinsIntLogger extends JenkinsIntLogger implements Serializable {
     private static final long serialVersionUID = 7672279347652895598L;
 
-    private CoverityJenkinsIntLogger(final TaskListener jenkinsTaskListener, final LogLevel logLevel) {
+    private CoverityJenkinsIntLogger(TaskListener jenkinsTaskListener, LogLevel logLevel) {
         super(jenkinsTaskListener);
         this.setLogLevel(logLevel);
     }
 
-    public static CoverityJenkinsIntLogger initializeLogger(final TaskListener jenkinsLogger, final IntEnvironmentVariables intEnvironmentVariables) {
-        final String logLevelString = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.LOG_LEVEL.toString());
-        final LogLevel logLevel = LogLevel.fromString(logLevelString);
-        final CoverityJenkinsIntLogger logger = new CoverityJenkinsIntLogger(jenkinsLogger, logLevel);
+    public static CoverityJenkinsIntLogger initializeLogger(TaskListener jenkinsLogger, IntEnvironmentVariables intEnvironmentVariables) {
+        String logLevelString = intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.LOG_LEVEL.toString());
+        LogLevel logLevel = LogLevel.fromString(logLevelString);
+        return new CoverityJenkinsIntLogger(jenkinsLogger, logLevel);
+    }
 
-        final String versionString = JenkinsVersionHelper.getPluginVersion("synopsys-coverity")
-                                         .map(version -> String.format("Running Synopsys Coverity version: %s", version))
-                                         .orElse("Running Synopsys Coverity");
-        logger.alwaysLog(versionString);
-        return logger;
+    public void logInitializationMessage() {
+        String versionString = JenkinsVersionHelper.getPluginVersion("synopsys-coverity")
+                                   .map(version -> String.format("Running Synopsys Coverity version: %s", version))
+                                   .orElse("Running Synopsys Coverity");
+        this.alwaysLog(versionString);
     }
 
     @Override
-    public void setLogLevel(final IntEnvironmentVariables variables) {
-        final String logLevel = variables.getValue(JenkinsCoverityEnvironmentVariable.LOG_LEVEL.toString(), LogLevel.INFO.toString());
+    public void setLogLevel(IntEnvironmentVariables variables) {
+        String logLevel = variables.getValue(JenkinsCoverityEnvironmentVariable.LOG_LEVEL.toString(), LogLevel.INFO.toString());
         try {
             setLogLevel(LogLevel.valueOf(logLevel.toUpperCase()));
-        } catch (final IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             setLogLevel(LogLevel.INFO);
         }
     }

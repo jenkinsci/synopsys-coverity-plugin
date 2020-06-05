@@ -22,6 +22,8 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
+import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -53,7 +55,6 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamF
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
-import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -293,10 +294,14 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
             IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
             intEnvironmentVariables.putAll(environmentVariables);
-            JenkinsIntLogger logger = new JenkinsIntLogger(listener);
-            logger.setLogLevel(intEnvironmentVariables);
-            CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, workspace.getChannel(), workspace.getRemote(), intEnvironmentVariables);
-            cleanUpWorkflowService.cleanUpAuthenticationFile();
+            CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
+            CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger);
+
+            String authKeyPath = intEnvironmentVariables.getValue(TEMPORARY_AUTH_KEY_PATH.toString());
+            if (StringUtils.isNotBlank(authKeyPath)) {
+                FilePath authKeyFile = new FilePath(launcher.getChannel(), authKeyPath);
+                cleanUpWorkflowService.cleanUpAuthenticationFile(authKeyFile);
+            }
         }
     }
 

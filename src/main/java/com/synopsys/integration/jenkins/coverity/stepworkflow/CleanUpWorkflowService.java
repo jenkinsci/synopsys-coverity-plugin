@@ -22,34 +22,21 @@
  */
 package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
-import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
-
 import java.io.IOException;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.FilePath;
-import hudson.remoting.VirtualChannel;
 
 public class CleanUpWorkflowService {
     private final JenkinsIntLogger logger;
-    private final VirtualChannel virtualChannel;
-    private final String workspaceRemotePath;
-    private final IntEnvironmentVariables intEnvironmentVariables;
 
-    public CleanUpWorkflowService(JenkinsIntLogger logger, VirtualChannel virtualChannel, String workspaceRemotePath, IntEnvironmentVariables intEnvironmentVariables) {
+    public CleanUpWorkflowService(JenkinsIntLogger logger) {
         this.logger = logger;
-        this.virtualChannel = virtualChannel;
-        this.workspaceRemotePath = workspaceRemotePath;
-        this.intEnvironmentVariables = intEnvironmentVariables;
     }
 
-    public void cleanUpIntermediateDirectory() {
+    public void cleanUpIntermediateDirectory(FilePath intermediateDirectory) {
         try {
-            FilePath intermediateDirectory = new FilePath(virtualChannel, workspaceRemotePath).child("idir");
             intermediateDirectory.deleteRecursive();
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
@@ -60,18 +47,18 @@ public class CleanUpWorkflowService {
         }
     }
 
-    public boolean cleanUpAuthenticationFile() {
-        String authKeyPath = intEnvironmentVariables.getValue(TEMPORARY_AUTH_KEY_PATH.toString());
-        if (StringUtils.isNotBlank(authKeyPath)) {
-            try {
-                return new FilePath(virtualChannel, authKeyPath).delete();
-            } catch (IOException | InterruptedException e) {
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-                logger.error("FATAL: Synopsys Coverity for Jenkins could not clean up authentication file because: ", e);
+    public void cleanUpAuthenticationFile(FilePath authenticationKeyFile) {
+        try {
+            if (authenticationKeyFile.delete()) {
+                logger.debug("Authentication keyfile deleted successfully");
+            } else {
+                logger.warn("WARNING: Synopsys Coverity for Jenkins could not clean up the authentication key file. It may have been cleaned up by something else.");
             }
+        } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            logger.error("ERROR: Synopsys Coverity for Jenkins could not clean up authentication file because: ", e);
         }
-        return true;
     }
 }

@@ -165,6 +165,7 @@ public class CoverityWorkflowStepFactory {
         IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
         if (_logger == null) {
             _logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
+            _logger.logInitializationMessage();
         }
         return _logger;
     }
