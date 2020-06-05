@@ -124,7 +124,7 @@ public class CoverityWorkflowStepFactory {
         return SubStep.ofSupplier(() -> {
             if (authKeyContents.isPresent()) {
                 FilePath authKeyFile = workspace.createTextTempFile("auth-key", ".txt", authKeyContents.get());
-                authKeyFile.chmod(0500);
+                authKeyFile.chmod(0600);
                 return authKeyFile.getRemote();
             }
             return StringUtils.EMPTY;
