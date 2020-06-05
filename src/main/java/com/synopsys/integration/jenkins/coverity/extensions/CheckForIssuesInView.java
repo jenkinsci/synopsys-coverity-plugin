@@ -45,7 +45,7 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
     private final BuildStatus buildStatusForIssues;
 
     @DataBoundConstructor
-    public CheckForIssuesInView(final String viewName, final String buildStatusForIssues) {
+    public CheckForIssuesInView(String viewName, String buildStatusForIssues) {
         this.viewName = viewName;
         this.buildStatusForIssues = BuildStatus.valueOf(buildStatusForIssues);
     }
@@ -65,16 +65,16 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
 
     @Extension
     public static class DescriptorImpl extends Descriptor<CheckForIssuesInView> {
-        private transient final ViewFieldHelper viewFieldHelper;
+        private final ViewFieldHelper viewFieldHelper;
 
         public DescriptorImpl() {
             super(CheckForIssuesInView.class);
             load();
-            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(CheckForIssuesInView.class));
+            Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(CheckForIssuesInView.class));
             viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
         }
 
-        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillViewNameItems(@RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
                 viewFieldHelper.updateNow(coverityInstanceUrl);
             }

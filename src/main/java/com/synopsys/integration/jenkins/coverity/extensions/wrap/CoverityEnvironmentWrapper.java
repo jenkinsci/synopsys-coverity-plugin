@@ -206,9 +206,9 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     @Symbol("withCoverityEnvironment")
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
-        private final transient CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
-        private final transient ProjectStreamFieldHelper projectStreamFieldHelper;
-        private final transient ViewFieldHelper viewFieldHelper;
+        private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private final ProjectStreamFieldHelper projectStreamFieldHelper;
+        private final ViewFieldHelper viewFieldHelper;
 
         public DescriptorImpl() {
             super(CoverityEnvironmentWrapper.class);
