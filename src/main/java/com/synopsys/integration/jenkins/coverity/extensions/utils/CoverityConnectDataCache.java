@@ -43,7 +43,7 @@ public abstract class CoverityConnectDataCache<T> {
     public CoverityConnectDataCache(IntLogger logger) {
         this.logger = logger;
         this.semaphore = new Semaphore(1);
-        this.lastTimeRetrieved = null;
+        this.lastTimeRetrieved = Instant.MIN;
         this.cachedData = getEmptyData();
     }
 
@@ -56,7 +56,7 @@ public abstract class CoverityConnectDataCache<T> {
 
     public void refreshIfStale(CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
         long cacheTimeInSeconds = TimeUnit.MINUTES.toSeconds(CACHE_TIME_IN_MINUTES);
-        if (lastTimeRetrieved == null || Instant.now().minusSeconds(cacheTimeInSeconds).isAfter(lastTimeRetrieved)) {
+        if (Instant.now().minusSeconds(cacheTimeInSeconds).isAfter(lastTimeRetrieved)) {
             refresh(coverityConnectInstance);
         }
     }

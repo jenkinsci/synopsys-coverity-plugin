@@ -30,6 +30,8 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
@@ -125,7 +127,7 @@ public class CoverityWorkflowStepFactory {
                 authKeyFile.chmod(0500);
                 return authKeyFile.getRemote();
             }
-            return null;
+            return StringUtils.EMPTY;
         });
     }
 
