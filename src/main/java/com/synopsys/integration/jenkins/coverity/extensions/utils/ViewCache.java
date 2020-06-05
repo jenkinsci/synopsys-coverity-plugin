@@ -35,17 +35,17 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 
 public class ViewCache extends CoverityConnectDataCache<List<String>> {
-    public ViewCache(final IntLogger logger) {
+    public ViewCache(IntLogger logger) {
         super(logger);
     }
 
     @Override
-    protected List<String> getFreshData(final WebServiceFactory webServiceFactory) {
+    protected List<String> getFreshData(WebServiceFactory webServiceFactory) {
         List<String> data = Collections.emptyList();
 
         try {
             logger.info("Attempting retrieval of Coverity Views.");
-            final ViewService viewService = webServiceFactory.createViewService();
+            ViewService viewService = webServiceFactory.createViewService();
             data = viewService.getAllViews()
                        .stream()
                        .map(view -> view.name)
@@ -58,5 +58,10 @@ public class ViewCache extends CoverityConnectDataCache<List<String>> {
         }
 
         return data;
+    }
+
+    @Override
+    protected List<String> getEmptyData() {
+        return Collections.emptyList();
     }
 }

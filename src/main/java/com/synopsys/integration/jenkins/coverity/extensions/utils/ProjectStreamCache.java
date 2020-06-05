@@ -34,17 +34,17 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.log.IntLogger;
 
 public class ProjectStreamCache extends CoverityConnectDataCache<List<ProjectDataObj>> {
-    public ProjectStreamCache(final IntLogger logger) {
+    public ProjectStreamCache(IntLogger logger) {
         super(logger);
     }
 
     @Override
-    protected List<ProjectDataObj> getFreshData(final WebServiceFactory webServiceFactory) {
+    protected List<ProjectDataObj> getFreshData(WebServiceFactory webServiceFactory) {
         List<ProjectDataObj> projects = Collections.emptyList();
         try {
             logger.info("Attempting retrieval of Coverity Projects.");
-            final ConfigurationService configurationService = webServiceFactory.createConfigurationService();
-            final ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
+            ConfigurationService configurationService = webServiceFactory.createConfigurationService();
+            ProjectFilterSpecDataObj projectFilterSpecDataObj = new ProjectFilterSpecDataObj();
             projects = configurationService.getProjects(projectFilterSpecDataObj);
             logger.info("Completed retrieval of Coverity Projects.");
         } catch (MalformedURLException | CovRemoteServiceException_Exception e) {
@@ -52,5 +52,10 @@ public class ProjectStreamCache extends CoverityConnectDataCache<List<ProjectDat
             logger.trace("Stack trace:", e);
         }
         return projects;
+    }
+
+    @Override
+    protected List<ProjectDataObj> getEmptyData() {
+        return Collections.emptyList();
     }
 }
