@@ -34,27 +34,27 @@ import com.synopsys.integration.log.IntLogger;
 
 import hudson.util.ListBoxModel;
 
-public class ViewFieldHelper extends ConnectionCachingFieldHelper<ViewCache> {
-    public ViewFieldHelper(final IntLogger logger) {
-        super(logger, () -> new ViewCache(logger));
+public class IssueViewFieldHelper extends ConnectionCachingFieldHelper<IssueViewCache> {
+    public IssueViewFieldHelper(IntLogger logger) {
+        super(logger, () -> new IssueViewCache(logger));
     }
 
-    public ListBoxModel getViewNamesForListBox(final String coverityConnectUrl) throws InterruptedException {
+    public ListBoxModel getViewNamesForListBox(String coverityConnectUrl) throws InterruptedException {
         try {
             return getViews(coverityConnectUrl).stream()
                        .filter(StringUtils::isNotBlank)
                        .map(this::wrapAsListBoxModelOption)
                        .collect(Collectors.toCollection(ListBoxModel::new));
-        } catch (final CoverityIntegrationException ignored) {
+        } catch (CoverityIntegrationException ignored) {
             // Form validation will display this exception as an error, so we can safely ignore it
             return new ListBoxModel();
         }
     }
 
-    private List<String> getViews(final String coverityConnectUrl) throws CoverityIntegrationException, InterruptedException {
-        final CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
-        final ViewCache viewCache = getCache(coverityConnectUrl);
-        return viewCache.getData(coverityConnectInstance);
+    private List<String> getViews(String coverityConnectUrl) throws CoverityIntegrationException, InterruptedException {
+        CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
+        IssueViewCache issueViewCache = getCache(coverityConnectUrl);
+        return issueViewCache.getData(coverityConnectInstance);
     }
 
 }

@@ -29,13 +29,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.synopsys.integration.coverity.api.rest.ViewType;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.log.IntLogger;
 
-public class ViewCache extends CoverityConnectDataCache<List<String>> {
-    public ViewCache(IntLogger logger) {
+public class IssueViewCache extends CoverityConnectDataCache<List<String>> {
+    public IssueViewCache(IntLogger logger) {
         super(logger);
     }
 
@@ -46,7 +47,7 @@ public class ViewCache extends CoverityConnectDataCache<List<String>> {
         try {
             logger.info("Attempting retrieval of Coverity Views.");
             ViewService viewService = webServiceFactory.createViewService();
-            data = viewService.getAllViews()
+            data = viewService.getAllViewsOfType(ViewType.ISSUES)
                        .stream()
                        .map(view -> view.name)
                        .filter(StringUtils::isNotBlank)

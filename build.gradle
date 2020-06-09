@@ -33,7 +33,7 @@ jenkinsPlugin {
 dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
 
-    implementation 'com.synopsys.integration:coverity-common:0.7.0-SNAPSHOT'
+    implementation 'com.synopsys.integration:coverity-common:0.8.0'
     implementation 'com.synopsys.integration:jenkins-common:0.1.14'
 
 

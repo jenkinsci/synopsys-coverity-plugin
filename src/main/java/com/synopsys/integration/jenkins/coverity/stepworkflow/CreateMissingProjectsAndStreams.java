@@ -28,17 +28,17 @@ import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceEx
 import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
-import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
+import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.stepworkflow.AbstractExecutingSubStep;
 import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 public class CreateMissingProjectsAndStreams extends AbstractExecutingSubStep {
-    private final CoverityJenkinsIntLogger logger;
+    private final JenkinsIntLogger logger;
     private final ConfigurationServiceWrapper configurationServiceWrapper;
     private final String projectName;
     private final String streamName;
 
-    public CreateMissingProjectsAndStreams(final CoverityJenkinsIntLogger logger, final ConfigurationServiceWrapper configurationServiceWrapper, final String projectName, final String streamName) {
+    public CreateMissingProjectsAndStreams(JenkinsIntLogger logger, ConfigurationServiceWrapper configurationServiceWrapper, String projectName, String streamName) {
         this.logger = logger;
         this.configurationServiceWrapper = configurationServiceWrapper;
         this.projectName = projectName;
@@ -73,10 +73,10 @@ public class CreateMissingProjectsAndStreams extends AbstractExecutingSubStep {
                     logger.error(String.format("Could not create stream '%s'", streamName));
                 }
             }
-        } catch (final InterruptedException e) {
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return SubStepResponse.FAILURE(e);
-        } catch (final CovRemoteServiceException_Exception e) {
+        } catch (CovRemoteServiceException_Exception e) {
             return SubStepResponse.FAILURE(e);
         }
 

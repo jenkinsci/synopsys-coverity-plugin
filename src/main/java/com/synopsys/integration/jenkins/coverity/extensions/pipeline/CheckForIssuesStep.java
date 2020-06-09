@@ -48,8 +48,8 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -100,7 +100,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
     }
 
     @DataBoundSetter
-    public void setReturnIssueCount(final Boolean returnIssueCount) {
+    public void setReturnIssueCount(Boolean returnIssueCount) {
         this.returnIssueCount = returnIssueCount;
     }
 
@@ -112,7 +112,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
     }
 
     @DataBoundSetter
-    public void setCoverityInstanceUrl(final String coverityInstanceUrl) {
+    public void setCoverityInstanceUrl(String coverityInstanceUrl) {
         this.coverityInstanceUrl = coverityInstanceUrl;
     }
 
@@ -124,7 +124,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
     }
 
     @DataBoundSetter
-    public void setProjectName(final String projectName) {
+    public void setProjectName(String projectName) {
         this.projectName = projectName;
     }
 
@@ -136,27 +136,27 @@ public class CheckForIssuesStep extends Step implements Serializable {
     }
 
     @DataBoundSetter
-    public void setViewName(final String viewName) {
+    public void setViewName(String viewName) {
         this.viewName = viewName;
     }
 
     @Override
-    public StepExecution start(final StepContext context) throws Exception {
+    public StepExecution start(StepContext context) throws Exception {
         return new Execution(context);
     }
 
     @Symbol(PIPELINE_NAME)
     @Extension(optional = true)
     public static final class DescriptorImpl extends StepDescriptor {
-        private transient final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
-        private transient final ProjectStreamFieldHelper projectStreamFieldHelper;
-        private transient final ViewFieldHelper viewFieldHelper;
+        private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private final ProjectStreamFieldHelper projectStreamFieldHelper;
+        private final IssueViewFieldHelper issueViewFieldHelper;
 
         public DescriptorImpl() {
-            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
+            Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
-            viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
+            issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
         }
 
         @Override
@@ -179,29 +179,29 @@ public class CheckForIssuesStep extends Step implements Serializable {
             return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
-        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") final String coverityInstanceUrl) {
+        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillProjectNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, final @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillProjectNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
                 projectStreamFieldHelper.updateNow(coverityInstanceUrl);
             }
             return projectStreamFieldHelper.getProjectNamesForListBox(coverityInstanceUrl);
         }
 
-        public FormValidation doCheckProjectName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+        public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
-        public ListBoxModel doFillViewNameItems(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillViewNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                viewFieldHelper.updateNow(coverityInstanceUrl);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl);
             }
-            return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
-        public FormValidation doCheckViewName(final @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
+        public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
             return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl);
         }
 
@@ -215,7 +215,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         private final transient Launcher launcher;
         private final transient Run<?, ?> run;
 
-        protected Execution(@Nonnull final StepContext context) throws InterruptedException, IOException {
+        protected Execution(@Nonnull StepContext context) throws InterruptedException, IOException {
             super(context);
             listener = context.get(TaskListener.class);
             envVars = context.get(EnvVars.class);
@@ -226,29 +226,29 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
         @Override
         protected Integer run() throws Exception {
-            final CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(envVars, node, launcher, listener);
-            final CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-            final IntEnvironmentVariables intEnvironmentVariables = coverityWorkflowStepFactory.getOrCreateEnvironmentVariables();
-            final String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
-            final String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
+            CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(envVars, node, launcher, listener);
+            CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
+            IntEnvironmentVariables intEnvironmentVariables = coverityWorkflowStepFactory.getOrCreateEnvironmentVariables();
+            String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
+            String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
 
-            final String unresolvedProjectName = getRequiredValueOrDie(projectName, "projectName", JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
-            final String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
+            String unresolvedProjectName = getRequiredValueOrDie(projectName, "projectName", JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
+            String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
 
-            final String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
-            final String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
+            String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
+            String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
-            final CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl), coverityWorkflowStepFactory,
+            CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl), coverityWorkflowStepFactory,
                 resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName, returnIssueCount, run);
             return checkForIssuesStepWorkflow.perform();
         }
 
-        private String getRequiredValueOrDie(final String pipelineParamter, final String parameterName, final JenkinsCoverityEnvironmentVariable environmentVariable, final Function<String, String> getter) throws AbortException {
+        private String getRequiredValueOrDie(String pipelineParamter, String parameterName, JenkinsCoverityEnvironmentVariable environmentVariable, Function<String, String> getter) throws AbortException {
             if (StringUtils.isNotBlank(pipelineParamter)) {
                 return pipelineParamter;
             }
 
-            final String valueFromEnvironmentVariable = getter.apply(environmentVariable.toString());
+            String valueFromEnvironmentVariable = getter.apply(environmentVariable.toString());
             if (StringUtils.isNotBlank(valueFromEnvironmentVariable)) {
                 return valueFromEnvironmentVariable;
             }

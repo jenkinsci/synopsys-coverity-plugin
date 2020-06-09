@@ -27,7 +27,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -45,7 +45,7 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
     private final BuildStatus buildStatusForIssues;
 
     @DataBoundConstructor
-    public CheckForIssuesInView(final String viewName, final String buildStatusForIssues) {
+    public CheckForIssuesInView(String viewName, String buildStatusForIssues) {
         this.viewName = viewName;
         this.buildStatusForIssues = BuildStatus.valueOf(buildStatusForIssues);
     }
@@ -65,20 +65,20 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
 
     @Extension
     public static class DescriptorImpl extends Descriptor<CheckForIssuesInView> {
-        private transient final ViewFieldHelper viewFieldHelper;
+        private final IssueViewFieldHelper issueViewFieldHelper;
 
         public DescriptorImpl() {
             super(CheckForIssuesInView.class);
             load();
-            final Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(CheckForIssuesInView.class));
-            viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
+            Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(CheckForIssuesInView.class));
+            issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
         }
 
-        public ListBoxModel doFillViewNameItems(final @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") final boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillViewNameItems(@RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                viewFieldHelper.updateNow(coverityInstanceUrl);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl);
             }
-            return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
         public ListBoxModel doFillBuildStatusForIssuesItems() {

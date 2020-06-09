@@ -49,8 +49,8 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVaria
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
@@ -205,9 +205,9 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     @Symbol("withCoverityEnvironment")
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
-        private final transient CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
-        private final transient ProjectStreamFieldHelper projectStreamFieldHelper;
-        private final transient ViewFieldHelper viewFieldHelper;
+        private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private final ProjectStreamFieldHelper projectStreamFieldHelper;
+        private final IssueViewFieldHelper issueViewFieldHelper;
 
         public DescriptorImpl() {
             super(CoverityEnvironmentWrapper.class);
@@ -216,7 +216,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
-            viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
+            issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems() {
@@ -248,9 +248,9 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         public ListBoxModel doFillViewNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                viewFieldHelper.updateNow(coverityInstanceUrl);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl);
             }
-            return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
         public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
