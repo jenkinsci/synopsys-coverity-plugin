@@ -48,8 +48,8 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.ViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -150,13 +150,13 @@ public class CheckForIssuesStep extends Step implements Serializable {
     public static final class DescriptorImpl extends StepDescriptor {
         private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
         private final ProjectStreamFieldHelper projectStreamFieldHelper;
-        private final ViewFieldHelper viewFieldHelper;
+        private final IssueViewFieldHelper issueViewFieldHelper;
 
         public DescriptorImpl() {
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
-            viewFieldHelper = new ViewFieldHelper(slf4jIntLogger);
+            issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
         }
 
         @Override
@@ -196,9 +196,9 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
         public ListBoxModel doFillViewNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                viewFieldHelper.updateNow(coverityInstanceUrl);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl);
             }
-            return viewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl);
         }
 
         public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
