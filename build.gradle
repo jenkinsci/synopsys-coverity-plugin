@@ -13,33 +13,11 @@ description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
 
-def jcenterRepo = project.repositories.findByName('BintrayJCenter')
-project.repositories.remove(jcenterRepo)
-def mavenRepo = project.repositories.findByName('maven')
-project.repositories.remove(mavenRepo)
-
-project.afterEvaluate {
-    // MavenLocal is added by the gradle-jpi-plugin and the common-gradle-plugin so we have to remove it after the plugins are evaluated
-    List<String> repoNames = new ArrayList()
-    repoNames.addAll(project.repositories.getNames())
-    for (String repoName : repoNames) {
-        if (repoName.contains('MavenLocal')) {
-            def repoToRemove = project.repositories.findByName(repoName)
-            project.repositories.remove(repoToRemove)
-        }
-    }
-}
-
-repositories {
-    maven { url 'https://sig-repo.synopsys.com/bds-integrations-release' }
-}
-
 artifactory {
     publish {
         defaults { publications('mavenJpi') }
     }
 }
-
 
 jenkinsPlugin {
     // Must be compatible with the version declared in Jenkins Common
@@ -55,8 +33,9 @@ jenkinsPlugin {
 dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
 
-    implementation 'com.synopsys.integration:coverity-common:0.7.0'
+    implementation 'com.synopsys.integration:coverity-common:0.7.0-SNAPSHOT'
     implementation 'com.synopsys.integration:jenkins-common:0.1.14'
+
 
     // Must be compatible with the versions declared in Jenkins Common
     jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
