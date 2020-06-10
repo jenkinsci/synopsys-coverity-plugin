@@ -44,6 +44,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
@@ -64,6 +65,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 
 public class CheckForIssuesStep extends Step implements Serializable {
     public static final String DISPLAY_NAME = "Check for Issues in Coverity View";
@@ -238,8 +240,10 @@ public class CheckForIssuesStep extends Step implements Serializable {
             String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
             String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
-            CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl), coverityWorkflowStepFactory,
-                resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName, returnIssueCount, run);
+            JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
+
+            CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger, jenkinsVersionHelper, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl),
+                coverityWorkflowStepFactory, resolvedCoverityInstanceUrl, resolvedProjectName, resolvedViewName, returnIssueCount, run);
             return checkForIssuesStepWorkflow.perform();
         }
 

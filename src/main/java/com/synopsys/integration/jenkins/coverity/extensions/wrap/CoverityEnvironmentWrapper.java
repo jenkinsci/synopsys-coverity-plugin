@@ -43,6 +43,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
@@ -74,6 +75,7 @@ import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
@@ -172,6 +174,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(initialEnvironment, node, launcher, listener);
         CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
+        JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
         List<ChangeLogSet<?>> changeLogSets;
         try {
             changeLogSets = runWrapper.getChangeSets();
@@ -183,8 +186,9 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             changeLogSets = Collections.emptyList();
         }
 
-        CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl),
-            coverityWorkflowStepFactory, context, workspace.getRemote(), coverityInstanceUrl, projectName, streamName, viewName, createMissingProjectsAndStreams, changeLogSets, configureChangeSetPatterns);
+        CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(logger, jenkinsVersionHelper,
+            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl), coverityWorkflowStepFactory, context, workspace.getRemote(), coverityInstanceUrl, projectName, streamName, viewName,
+            createMissingProjectsAndStreams, changeLogSets, configureChangeSetPatterns);
         Boolean environmentInjectedSuccessfully = coverityEnvironmentWrapperStepWorkflow.perform();
         if (Boolean.TRUE.equals(environmentInjectedSuccessfully)) {
             logger.info("Coverity environment injected successfully.");

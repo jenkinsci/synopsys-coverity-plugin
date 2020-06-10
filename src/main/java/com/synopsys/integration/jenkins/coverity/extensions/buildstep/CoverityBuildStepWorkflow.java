@@ -41,6 +41,7 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.function.ThrowingSupplier;
+import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
@@ -79,10 +80,10 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
     private final String workspaceRemotePath;
     private final String coverityInstanceUrl;
 
-    public CoverityBuildStepWorkflow(JenkinsIntLogger logger, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier, CoverityWorkflowStepFactory coverityWorkflowStepFactory, AbstractBuild<?, ?> build,
-        String workspaceRemotePath, String coverityInstanceUrl, String projectName, String streamName, CoverityRunConfiguration coverityRunConfiguration, ConfigureChangeSetPatterns configureChangeSetPatterns,
-        CheckForIssuesInView checkForIssuesInView, OnCommandFailure onCommandFailure, CleanUpAction cleanUpAction) {
-        super(logger, webServiceFactorySupplier);
+    public CoverityBuildStepWorkflow(JenkinsIntLogger logger, JenkinsVersionHelper jenkinsVersionHelper, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory, AbstractBuild<?, ?> build, String workspaceRemotePath, String coverityInstanceUrl, String projectName, String streamName, CoverityRunConfiguration coverityRunConfiguration,
+        ConfigureChangeSetPatterns configureChangeSetPatterns, CheckForIssuesInView checkForIssuesInView, OnCommandFailure onCommandFailure, CleanUpAction cleanUpAction) {
+        super(logger, jenkinsVersionHelper, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.build = build;
         this.workspaceRemotePath = workspaceRemotePath;

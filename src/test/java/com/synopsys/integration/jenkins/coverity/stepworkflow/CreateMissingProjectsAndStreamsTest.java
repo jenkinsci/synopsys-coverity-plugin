@@ -85,6 +85,8 @@ public class CreateMissingProjectsAndStreamsTest {
         // The plugin only logs based on whether or not it was able to create given projects or streams, so we have to verify the mocked logger's behavior. --rotte JUN 2020
         if (projectName.equals(EXISTING_PROJECT)) {
             Mockito.verify(mockedLogger, Mockito.never()).info(AdditionalMatchers.and(Mockito.contains("No project"), Mockito.contains(projectName)));
+            Mockito.verify(mockedLogger, Mockito.never()).info(AdditionalMatchers.and(Mockito.contains("Successfully created"), Mockito.contains(projectName)));
+            Mockito.verify(mockedLogger, Mockito.never()).error(AdditionalMatchers.and(Mockito.contains("Could not create"), Mockito.contains(projectName)));
         } else if (projectName.equals(NEW_PROJECT)) {
             Mockito.verify(mockedLogger).info(AdditionalMatchers.and(Mockito.contains("No project"), Mockito.contains(projectName)));
             Mockito.verify(mockedLogger).info(AdditionalMatchers.and(Mockito.contains("Successfully created"), Mockito.contains(projectName)));
@@ -95,6 +97,8 @@ public class CreateMissingProjectsAndStreamsTest {
 
         if (projectName.equals(FAILED_PROJECT) || streamName.equals(EXISTING_STREAM)) {
             Mockito.verify(mockedLogger, Mockito.never()).info(AdditionalMatchers.and(Mockito.contains("No stream"), Mockito.contains(streamName)));
+            Mockito.verify(mockedLogger, Mockito.never()).info(AdditionalMatchers.and(Mockito.contains("Successfully created"), Mockito.contains(streamName)));
+            Mockito.verify(mockedLogger, Mockito.never()).error(AdditionalMatchers.and(Mockito.contains("Could not create"), Mockito.contains(streamName)));
         } else if (streamName.equals(NEW_STREAM)) {
             Mockito.verify(mockedLogger).info(AdditionalMatchers.and(Mockito.contains("No stream"), Mockito.contains(streamName)));
             Mockito.verify(mockedLogger).info(AdditionalMatchers.and(Mockito.contains("Successfully created"), Mockito.contains(streamName)));

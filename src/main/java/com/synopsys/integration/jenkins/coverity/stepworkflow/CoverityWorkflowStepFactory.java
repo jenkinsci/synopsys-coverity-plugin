@@ -38,6 +38,7 @@ import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.function.ThrowingSupplier;
+import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
@@ -59,6 +60,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
 import jenkins.model.GlobalConfiguration;
+import jenkins.model.Jenkins;
 
 public class CoverityWorkflowStepFactory {
     private final EnvVars envVars;
@@ -166,8 +168,9 @@ public class CoverityWorkflowStepFactory {
     public CoverityJenkinsIntLogger getOrCreateLogger() {
         IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
         if (_logger == null) {
+            JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
             _logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
-            _logger.logInitializationMessage();
+            _logger.logInitializationMessage(jenkinsVersionHelper);
         }
         return _logger;
     }

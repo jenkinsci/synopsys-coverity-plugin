@@ -34,6 +34,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
+import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
@@ -58,6 +59,7 @@ import hudson.tasks.Builder;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 
 public class CoverityBuildStep extends Builder {
 
@@ -157,8 +159,9 @@ public class CoverityBuildStep extends Builder {
 
         CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(build.getEnvironment(listener), build.getBuiltOn(), launcher, listener);
         JenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-        CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(logger, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl), coverityWorkflowStepFactory, build,
-            remoteWorkingDirectoryPath, coverityInstanceUrl, projectName, streamName, coverityRunConfiguration, configureChangeSetPatterns, checkForIssuesInView, onCommandFailure, cleanUpAction);
+        JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
+        CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(logger, jenkinsVersionHelper, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl), coverityWorkflowStepFactory,
+            build, remoteWorkingDirectoryPath, coverityInstanceUrl, projectName, streamName, coverityRunConfiguration, configureChangeSetPatterns, checkForIssuesInView, onCommandFailure, cleanUpAction);
 
         return coverityBuildStepWorkflow.perform();
     }

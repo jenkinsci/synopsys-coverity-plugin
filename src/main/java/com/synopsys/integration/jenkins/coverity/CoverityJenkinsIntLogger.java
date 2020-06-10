@@ -45,8 +45,8 @@ public class CoverityJenkinsIntLogger extends JenkinsIntLogger implements Serial
         return new CoverityJenkinsIntLogger(jenkinsLogger, logLevel);
     }
 
-    public void logInitializationMessage() {
-        String versionString = JenkinsVersionHelper.getPluginVersion("synopsys-coverity")
+    public void logInitializationMessage(JenkinsVersionHelper jenkinsVersionHelper) {
+        String versionString = jenkinsVersionHelper.getPluginVersion("synopsys-coverity")
                                    .map(version -> String.format("Running Synopsys Coverity version: %s", version))
                                    .orElse("Running Synopsys Coverity");
         this.alwaysLog(versionString);

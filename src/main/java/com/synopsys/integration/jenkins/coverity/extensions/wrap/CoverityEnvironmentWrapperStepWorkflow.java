@@ -28,6 +28,7 @@ import java.util.List;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.function.ThrowingSupplier;
+import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityJenkinsStepWorkflow;
@@ -54,10 +55,10 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     private final List<ChangeLogSet<?>> changeSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
-    public CoverityEnvironmentWrapperStepWorkflow(JenkinsIntLogger jenkinsIntLogger, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier, CoverityWorkflowStepFactory coverityWorkflowStepFactory,
-        SimpleBuildWrapper.Context context, String workspaceRemotePath, String coverityInstanceUrl, String projectName, String streamName, String viewName, Boolean createMissingProjectsAndStreams, List<ChangeLogSet<?>> changeSets,
-        ConfigureChangeSetPatterns configureChangeSetPatterns) {
-        super(jenkinsIntLogger, webServiceFactorySupplier);
+    public CoverityEnvironmentWrapperStepWorkflow(JenkinsIntLogger jenkinsIntLogger, JenkinsVersionHelper jenkinsVersionHelper, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory, SimpleBuildWrapper.Context context, String workspaceRemotePath, String coverityInstanceUrl, String projectName, String streamName, String viewName,
+        Boolean createMissingProjectsAndStreams, List<ChangeLogSet<?>> changeSets, ConfigureChangeSetPatterns configureChangeSetPatterns) {
+        super(jenkinsIntLogger, jenkinsVersionHelper, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.context = context;
         this.workspaceRemotePath = workspaceRemotePath;
