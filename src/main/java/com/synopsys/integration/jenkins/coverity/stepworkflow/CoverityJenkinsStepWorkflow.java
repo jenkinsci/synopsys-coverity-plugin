@@ -43,12 +43,10 @@ import hudson.AbortException;
 
 public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow<T> {
     protected final ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier;
-    private final JenkinsVersionHelper jenkinsVersionHelper;
     protected WebServiceFactory webServiceFactory;
 
     public CoverityJenkinsStepWorkflow(JenkinsIntLogger logger, JenkinsVersionHelper jenkinsVersionHelper, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier) {
         super(logger, jenkinsVersionHelper);
-        this.jenkinsVersionHelper = jenkinsVersionHelper;
         // Due to special classloading handling, it's better to get a supplier here that we use to fetch the Factory in our override of runWorkflow(). --rotte MAY 2020
         this.webServiceFactorySupplier = webServiceFactorySupplier;
     }
