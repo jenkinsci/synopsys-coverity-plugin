@@ -30,6 +30,8 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
@@ -67,6 +69,7 @@ public class CoverityWorkflowStepFactory {
     private final Node node;
     private final Launcher launcher;
     private final TaskListener listener;
+    private final ThrowingSupplier<String, CoverityJenkinsAbortException> validatedCoverityToolHome = this::getCoverityToolHomeFromEnvironment;
     // These fields are lazily initialized; inside this class: use the suppliers that guarantee an initialized value
     private IntEnvironmentVariables _intEnvironmentVariables = null;
     private final Supplier<IntEnvironmentVariables> initializedIntEnvrionmentVariables = this::getOrCreateEnvironmentVariables;
@@ -94,7 +97,6 @@ public class CoverityWorkflowStepFactory {
         return new CreateMissingProjectsAndStreams(initializedLogger.get(), configurationServiceWrapper, projectName, streamName);
     }
 
-    // TODO: Remove Jenkins extension object?
     public GetCoverityCommands createStepGetCoverityCommands(CoverityRunConfiguration coverityRunConfiguration) {
         return new GetCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityRunConfiguration);
     }
@@ -112,7 +114,6 @@ public class CoverityWorkflowStepFactory {
         return new GetIssuesInView(initializedLogger.get(), configurationServiceWrapper, viewService, projectName, viewName);
     }
 
-    // TODO: Remove Jenkins extension object?
     public RunCoverityCommands createStepRunCoverityCommands(String workspaceRemotePath, OnCommandFailure onCommandFailure) throws CoverityJenkinsAbortException {
         return new RunCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), workspaceRemotePath, onCommandFailure, initializedVirtualChannel.get());
     }
@@ -154,7 +155,7 @@ public class CoverityWorkflowStepFactory {
     }
 
     public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(boolean shouldValidateVersion) throws CoverityJenkinsAbortException {
-        String coverityToolHome = initializedIntEnvrionmentVariables.get().getValue(COVERITY_TOOL_HOME.toString());
+        String coverityToolHome = validatedCoverityToolHome.get();
 
         ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(initializedLogger.get(), shouldValidateVersion, coverityToolHome);
         return RemoteSubStep.of(initializedVirtualChannel.get(), validateCoverityInstallation);
@@ -181,6 +182,18 @@ public class CoverityWorkflowStepFactory {
             _intEnvironmentVariables.putAll(envVars);
         }
         return _intEnvironmentVariables;
+    }
+
+    @Nonnull
+    public String getCoverityToolHomeFromEnvironment() throws CoverityJenkinsAbortException {
+        IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
+
+        String coverityToolHome = intEnvironmentVariables.getValue(COVERITY_TOOL_HOME.toString());
+        if (coverityToolHome == null) {
+            throw new CoverityJenkinsAbortException("Environment variable $COVERITY_TOOL_HOME is not set. Please set $COVERITY_TOOL_HOME to the path to your Coverity tools.");
+        }
+
+        return coverityToolHome;
     }
 
     public CoverityConnectInstance getCoverityConnectInstanceFromUrl(String coverityServerUrl) throws CoverityJenkinsAbortException {
