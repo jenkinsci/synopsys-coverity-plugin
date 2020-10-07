@@ -139,10 +139,6 @@ public class CoverityBuildStep extends Builder {
         return coverityRunConfiguration;
     }
 
-    public CoverityRunConfiguration getDefaultCoverityRunConfiguration() {
-        return SimpleCoverityRunConfiguration.DEFAULT_CONFIGURATION();
-    }
-
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
@@ -243,6 +239,10 @@ public class CoverityBuildStep extends Builder {
 
         public ListBoxModel doFillCleanUpActionItems() {
             return JenkinsSelectBoxEnum.toListBoxModel(CleanUpAction.values());
+        }
+
+        public CoverityRunConfiguration getDefaultCoverityRunConfiguration() {
+            return SimpleCoverityRunConfiguration.DEFAULT_CONFIGURATION();
         }
 
     }

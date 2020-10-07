@@ -49,7 +49,7 @@
         </div>
     </f:entry>
 
-    <f:dropdownDescriptorSelector field="coverityRunConfiguration" title="Coverity run configuration" default="${instance.defaultCoverityRunConfiguration}"/>
+    <f:dropdownDescriptorSelector field="coverityRunConfiguration" title="Coverity run configuration" default="${descriptor.getDefaultCoverityRunConfiguration()}"/>
 
     <f:entry field="onCommandFailure" title="On command failure">
         <f:select id="onCommandFailureBuildStepId"/>
