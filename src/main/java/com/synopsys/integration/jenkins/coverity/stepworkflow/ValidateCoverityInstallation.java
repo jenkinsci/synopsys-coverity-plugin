@@ -29,11 +29,8 @@ import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.synopsys.integration.coverity.CoverityVersion;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 
 public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean> {
@@ -49,9 +46,9 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean
     }
 
     public Boolean call() throws CoverityJenkinsException {
-        if (StringUtils.isBlank(coverityToolHome)) {
-            throw new CoverityJenkinsException(String.format("Cannot find Coverity installation, %s is not set.", JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()));
-        }
+        // Previously we would validate the location of coverityToolHome here, but that's too late for CoverityWorkflowStepFactory-- so now we validate it before this class is constructed.
+        // If/when we switch to the services pattern that Detect and Polaris Jenkins use, that logic should likely return here.
+        // --rotte OCT 2020
 
         Path pathToCoverityToolHome = Paths.get(coverityToolHome);
 

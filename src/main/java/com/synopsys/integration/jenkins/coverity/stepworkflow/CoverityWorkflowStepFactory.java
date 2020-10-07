@@ -42,7 +42,6 @@ import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
@@ -69,10 +68,10 @@ public class CoverityWorkflowStepFactory {
     private final Node node;
     private final Launcher launcher;
     private final TaskListener listener;
-    private final ThrowingSupplier<String, CoverityJenkinsAbortException> validatedCoverityToolHome = this::getCoverityToolHomeFromEnvironment;
     // These fields are lazily initialized; inside this class: use the suppliers that guarantee an initialized value
     private IntEnvironmentVariables _intEnvironmentVariables = null;
     private final Supplier<IntEnvironmentVariables> initializedIntEnvrionmentVariables = this::getOrCreateEnvironmentVariables;
+    private final ThrowingSupplier<String, CoverityJenkinsAbortException> validatedCoverityToolHome = this::getCoverityToolHomeFromEnvironment;
     private CoverityJenkinsIntLogger _logger = null;
     private final Supplier<CoverityJenkinsIntLogger> initializedLogger = this::getOrCreateLogger;
     private VirtualChannel _virtualChannel = null;
@@ -146,7 +145,7 @@ public class CoverityWorkflowStepFactory {
         CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
         String coverityUsername = coverityConnectInstance.getUsername(logger).orElse(null);
         String coverityPassphrase = coverityConnectInstance.getPassphrase().orElse(null);
-        String coverityToolHomeBin = new FilePath(virtualChannel, intEnvironmentVariables.getValue(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString()))
+        String coverityToolHomeBin = new FilePath(virtualChannel, validatedCoverityToolHome.get())
                                          .child("bin")
                                          .getRemote();
 
@@ -189,8 +188,8 @@ public class CoverityWorkflowStepFactory {
         IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
 
         String coverityToolHome = intEnvironmentVariables.getValue(COVERITY_TOOL_HOME.toString());
-        if (coverityToolHome == null) {
-            throw new CoverityJenkinsAbortException("Environment variable $COVERITY_TOOL_HOME is not set. Please set $COVERITY_TOOL_HOME to the path to your Coverity tools.");
+        if (StringUtils.isBlank(coverityToolHome)) {
+            throw new CoverityJenkinsAbortException(String.format("Environment variable $%1$s is not set. Please set $%1$s to the path to your Coverity tool installation.", COVERITY_TOOL_HOME.toString()));
         }
 
         return coverityToolHome;
