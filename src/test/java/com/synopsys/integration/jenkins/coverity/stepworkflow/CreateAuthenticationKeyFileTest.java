@@ -48,6 +48,7 @@ public class CreateAuthenticationKeyFileTest {
         assumeTrue(Files.isWritable(Paths.get(workspaceRemotePath)));
 
         String coverityServerUrl = "https://example.com/cim";
+        String credentialsId = "SOME_CREDENTIALS_ID";
 
         Launcher mockedLauncher = Mockito.mock(Launcher.class);
         Mockito.when(mockedLauncher.getChannel()).thenReturn(Mockito.mock(LocalChannel.class));
@@ -56,14 +57,14 @@ public class CreateAuthenticationKeyFileTest {
         Mockito.when(mockedListener.getLogger()).thenReturn(System.out);
 
         CoverityConnectInstance mockedInstance = Mockito.mock(CoverityConnectInstance.class);
-        Mockito.when(mockedInstance.getAuthenticationKeyFileContents(Mockito.any())).thenReturn(authenticationKeyFileContents);
+        Mockito.when(mockedInstance.getAuthenticationKeyFileContents(Mockito.any(), Mockito.any())).thenReturn(authenticationKeyFileContents);
 
         CoverityWorkflowStepFactory realFactory = new CoverityWorkflowStepFactory(Mockito.mock(EnvVars.class), Mockito.mock(Node.class), mockedLauncher, mockedListener);
         // Because we do not want to do GlobalConfiguration.all(), we have to use Mockito::spy-- maybe this is a good reason to refactor? -- rotte JUN 2020
         CoverityWorkflowStepFactory spiedFactory = Mockito.spy(realFactory);
         Mockito.doReturn(mockedInstance).when(spiedFactory).getCoverityConnectInstanceFromUrl(coverityServerUrl);
 
-        SubStep<Object, String> createAuthenticationKeyFile = spiedFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, coverityServerUrl);
+        SubStep<Object, String> createAuthenticationKeyFile = spiedFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, credentialsId, coverityServerUrl);
         SubStepResponse<String> subStepResponse = createAuthenticationKeyFile.run(SubStepResponse.SUCCESS());
 
         assertTrue(subStepResponse.isSuccess());

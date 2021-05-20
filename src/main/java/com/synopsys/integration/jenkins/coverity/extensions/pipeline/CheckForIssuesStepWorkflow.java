@@ -1,24 +1,9 @@
-/**
+/*
  * synopsys-coverity
  *
- * Copyright (c) 2020 Synopsys, Inc.
+ * Copyright (c) 2021 Synopsys, Inc.
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
 package com.synopsys.integration.jenkins.coverity.extensions.pipeline;
 
@@ -41,16 +26,18 @@ import hudson.model.Run;
 public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Integer> {
     private final CoverityWorkflowStepFactory coverityWorkflowStepFactory;
     private final String coverityInstanceUrl;
+    private final String credentialsId;
     private final String projectName;
     private final String viewName;
     private final Boolean returnIssueCount;
     private final Run<?, ?> run;
 
     public CheckForIssuesStepWorkflow(JenkinsIntLogger jenkinsIntLogger, JenkinsVersionHelper jenkinsVersionHelper, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
-        CoverityWorkflowStepFactory coverityWorkflowStepFactory, String coverityInstanceUrl, String projectName, String viewName, Boolean returnIssueCount, Run<?, ?> run) {
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory, String coverityInstanceUrl, String credentialsId, String projectName, String viewName, Boolean returnIssueCount, Run<?, ?> run) {
         super(jenkinsIntLogger, jenkinsVersionHelper, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.coverityInstanceUrl = coverityInstanceUrl;
+        this.credentialsId = credentialsId;
         this.projectName = projectName;
         this.viewName = viewName;
         this.returnIssueCount = returnIssueCount;
@@ -59,7 +46,7 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
 
     @Override
     protected StepWorkflow<Integer> buildWorkflow() throws AbortException {
-        return StepWorkflow.first(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, projectName, viewName))
+        return StepWorkflow.first(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, credentialsId, projectName, viewName))
                    .then(SubStep.ofFunction(this::getDefectCount))
                    .build();
     }

@@ -1,24 +1,9 @@
-/**
+/*
  * synopsys-coverity
  *
- * Copyright (c) 2020 Synopsys, Inc.
+ * Copyright (c) 2021 Synopsys, Inc.
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
@@ -90,6 +75,8 @@ public class CoverityBuildStep extends Builder {
                       + "Will either persist or delete the intermediate directory created by the specified capture type.")
     private CleanUpAction cleanUpAction;
 
+    private String credentialsId;
+
     @DataBoundConstructor
     public CoverityBuildStep(String coverityInstanceUrl, String onCommandFailure, String projectName, String streamName, CheckForIssuesInView checkForIssuesInView,
         ConfigureChangeSetPatterns configureChangeSetPatterns, CoverityRunConfiguration coverityRunConfiguration) {
@@ -109,6 +96,15 @@ public class CoverityBuildStep extends Builder {
     @DataBoundSetter
     public void setCleanUpAction(CleanUpAction cleanUpAction) {
         this.cleanUpAction = cleanUpAction;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
+    }
+
+    @DataBoundSetter
+    public void setCredentialsId(String credentialsId) {
+        this.credentialsId = credentialsId;
     }
 
     public String getCoverityInstanceUrl() {
@@ -156,8 +152,23 @@ public class CoverityBuildStep extends Builder {
         CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(build.getEnvironment(listener), build.getBuiltOn(), launcher, listener);
         JenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
         JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
-        CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(logger, jenkinsVersionHelper, () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl), coverityWorkflowStepFactory,
-            build, remoteWorkingDirectoryPath, coverityInstanceUrl, projectName, streamName, coverityRunConfiguration, configureChangeSetPatterns, checkForIssuesInView, onCommandFailure, cleanUpAction);
+        CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(
+            logger,
+            jenkinsVersionHelper,
+            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(credentialsId, coverityInstanceUrl),
+            coverityWorkflowStepFactory,
+            build,
+            remoteWorkingDirectoryPath,
+            coverityInstanceUrl,
+            credentialsId,
+            projectName,
+            streamName,
+            coverityRunConfiguration,
+            configureChangeSetPatterns,
+            checkForIssuesInView,
+            onCommandFailure,
+            cleanUpAction
+        );
 
         return coverityBuildStepWorkflow.perform();
     }
@@ -204,32 +215,32 @@ public class CoverityBuildStep extends Builder {
             return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
-        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl);
+        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter String credentialsId) {
+            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
         }
 
-        public ComboBoxModel doFillProjectNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ComboBoxModel doFillProjectNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                projectStreamFieldHelper.updateNow(coverityInstanceUrl);
+                projectStreamFieldHelper.updateNow(credentialsId, coverityInstanceUrl);
             }
-            return projectStreamFieldHelper.getProjectNamesForComboBox(coverityInstanceUrl);
+            return projectStreamFieldHelper.getProjectNamesForComboBox(credentialsId, coverityInstanceUrl);
         }
 
-        public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) {
+        public FormValidation doCheckProjectName(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) {
             return FormValidation.aggregate(Arrays.asList(
-                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl),
-                projectStreamFieldHelper.checkForProjectInCache(coverityInstanceUrl, projectName)
+                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
+                projectStreamFieldHelper.checkForProjectInCache(credentialsId, coverityInstanceUrl, projectName)
             ));
         }
 
-        public ComboBoxModel doFillStreamNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) throws InterruptedException {
-            return projectStreamFieldHelper.getStreamNamesForComboBox(coverityInstanceUrl, projectName);
+        public ComboBoxModel doFillStreamNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) throws InterruptedException {
+            return projectStreamFieldHelper.getStreamNamesForComboBox(credentialsId, coverityInstanceUrl, projectName);
         }
 
-        public FormValidation doCheckStreamName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
+        public FormValidation doCheckStreamName(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
             return FormValidation.aggregate(Arrays.asList(
-                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl),
-                projectStreamFieldHelper.checkForStreamInCache(coverityInstanceUrl, projectName, streamName)
+                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
+                projectStreamFieldHelper.checkForStreamInCache(credentialsId, coverityInstanceUrl, projectName, streamName)
             ));
         }
 

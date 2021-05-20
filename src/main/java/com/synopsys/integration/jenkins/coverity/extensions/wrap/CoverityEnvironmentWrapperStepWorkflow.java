@@ -1,24 +1,9 @@
-/**
+/*
  * synopsys-coverity
  *
- * Copyright (c) 2020 Synopsys, Inc.
+ * Copyright (c) 2021 Synopsys, Inc.
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
 package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
@@ -48,6 +33,7 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     private final SimpleBuildWrapper.Context context;
     private final String workspaceRemotePath;
     private final String coverityInstanceUrl;
+    private final String credentialsId;
     private final String projectName;
     private final String streamName;
     private final String viewName;
@@ -56,13 +42,14 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
 
     public CoverityEnvironmentWrapperStepWorkflow(JenkinsIntLogger jenkinsIntLogger, JenkinsVersionHelper jenkinsVersionHelper, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
-        CoverityWorkflowStepFactory coverityWorkflowStepFactory, SimpleBuildWrapper.Context context, String workspaceRemotePath, String coverityInstanceUrl, String projectName, String streamName, String viewName,
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory, SimpleBuildWrapper.Context context, String workspaceRemotePath, String coverityInstanceUrl, String credentialsId, String projectName, String streamName, String viewName,
         Boolean createMissingProjectsAndStreams, List<ChangeLogSet<?>> changeSets, ConfigureChangeSetPatterns configureChangeSetPatterns) {
         super(jenkinsIntLogger, jenkinsVersionHelper, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.context = context;
         this.workspaceRemotePath = workspaceRemotePath;
         this.coverityInstanceUrl = coverityInstanceUrl;
+        this.credentialsId = credentialsId;
         this.projectName = projectName;
         this.streamName = streamName;
         this.viewName = viewName;
@@ -71,16 +58,18 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
         this.configureChangeSetPatterns = configureChangeSetPatterns;
     }
 
+    @Override
     protected StepWorkflow<Object> buildWorkflow() throws AbortException {
         return StepWorkflow
                    .first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(false))
-                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl))
-                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(changeSets, configureChangeSetPatterns, workspaceRemotePath, coverityInstanceUrl, projectName, streamName, viewName))
+                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, credentialsId, coverityInstanceUrl))
+                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(changeSets, configureChangeSetPatterns, workspaceRemotePath, credentialsId, coverityInstanceUrl, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepPopulateEnvVars(context::env))
-                   .andSometimes(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, projectName, streamName)).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
+                   .andSometimes(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, credentialsId, projectName, streamName)).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
                    .build();
     }
 
+    @Override
     public Boolean perform() throws IOException {
         StepWorkflowResponse<Object> response = runWorkflow();
         try {

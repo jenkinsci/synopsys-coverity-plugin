@@ -1,24 +1,9 @@
-/**
+/*
  * synopsys-coverity
  *
- * Copyright (c) 2020 Synopsys, Inc.
+ * Copyright (c) 2021 Synopsys, Inc.
  *
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
@@ -47,21 +32,21 @@ public abstract class CoverityConnectDataCache<T> {
         this.cachedData = getEmptyData();
     }
 
-    public T getData(CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public T getData(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
         semaphore.acquire();
         semaphore.release();
-        refreshIfStale(coverityConnectInstance);
+        refreshIfStale(credentialId, coverityConnectInstance);
         return cachedData;
     }
 
-    public void refreshIfStale(CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public void refreshIfStale(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
         long cacheTimeInSeconds = TimeUnit.MINUTES.toSeconds(CACHE_TIME_IN_MINUTES);
         if (Instant.now().minusSeconds(cacheTimeInSeconds).isAfter(lastTimeRetrieved)) {
-            refresh(coverityConnectInstance);
+            refresh(credentialId, coverityConnectInstance);
         }
     }
 
-    public void refresh(CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public void refresh(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
         semaphore.acquire();
         Thread thread = Thread.currentThread();
         ClassLoader threadClassLoader = thread.getContextClassLoader();
@@ -70,7 +55,7 @@ public abstract class CoverityConnectDataCache<T> {
         try {
             logger.info("Refreshing connection to Coverity Connect instance...");
 
-            CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger);
+            CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger, credentialId);
             WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
             webServiceFactory.connect();
 
