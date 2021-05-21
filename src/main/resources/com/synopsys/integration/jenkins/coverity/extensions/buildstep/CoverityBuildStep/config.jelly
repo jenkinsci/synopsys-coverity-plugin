@@ -6,6 +6,12 @@
         <f:select id="coverityInstanceUrlBuildStepId"/>
     </f:entry>
 
+    <f:optionalBlock inline="true" checked="${ instance.overrideDefaultCredentials == true }" field="overrideDefaultCredentials" title="Provide step-specific credentials">
+        <f:entry field="credentialsId" title="Coverity instance credentials">
+            <f:select id="credentialsIdBuildStepId"/>
+        </f:entry>
+    </f:optionalBlock>
+
     <f:entry field="projectName" title="Coverity project">
         <f:combobox id="projectNameBuildStepId"/>
     </f:entry>

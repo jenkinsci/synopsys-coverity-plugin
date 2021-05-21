@@ -26,8 +26,8 @@ import com.synopsys.integration.rest.credentials.Credentials;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
-public class CoverityConnectUrlFieldHelper extends FieldHelper {
-    public CoverityConnectUrlFieldHelper(IntLogger logger) {
+public class CoverityConnectionFieldHelper extends FieldHelper {
+    public CoverityConnectionFieldHelper(IntLogger logger) {
         super(logger);
     }
 

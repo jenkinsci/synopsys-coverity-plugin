@@ -21,11 +21,12 @@ import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
+import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
@@ -47,7 +48,6 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 public class CoverityBuildStep extends Builder {
-
     @HelpMarkdown("Specify which Synopsys Coverity connect instance to run this job against.  \r\n"
                       + "The resulting Synopsys Coverity connect instance URL is stored in the $COV_URL environment variable, and will affect both the full and incremental analysis.")
     private final String coverityInstanceUrl;
@@ -75,7 +75,12 @@ public class CoverityBuildStep extends Builder {
                       + "Will either persist or delete the intermediate directory created by the specified capture type.")
     private CleanUpAction cleanUpAction;
 
+    @Nullable
+    @HelpMarkdown("Specify the credentials to use with the Synopsys Coverity connect instance.")
     private String credentialsId;
+
+    @Nullable
+    private Boolean overrideDefaultCredentials;
 
     @DataBoundConstructor
     public CoverityBuildStep(String coverityInstanceUrl, String onCommandFailure, String projectName, String streamName, CheckForIssuesInView checkForIssuesInView,
@@ -105,6 +110,15 @@ public class CoverityBuildStep extends Builder {
     @DataBoundSetter
     public void setCredentialsId(String credentialsId) {
         this.credentialsId = credentialsId;
+    }
+
+    public Boolean getOverrideDefaultCredentials() {
+        return overrideDefaultCredentials;
+    }
+
+    @DataBoundSetter
+    public void setOverrideDefaultCredentials(Boolean overrideDefaultCredentials) {
+        this.overrideDefaultCredentials = overrideDefaultCredentials;
     }
 
     public String getCoverityInstanceUrl() {
@@ -188,16 +202,18 @@ public class CoverityBuildStep extends Builder {
 
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private final CoverityConnectionFieldHelper coverityConnectionFieldHelper;
         private final ProjectStreamFieldHelper projectStreamFieldHelper;
+        private final SynopsysCoverityCredentialsHelper credentialsHelper;
 
         public DescriptorImpl() {
             super(CoverityBuildStep.class);
             load();
 
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-            coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
+            coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
         }
 
         @Override
@@ -212,11 +228,15 @@ public class CoverityBuildStep extends Builder {
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems() {
-            return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
+            return coverityConnectionFieldHelper.doFillCoverityInstanceUrlItems();
+        }
+
+        public ListBoxModel doFillCredentialsIdItems() {
+            return credentialsHelper.listSupportedCredentials();
         }
 
         public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
         }
 
         public ComboBoxModel doFillProjectNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
@@ -228,7 +248,7 @@ public class CoverityBuildStep extends Builder {
 
         public FormValidation doCheckProjectName(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) {
             return FormValidation.aggregate(Arrays.asList(
-                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
+                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
                 projectStreamFieldHelper.checkForProjectInCache(credentialsId, coverityInstanceUrl, projectName)
             ));
         }
@@ -239,7 +259,7 @@ public class CoverityBuildStep extends Builder {
 
         public FormValidation doCheckStreamName(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
             return FormValidation.aggregate(Arrays.asList(
-                coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
+                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
                 projectStreamFieldHelper.checkForStreamInCache(credentialsId, coverityInstanceUrl, projectName, streamName)
             ));
         }

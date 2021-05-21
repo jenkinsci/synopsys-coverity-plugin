@@ -34,8 +34,9 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
+import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
@@ -90,7 +91,11 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     private Boolean createMissingProjectsAndStreams;
 
     @Nullable
+    @HelpMarkdown("Specify the credentials to use with the Synopsys Coverity connect instance.")
     private String credentialsId;
+
+    @Nullable
+    private Boolean overrideDefaultCredentials;
 
     @DataBoundConstructor
     public CoverityEnvironmentWrapper(String coverityInstanceUrl) {
@@ -161,6 +166,15 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         this.credentialsId = credentialsId;
     }
 
+    public Boolean getOverrideDefaultCredentials() {
+        return overrideDefaultCredentials;
+    }
+
+    @DataBoundSetter
+    public void setOverrideDefaultCredentials(Boolean overrideDefaultCredentials) {
+        this.overrideDefaultCredentials = overrideDefaultCredentials;
+    }
+
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
         Node node = Optional.ofNullable(workspace.toComputer())
@@ -185,7 +199,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(
             logger,
             jenkinsVersionHelper,
-            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(credentialsId, coverityInstanceUrl),
+            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(getCredentialsId(), coverityInstanceUrl),
             coverityWorkflowStepFactory,
             context,
             workspace.getRemote(),
@@ -219,8 +233,9 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     @Symbol("withCoverityEnvironment")
     @Extension
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
-        private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private final CoverityConnectionFieldHelper coverityConnectionFieldHelper;
         private final ProjectStreamFieldHelper projectStreamFieldHelper;
+        private final SynopsysCoverityCredentialsHelper credentialsHelper;
         private final IssueViewFieldHelper issueViewFieldHelper;
 
         public DescriptorImpl() {
@@ -228,17 +243,22 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             load();
 
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-            coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
+            coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
             issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems() {
-            return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
+            return coverityConnectionFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
         public FormValidation doCheckCoverityInstanceUrl( @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+        }
+
+        public ListBoxModel doFillCredentialsIdItems() {
+            return credentialsHelper.listSupportedCredentials();
         }
 
         public ComboBoxModel doFillProjectNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
@@ -249,7 +269,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
         }
 
         public ComboBoxModel doFillStreamNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("projectName") String projectName) throws InterruptedException {
@@ -257,7 +277,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         public FormValidation doCheckStreamName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
         }
 
         public ListBoxModel doFillViewNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
@@ -268,7 +288,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         }
 
         public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
         }
 
         @Override
@@ -297,6 +317,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     }
 
     private static final class DisposerImpl extends SimpleBuildWrapper.Disposer {
+        private static final long serialVersionUID = 4771346213830683656L;
         private final HashMap<String, String> environmentVariables;
 
         public DisposerImpl(HashMap<String, String> intEnvironmentVariables) {

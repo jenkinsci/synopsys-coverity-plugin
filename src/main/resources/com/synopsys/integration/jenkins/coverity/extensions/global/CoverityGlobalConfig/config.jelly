@@ -7,7 +7,7 @@
                         <f:textbox/>
                     </f:entry>
 
-                    <f:entry field="credentialId" title="Credentials">
+                    <f:entry field="defaultCredentialsId" title="Default credentials">
                         <c:select/>
                     </f:entry>
 

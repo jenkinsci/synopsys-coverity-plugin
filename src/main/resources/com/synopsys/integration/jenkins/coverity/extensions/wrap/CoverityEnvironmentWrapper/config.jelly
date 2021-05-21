@@ -1,15 +1,33 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <script src="${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js"/><script type="text/javascript">setRootURL("${app.rootUrl}");</script><f:entry field="coverityInstanceUrl" title="Coverity instance">
+    <script src="${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js"/><script type="text/javascript">setRootURL("${app.rootUrl}");</script>
+
+    <f:entry field="coverityInstanceUrl" title="Coverity instance">
         <f:select id="coverityInstanceUrlEnvWrapperId"/>
-    </f:entry><f:entry field="projectName" title="Coverity project">
+    </f:entry>
+
+    <f:optionalBlock inline="true" checked="${ instance.overrideDefaultCredentials != null }" field="overrideDefaultCredentials" title="Provide step-specific credentials">
+        <f:entry field="credentialsId" title="Coverity instance credentials">
+            <f:select id="credentialsIdEnvWrapperId"/>
+        </f:entry>
+    </f:optionalBlock>
+
+    <f:entry field="projectName" title="Coverity project">
         <f:combobox id="projectNameEnvWrapperId"/>
-    </f:entry><f:entry field="streamName" title="Coverity stream">
+    </f:entry>
+
+    <f:entry field="streamName" title="Coverity stream">
         <f:combobox id="streamNameEnvWrapperId"/>
-    </f:entry><f:entry field="createMissingProjectsAndStreams" title="Create project and/or stream if they do not exist">
+    </f:entry>
+
+    <f:entry field="createMissingProjectsAndStreams" title="Create project and/or stream if they do not exist">
         <f:checkbox id="createMissingProjectsAndStreamsEnvWrapperId"/>
-    </f:entry><f:entry field="viewName" title="Coverity view">
+    </f:entry>
+
+    <f:entry field="viewName" title="Coverity view">
         <f:select id="viewNameEnvWrapperId"/>
-    </f:entry><f:optionalBlock checked="${instance.configureChangeSetPatterns != null}" field="configureChangeSetPatterns" title="Customize change set">
+    </f:entry>
+
+    <f:optionalBlock checked="${instance.configureChangeSetPatterns != null}" field="configureChangeSetPatterns" title="Customize change set">
         <j:scope>
             <j:set var="descriptor" value="${descriptor.getPropertyType(instance,'configureChangeSetPatterns').getApplicableDescriptors().get(0)}"/><j:set var="instance" value="${instance.configureChangeSetPatterns}"/><j:set var="it" value="${it.configureChangeSetPatterns}"/><f:entry field="changeSetInclusionPatterns" title="Change set inclusion patterns">
                 <f:textbox id="changeSetInclusionPatternsEnvWrapperId"/>
@@ -17,7 +35,9 @@
                 <f:textbox id="changeSetExclusionPatternsEnvWrapperId"/>
             </f:entry>
         </j:scope>
-    </f:optionalBlock><f:entry>
+    </f:optionalBlock>
+
+    <f:entry>
         <div style="float:right">
             <input type="button" value="Refresh Coverity projects, streams, and views" class="yui-button ${attrs.clazz}" onclick="loadProjectsThenStreams('coverityInstanceUrlEnvWrapperId', 'projectNameEnvWrapperId', 'streamNameEnvWrapperId', 'com.synopsys.integration.jenkins.coverity.extensions.wrap.CoverityEnvironmentWrapper');loadViews('coverityInstanceUrlEnvWrapperId', 'viewNameEnvWrapperId', 'com.synopsys.integration.jenkins.coverity.extensions.wrap.CoverityEnvironmentWrapper');"/>
         </div>

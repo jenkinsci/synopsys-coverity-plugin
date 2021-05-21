@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,7 +33,8 @@ import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectUrlFieldHelper;
+import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
@@ -63,6 +64,10 @@ public class CheckForIssuesStep extends Step implements Serializable {
     private String coverityInstanceUrl;
 
     @Nullable
+    @HelpMarkdown("Specify the credentials to use with the Synopsys Coverity connect instance.")
+    private String credentialsId;
+
+    @Nullable
     @HelpMarkdown("Specify the name of the Coverity project the view is associated with.")
     private String projectName;
 
@@ -75,7 +80,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
     private Boolean returnIssueCount;
 
     @Nullable
-    private String credentialsId;
+    private Boolean overrideDefaultCredentials;
 
     @DataBoundConstructor
     public CheckForIssuesStep() {
@@ -139,6 +144,15 @@ public class CheckForIssuesStep extends Step implements Serializable {
         this.viewName = viewName;
     }
 
+    public Boolean getOverrideDefaultCredentials() {
+        return overrideDefaultCredentials;
+    }
+
+    @DataBoundSetter
+    public void setOverrideDefaultCredentials(Boolean overrideDefaultCredentials) {
+        this.overrideDefaultCredentials = overrideDefaultCredentials;
+    }
+
     @Override
     public StepExecution start(StepContext context) throws Exception {
         return new Execution(context);
@@ -147,15 +161,17 @@ public class CheckForIssuesStep extends Step implements Serializable {
     @Symbol(PIPELINE_NAME)
     @Extension(optional = true)
     public static final class DescriptorImpl extends StepDescriptor {
-        private final CoverityConnectUrlFieldHelper coverityConnectUrlFieldHelper;
+        private final CoverityConnectionFieldHelper coverityConnectionFieldHelper;
         private final ProjectStreamFieldHelper projectStreamFieldHelper;
         private final IssueViewFieldHelper issueViewFieldHelper;
+        private final SynopsysCoverityCredentialsHelper credentialsHelper;
 
         public DescriptorImpl() {
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
-            coverityConnectUrlFieldHelper = new CoverityConnectUrlFieldHelper(slf4jIntLogger);
+            coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
             issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
         }
 
         @Override
@@ -175,11 +191,15 @@ public class CheckForIssuesStep extends Step implements Serializable {
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems() {
-            return coverityConnectUrlFieldHelper.doFillCoverityInstanceUrlItems();
+            return coverityConnectionFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
         public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+        }
+
+        public ListBoxModel doFillCredentialsIdItems() {
+            return credentialsHelper.listSupportedCredentials();
         }
 
         public ListBoxModel doFillProjectNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
@@ -190,7 +210,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         }
 
         public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
         }
 
         public ListBoxModel doFillViewNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
@@ -201,7 +221,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         }
 
         public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectUrlFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
         }
 
     }
@@ -252,9 +272,9 @@ public class CheckForIssuesStep extends Step implements Serializable {
             return checkForIssuesStepWorkflow.perform();
         }
 
-        private String getRequiredValueOrDie(String pipelineParamter, String parameterName, JenkinsCoverityEnvironmentVariable environmentVariable, Function<String, String> getter) throws AbortException {
-            if (StringUtils.isNotBlank(pipelineParamter)) {
-                return pipelineParamter;
+        private String getRequiredValueOrDie(String pipelineParameter, String parameterName, JenkinsCoverityEnvironmentVariable environmentVariable, UnaryOperator<String> getter) throws AbortException {
+            if (StringUtils.isNotBlank(pipelineParameter)) {
+                return pipelineParameter;
             }
 
             String valueFromEnvironmentVariable = getter.apply(environmentVariable.toString());
