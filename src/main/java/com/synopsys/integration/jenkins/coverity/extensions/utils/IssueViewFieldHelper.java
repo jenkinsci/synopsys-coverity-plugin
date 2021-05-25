@@ -24,9 +24,9 @@ public class IssueViewFieldHelper extends ConnectionCachingFieldHelper<IssueView
         super(logger, () -> new IssueViewCache(logger));
     }
 
-    public ListBoxModel getViewNamesForListBox(String coverityConnectUrl, String credentialsId) throws InterruptedException {
+    public ListBoxModel getViewNamesForListBox(String coverityConnectUrl, Boolean overrideDefaultCredentials, String credentialsId) throws InterruptedException {
         try {
-            return getViews(coverityConnectUrl, credentialsId).stream()
+            return getViews(coverityConnectUrl, overrideDefaultCredentials, credentialsId).stream()
                        .filter(StringUtils::isNotBlank)
                        .map(this::wrapAsListBoxModelOption)
                        .collect(Collectors.toCollection(ListBoxModel::new));
@@ -36,10 +36,15 @@ public class IssueViewFieldHelper extends ConnectionCachingFieldHelper<IssueView
         }
     }
 
-    private List<String> getViews(String coverityConnectUrl, String credentialsId) throws CoverityIntegrationException, InterruptedException {
+    private List<String> getViews(String coverityConnectUrl, Boolean overrideDefaultCredentials, String credentialsId) throws CoverityIntegrationException, InterruptedException {
         CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
-        IssueViewCache issueViewCache = getCache(coverityConnectUrl);
-        return issueViewCache.getData(credentialsId, coverityConnectInstance);
+        if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
+            IssueViewCache issueViewCache = getCache(coverityConnectUrl, credentialsId);
+            return issueViewCache.getData(credentialsId, coverityConnectInstance);
+        } else {
+            IssueViewCache issueViewCache = getCache(coverityConnectUrl, coverityConnectInstance.getDefaultCredentialsId());
+            return issueViewCache.getData(coverityConnectInstance.getDefaultCredentialsId(), coverityConnectInstance);
+        }
     }
 
 }

@@ -58,6 +58,19 @@ public class CheckForIssuesStep extends Step implements Serializable {
     public static final String PIPELINE_NAME = "coverityIssueCheck";
     private static final long serialVersionUID = 3602102048550370960L;
 
+    // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
+    // Be aware by changing a field name, you will also need to change these strings and will likely break previous implementations.
+    // Jenkins Common provides convenient access to the XSTREAM instance that Jenkins uses to serialize the classes, you can use the serialization methods on that class to rename fields without breaking them.
+    // --rotte MAY 2021
+    public static final String FIELD_COVERITY_INSTANCE_URL = "coverityInstanceUrl";
+    public static final String FIELD_PROJECT_NAME = "projectName";
+    public static final String FIELD_STREAM_NAME = "streamName";
+    public static final String FIELD_VIEW_NAME = "viewName";
+    public static final String FIELD_OVERRIDE_CREDENTIALS = "overrideDefaultCredentials";
+    public static final String FIELD_CREDENTIALS_ID = "credentialsId";
+    public static final String FIELD_RETURN_ISSUE_COUNT = "returnIssueCount";
+
+
     // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
     @Nullable
     @HelpMarkdown("Specify which Synopsys Coverity connect instance to check for issues.")
@@ -194,34 +207,56 @@ public class CheckForIssuesStep extends Step implements Serializable {
             return coverityConnectionFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
-        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckCoverityInstanceUrl(
+            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
+            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
+        ) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
         public ListBoxModel doFillCredentialsIdItems() {
             return credentialsHelper.listSupportedCredentials();
         }
 
-        public ListBoxModel doFillProjectNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillProjectNameItems(
+            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
+            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
+            @QueryParameter("updateNow") boolean updateNow
+        ) throws InterruptedException {
             if (updateNow) {
-                projectStreamFieldHelper.updateNow(credentialsId, coverityInstanceUrl);
+                projectStreamFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
             }
-            return projectStreamFieldHelper.getProjectNamesForListBox(credentialsId, coverityInstanceUrl);
+            return projectStreamFieldHelper.getProjectNamesForListBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckProjectName(
+            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
+            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
+        ) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public ListBoxModel doFillViewNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillViewNameItems(
+            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
+            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
+            @QueryParameter("updateNow") boolean updateNow
+        ) throws InterruptedException {
             if (updateNow) {
-                issueViewFieldHelper.updateNow(credentialsId, coverityInstanceUrl);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
             }
-            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl, credentialsId);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckViewName(
+            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
+            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
+        ) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
     }
@@ -248,13 +283,13 @@ public class CheckForIssuesStep extends Step implements Serializable {
             CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(envVars, node, launcher, listener);
             CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
             IntEnvironmentVariables intEnvironmentVariables = coverityWorkflowStepFactory.getOrCreateEnvironmentVariables();
-            String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, "coverityInstanceUrl", JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
+            String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, FIELD_COVERITY_INSTANCE_URL, JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
             String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
 
-            String unresolvedProjectName = getRequiredValueOrDie(projectName, "projectName", JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
+            String unresolvedProjectName = getRequiredValueOrDie(projectName, FIELD_PROJECT_NAME, JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
             String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
 
-            String unresolvedViewName = getRequiredValueOrDie(viewName, "viewName", JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
+            String unresolvedViewName = getRequiredValueOrDie(viewName, FIELD_VIEW_NAME, JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
             String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
             JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());

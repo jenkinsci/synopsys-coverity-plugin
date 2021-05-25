@@ -64,6 +64,21 @@ import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
+    // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
+    // Be aware by changing a field name, you will also need to change these strings and will likely break previous implementations.
+    // Jenkins Common provides convenient access to the XSTREAM instance that Jenkins uses to serialize the classes, you can use the serialization methods on that class to rename fields without breaking them.
+    // --rotte MAY 2021
+    public static final String FIELD_COVERITY_INSTANCE_URL = "coverityInstanceUrl";
+    public static final String FIELD_PROJECT_NAME = "projectName";
+    public static final String FIELD_STREAM_NAME = "streamName";
+    public static final String NESTED_DESCRIPTOR_CHECK_FOR_ISSUES = "checkForIssuesInView";
+    public static final String NESTED_DESCRIPTOR_CONFIGURE_CHANGE_SET_PATTERNS = "configureChangeSetPatterns";
+    public static final String NESTED_DESCRIPTOR_COVERITY_RUN_CONFIGURATION = "coverityRunConfiguration";
+    public static final String FIELD_ON_COMMAND_FAILURE = "onCommandFailure";
+    public static final String FIELD_CLEAN_UP_ACTION = "cleanUpAction";
+    public static final String FIELD_OVERRIDE_CREDENTIALS = "overrideDefaultCredentials";
+    public static final String FIELD_CREDENTIALS_ID = "credentialsId";
+
     @HelpMarkdown("Specify which Synopsys Coverity connect instance to run this job against.")
     private final String coverityInstanceUrl;
     private final String coverityPassphrase;
@@ -253,42 +268,42 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             return coverityConnectionFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
-        public FormValidation doCheckCoverityInstanceUrl( @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter("credentialsId") String credentialsId) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
         public ListBoxModel doFillCredentialsIdItems() {
             return credentialsHelper.listSupportedCredentials();
         }
 
-        public ComboBoxModel doFillProjectNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ComboBoxModel doFillProjectNameItems(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                projectStreamFieldHelper.updateNow(credentialsId, coverityInstanceUrl);
+                projectStreamFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
             }
-            return projectStreamFieldHelper.getProjectNamesForComboBox(credentialsId, coverityInstanceUrl);
+            return projectStreamFieldHelper.getProjectNamesForComboBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public FormValidation doCheckProjectName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckProjectName(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter("credentialsId") String credentialsId) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public ComboBoxModel doFillStreamNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("projectName") String projectName) throws InterruptedException {
-            return projectStreamFieldHelper.getStreamNamesForComboBox(credentialsId, coverityInstanceUrl, projectName);
+        public ComboBoxModel doFillStreamNameItems(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("projectName") String projectName) throws InterruptedException {
+            return projectStreamFieldHelper.getStreamNamesForComboBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId, projectName);
         }
 
-        public FormValidation doCheckStreamName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckStreamName(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter("credentialsId") String credentialsId) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public ListBoxModel doFillViewNameItems(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillViewNameItems(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter("credentialsId") String credentialsId, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                issueViewFieldHelper.updateNow(credentialsId, coverityInstanceUrl);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
             }
-            return issueViewFieldHelper.getViewNamesForListBox(credentialsId, coverityInstanceUrl);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public FormValidation doCheckViewName(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("credentialsId") String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckViewName(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter("credentialsId") String credentialsId) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
         @Override

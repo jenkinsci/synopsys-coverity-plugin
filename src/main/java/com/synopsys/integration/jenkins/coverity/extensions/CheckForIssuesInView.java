@@ -12,6 +12,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
+import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityBuildStep;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -23,6 +24,15 @@ import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
 
 public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssuesInView> {
+    // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
+    // Be aware by changing a field name, you will also need to change these strings and will likely break previous implementations.
+    // Jenkins Common provides convenient access to the XSTREAM instance that Jenkins uses to serialize the classes, you can use the serialization methods on that class to rename fields without breaking them.
+    // --rotte MAY 2021
+    public static final String FIELD_VIEW_NAME = "viewName";
+    public static final String FIELD_BUILD_STATUS_FOR_ISSUES = "buildStatusForIssues";
+    public static final String PATH_TO_COVERITY_BUILD_STEP = "..";
+
+
     @HelpMarkdown("Specify the name of the Coverity view that you would like to check for issues.  \r\n"
                       + "The resulting view name is stored in the $COV_VIEW environment variable, and affects checking for issues in both the full and incremental analysis, if configured.")
     private final String viewName;
@@ -59,11 +69,16 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
             issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
         }
 
-        public ListBoxModel doFillViewNameItems(@QueryParameter("credentialsId") String credentialsId, @RelativePath("..") @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ListBoxModel doFillViewNameItems(
+            @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+            @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
+            @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_CREDENTIALS_ID) String credentialsId,
+            @QueryParameter("updateNow") boolean updateNow
+        ) throws InterruptedException {
             if (updateNow) {
-                issueViewFieldHelper.updateNow(credentialsId, coverityInstanceUrl);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
             }
-            return issueViewFieldHelper.getViewNamesForListBox(credentialsId, coverityInstanceUrl);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
         public ListBoxModel doFillBuildStatusForIssuesItems() {

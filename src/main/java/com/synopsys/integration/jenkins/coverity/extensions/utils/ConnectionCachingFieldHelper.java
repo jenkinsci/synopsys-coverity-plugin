@@ -7,6 +7,9 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -16,7 +19,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.log.IntLogger;
 
 public abstract class ConnectionCachingFieldHelper<T extends CoverityConnectDataCache> extends FieldHelper {
-    private final ConcurrentHashMap<String, T> cacheMap;
+    private final ConcurrentHashMap<List<String>, T> cacheMap;
     private final Supplier<T> cacheConstructor;
 
     public ConnectionCachingFieldHelper(IntLogger logger, Supplier<T> cacheConstructor) {
@@ -25,19 +28,25 @@ public abstract class ConnectionCachingFieldHelper<T extends CoverityConnectData
         this.cacheConstructor = cacheConstructor;
     }
 
-    public void updateNow(String credentialId, String coverityConnectUrl) throws InterruptedException {
+    public void updateNow(String coverityConnectUrl, Boolean overrideDefaultCredentials, String credentialsId) throws InterruptedException {
         try {
             CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
-            T cache = getCache(coverityConnectUrl);
-            cache.refresh(credentialId, coverityConnectInstance);
+            if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
+                T cache = getCache(coverityConnectUrl, credentialsId);
+                cache.refresh(credentialsId, coverityConnectInstance);
+            } else {
+                T cache = getCache(coverityConnectUrl, coverityConnectInstance.getDefaultCredentialsId());
+                cache.refresh(coverityConnectInstance.getDefaultCredentialsId(), coverityConnectInstance);
+            }
         } catch (CoverityIntegrationException ignored) {
             // Handled by form validation
         }
     }
 
-    protected T getCache(String coverityConnectUrl) {
-        cacheMap.putIfAbsent(coverityConnectUrl, cacheConstructor.get());
-        return cacheMap.get(coverityConnectUrl);
+    protected T getCache(String coverityConnectUrl, String credentialsId) {
+        List<String> urlAndCredentialsId = Collections.unmodifiableList(Arrays.asList(coverityConnectUrl, credentialsId));
+        cacheMap.putIfAbsent(urlAndCredentialsId, cacheConstructor.get());
+        return cacheMap.get(urlAndCredentialsId);
     }
 
 }

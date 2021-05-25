@@ -158,19 +158,19 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
         }
 
         @POST
-        public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("defaultCredentialsId") String credentialsId) {
+        public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("defaultCredentialsId") String defaultCredentialsId) {
             Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             FormValidation urlValidation = doCheckUrl(url);
             if (!FormValidation.Kind.OK.equals(urlValidation.kind)) {
                 return urlValidation;
             }
 
-            if (StringUtils.isBlank(credentialsId)) {
+            if (StringUtils.isBlank(defaultCredentialsId)) {
                 return FormValidation.error("Please specify the credentials for the Coverity Connect instance.");
             }
 
-            CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialsId);
-            return coverityConnectionFieldHelper.testConnectionToCoverityInstance(coverityConnectInstance, credentialsId);
+            CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, defaultCredentialsId);
+            return coverityConnectionFieldHelper.testConnectionToCoverityInstance(coverityConnectInstance, defaultCredentialsId);
         }
     }
 

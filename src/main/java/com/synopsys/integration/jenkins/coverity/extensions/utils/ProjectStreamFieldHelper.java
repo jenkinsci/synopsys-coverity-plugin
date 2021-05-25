@@ -32,17 +32,17 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
         super(logger, () -> new ProjectStreamCache(logger));
     }
 
-    public ComboBoxModel getProjectNamesForComboBox(String credentialsId, String jenkinsCoverityInstanceUrl) throws InterruptedException {
-        return doFillProjectNameItems(ComboBoxModel::new, Function.identity(), credentialsId, jenkinsCoverityInstanceUrl);
+    public ComboBoxModel getProjectNamesForComboBox(String coverityInstanceUrl, Boolean overrideDefaultCredentialsId, String credentialsId) throws InterruptedException {
+        return doFillProjectNameItems(ComboBoxModel::new, Function.identity(), coverityInstanceUrl, overrideDefaultCredentialsId, credentialsId);
     }
 
-    public ListBoxModel getProjectNamesForListBox(String credentialsId, String jenkinsCoverityInstanceUrl) throws InterruptedException {
-        return doFillProjectNameItems(ListBoxModel::new, this::wrapAsListBoxModelOption, credentialsId, jenkinsCoverityInstanceUrl);
+    public ListBoxModel getProjectNamesForListBox(String coverityConnectUrl, Boolean overrideDefaultCredentialsId, String credentialsId) throws InterruptedException {
+        return doFillProjectNameItems(ListBoxModel::new, this::wrapAsListBoxModelOption, coverityConnectUrl, overrideDefaultCredentialsId, credentialsId);
     }
 
-    public ComboBoxModel getStreamNamesForComboBox(String credentialsId, String jenkinsCoverityInstanceUrl, String selectedProjectName) throws InterruptedException {
+    public ComboBoxModel getStreamNamesForComboBox(String coverityInstanceUrl, Boolean overrideDefaultCredentialsId, String credentialsId, String selectedProjectName) throws InterruptedException {
         try {
-            return getStreams(jenkinsCoverityInstanceUrl, credentialsId, selectedProjectName).stream()
+            return getStreams(coverityInstanceUrl, overrideDefaultCredentialsId, credentialsId, selectedProjectName).stream()
                        .map(this::toStreamName)
                        .filter(StringUtils::isNotBlank)
                        .collect(Collectors.toCollection(ComboBoxModel::new));
@@ -53,9 +53,10 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
         }
     }
 
-    public FormValidation checkForProjectInCache(String credentialsId, String coverityConnectUrl, String projectName) {
+
+    public FormValidation checkForProjectInCache(String coverityInstanceUrl, Boolean overrideDefaultCredentialsId, String credentialsId, String projectName) {
         try {
-            return getProjects(credentialsId, coverityConnectUrl).stream()
+            return getProjects(coverityInstanceUrl, overrideDefaultCredentialsId, credentialsId).stream()
                        .map(this::toProjectName)
                        .filter(projectName::equals)
                        .findFirst()
@@ -69,9 +70,9 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
         }
     }
 
-    public FormValidation checkForStreamInCache(String credentialsId, String coverityConnectUrl, String projectName, String streamName) {
+    public FormValidation checkForStreamInCache(String coverityInstanceUrl, Boolean overrideDefaultCredentialsId, String credentialsId, String projectName, String streamName) {
         try {
-            return getStreams(credentialsId, coverityConnectUrl, projectName).stream()
+            return getStreams(coverityInstanceUrl, overrideDefaultCredentialsId, credentialsId, projectName).stream()
                        .map(this::toStreamName)
                        .filter(streamName::equals)
                        .findFirst()
@@ -85,9 +86,9 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
         }
     }
 
-    private <T, R extends Collection<T>> R doFillProjectNameItems(Supplier<R> supplier, Function<String, T> itemWrapper, String credentialsId, String jenkinsCoverityInstanceUrl) throws InterruptedException {
+    private <T, R extends Collection<T>> R doFillProjectNameItems(Supplier<R> supplier, Function<String, T> itemWrapper, String coverityInstanceUrl, Boolean overrideDefaultCredentialsId, String credentialsId) throws InterruptedException {
         try {
-            return getProjects(credentialsId, jenkinsCoverityInstanceUrl).stream()
+            return getProjects(coverityInstanceUrl, overrideDefaultCredentialsId, credentialsId).stream()
                        .map(this::toProjectName)
                        .filter(StringUtils::isNotBlank)
                        .map(itemWrapper)
@@ -98,19 +99,26 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
         }
     }
 
-    private List<ProjectDataObj> getProjects(String credentialsId, String coverityConnectUrl) throws CoverityIntegrationException, InterruptedException {
-        CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
-        ProjectStreamCache projectStreamCache = getCache(coverityConnectUrl);
-        List<ProjectDataObj> projectDataObjs = projectStreamCache.getData(credentialsId, coverityConnectInstance);
-        return projectDataObjs != null ? projectDataObjs : Collections.emptyList();
-    }
-
-    private List<StreamDataObj> getStreams(String credentialsId, String coverityConnectUrl, String projectName) throws CoverityIntegrationException, InterruptedException {
-        return getProjects(credentialsId, coverityConnectUrl).stream()
+    private List<StreamDataObj> getStreams(String coverityInstanceUrl, Boolean overrideDefaultCredentialsId, String credentialsId, String projectName) throws CoverityIntegrationException, InterruptedException {
+        return getProjects(coverityInstanceUrl, overrideDefaultCredentialsId, credentialsId).stream()
                    .filter(projectDataObj -> this.isMatchingProject(projectDataObj, projectName))
                    .map(ProjectDataObj::getStreams)
                    .flatMap(Collection::stream)
                    .collect(Collectors.toList());
+    }
+
+    private List<ProjectDataObj> getProjects(String coverityInstanceUrl, Boolean overrideDefaultCredentialsId, String credentialsId) throws CoverityIntegrationException, InterruptedException {
+        CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityInstanceUrl);
+        ProjectStreamCache projectStreamCache;
+        List<ProjectDataObj> projectDataObjs;
+        if (Boolean.TRUE.equals(overrideDefaultCredentialsId)) {
+            projectStreamCache = getCache(coverityInstanceUrl, credentialsId);
+            projectDataObjs = projectStreamCache.getData(credentialsId, coverityConnectInstance);
+        } else {
+            projectStreamCache = getCache(coverityInstanceUrl, coverityConnectInstance.getDefaultCredentialsId());
+            projectDataObjs = projectStreamCache.getData(coverityConnectInstance.getDefaultCredentialsId(), coverityConnectInstance);
+        }
+        return projectDataObjs != null ? projectDataObjs : Collections.emptyList();
     }
 
     private Boolean isMatchingProject(ProjectDataObj projectDataObj, String selectedProjectName) {

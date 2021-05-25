@@ -48,6 +48,18 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 public class CoverityBuildStep extends Builder {
+    // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
+    public static final String FIELD_COVERITY_INSTANCE_URL = "coverityInstanceUrl";
+    public static final String FIELD_PROJECT_NAME = "projectName";
+    public static final String FIELD_STREAM_NAME = "streamName";
+    public static final String NESTED_DESCRIPTOR_CHECK_FOR_ISSUES = "checkForIssuesInView";
+    public static final String NESTED_DESCRIPTOR_CONFIGURE_CHANGE_SET_PATTERNS = "configureChangeSetPatterns";
+    public static final String NESTED_DESCRIPTOR_COVERITY_RUN_CONFIGURATION = "coverityRunConfiguration";
+    public static final String FIELD_ON_COMMAND_FAILURE = "onCommandFailure";
+    public static final String FIELD_CLEAN_UP_ACTION = "cleanUpAction";
+    public static final String FIELD_OVERRIDE_CREDENTIALS = "overrideDefaultCredentials";
+    public static final String FIELD_CREDENTIALS_ID = "credentialsId";
+
     @HelpMarkdown("Specify which Synopsys Coverity connect instance to run this job against.  \r\n"
                       + "The resulting Synopsys Coverity connect instance URL is stored in the $COV_URL environment variable, and will affect both the full and incremental analysis.")
     private final String coverityInstanceUrl;
@@ -235,32 +247,32 @@ public class CoverityBuildStep extends Builder {
             return credentialsHelper.listSupportedCredentials();
         }
 
-        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter String credentialsId) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, credentialsId);
+        public FormValidation doCheckCoverityInstanceUrl(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId) {
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public ComboBoxModel doFillProjectNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
+        public ComboBoxModel doFillProjectNameItems(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId, @QueryParameter("updateNow") boolean updateNow) throws InterruptedException {
             if (updateNow) {
-                projectStreamFieldHelper.updateNow(credentialsId, coverityInstanceUrl);
+                projectStreamFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
             }
-            return projectStreamFieldHelper.getProjectNamesForComboBox(credentialsId, coverityInstanceUrl);
+            return projectStreamFieldHelper.getProjectNamesForComboBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
         }
 
-        public FormValidation doCheckProjectName(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) {
+        public FormValidation doCheckProjectName(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId, @QueryParameter(FIELD_PROJECT_NAME) String projectName) {
             return FormValidation.aggregate(Arrays.asList(
-                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
-                projectStreamFieldHelper.checkForProjectInCache(credentialsId, coverityInstanceUrl, projectName)
+                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId),
+                projectStreamFieldHelper.checkForProjectInCache(coverityInstanceUrl, overrideDefaultCredentials, credentialsId, projectName)
             ));
         }
 
-        public ComboBoxModel doFillStreamNameItems(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName) throws InterruptedException {
-            return projectStreamFieldHelper.getStreamNamesForComboBox(credentialsId, coverityInstanceUrl, projectName);
+        public ComboBoxModel doFillStreamNameItems(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId, @QueryParameter(FIELD_PROJECT_NAME) String projectName) throws InterruptedException {
+            return projectStreamFieldHelper.getStreamNamesForComboBox(coverityInstanceUrl, overrideDefaultCredentials,credentialsId, projectName);
         }
 
-        public FormValidation doCheckStreamName(@QueryParameter("credentialsId") String credentialsId, @QueryParameter("coverityInstanceUrl") String coverityInstanceUrl, @QueryParameter("projectName") String projectName, @QueryParameter("streamName") String streamName) {
+        public FormValidation doCheckStreamName(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId, @QueryParameter(FIELD_PROJECT_NAME) String projectName, @QueryParameter(FIELD_STREAM_NAME) String streamName) {
             return FormValidation.aggregate(Arrays.asList(
-                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, credentialsId),
-                projectStreamFieldHelper.checkForStreamInCache(credentialsId, coverityInstanceUrl, projectName, streamName)
+                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId),
+                projectStreamFieldHelper.checkForStreamInCache(coverityInstanceUrl, overrideDefaultCredentials, credentialsId, projectName, streamName)
             ));
         }
 

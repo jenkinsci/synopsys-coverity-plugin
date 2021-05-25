@@ -40,7 +40,7 @@ public class CoverityConnectionFieldHelper extends FieldHelper {
         return listBoxModel;
     }
 
-    public FormValidation doCheckCoverityInstanceUrl(String coverityInstance, String credentialsId) {
+    public FormValidation doCheckCoverityInstanceUrl(String coverityInstance, Boolean overrideDefaultCredentials, String credentialsId) {
         if (GlobalValueHelper.getGlobalCoverityConnectInstances().isEmpty()) {
             return FormValidation.error("There are no Coverity instances configured");
         }
@@ -49,17 +49,26 @@ public class CoverityConnectionFieldHelper extends FieldHelper {
             return FormValidation.error("Please choose one of the Coverity instances");
         }
 
-        return testConnectionIgnoreSuccessMessage(coverityInstance, credentialsId);
+        if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
+            return testConnectionIgnoreSuccessMessage(coverityInstance, credentialsId);
+        }
+        return testConnectionIgnoreSuccessMessage(coverityInstance);
     }
 
-    public FormValidation doCheckCoverityInstanceUrlIgnoreMessage(String coverityInstance, String credentialsId) {
-        FormValidation formValidation = doCheckCoverityInstanceUrl(coverityInstance, credentialsId);
+    public FormValidation doCheckCoverityInstanceUrlIgnoreMessage(String coverityInstance, Boolean overrideDefaultCredentials, String credentialsId) {
+        FormValidation formValidation = doCheckCoverityInstanceUrl(coverityInstance, overrideDefaultCredentials, credentialsId);
 
         if (formValidation.kind.equals(FormValidation.Kind.ERROR)) {
             return FormValidation.error("Selected Coverity instance is invalid.");
         } else {
             return FormValidation.ok();
         }
+    }
+
+    public FormValidation testConnectionIgnoreSuccessMessage(String jenkinsCoverityInstanceUrl) {
+        return GlobalValueHelper.getCoverityInstanceWithUrl(logger, jenkinsCoverityInstanceUrl)
+                   .map(coverityConnectInstance -> this.testConnectionIgnoreSuccessMessage(coverityConnectInstance, coverityConnectInstance.getDefaultCredentialsId()))
+                   .orElse(FormValidation.error("There are no Coverity instances configured with the name %s", jenkinsCoverityInstanceUrl));
     }
 
     public FormValidation testConnectionIgnoreSuccessMessage(String jenkinsCoverityInstanceUrl, String credentialsId) {
