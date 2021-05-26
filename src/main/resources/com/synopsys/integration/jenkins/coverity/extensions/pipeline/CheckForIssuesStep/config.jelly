@@ -1,4 +1,4 @@
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
     <script src="${rootURL}/plugin/synopsys-coverity/javascript/CoverityFunctions.js"/>
     <script type="text/javascript">setRootURL("${app.rootUrl}");</script>
 
@@ -6,9 +6,9 @@
         <f:select id="coverityInstanceUrlCheckIssuesId"/>
     </f:entry>
 
-    <f:optionalBlock inline="true" checked="${ instance.overrideDefaultCredentials == true }" field="overrideDefaultCredentials" title="Provide step-specific credentials">
-        <f:entry field="credentialsId" title="Coverity instance credentials">
-            <f:select id="coverityInstanceCredentialsIdCheckIssuesId"/>
+    <f:optionalBlock inline="true" checked="${ instance.credentialsId != null }" name="overrideDefaultCredentials" title="Provide step-specific credentials">
+        <f:entry field="credentialsId">
+            <c:select id="coverityInstanceCredentialsIdCheckIssuesId"/>
         </f:entry>
     </f:optionalBlock>
 

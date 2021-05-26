@@ -17,7 +17,7 @@ import java.util.function.UnaryOperator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
@@ -66,10 +66,8 @@ public class CheckForIssuesStep extends Step implements Serializable {
     public static final String FIELD_PROJECT_NAME = "projectName";
     public static final String FIELD_STREAM_NAME = "streamName";
     public static final String FIELD_VIEW_NAME = "viewName";
-    public static final String FIELD_OVERRIDE_CREDENTIALS = "overrideDefaultCredentials";
     public static final String FIELD_CREDENTIALS_ID = "credentialsId";
     public static final String FIELD_RETURN_ISSUE_COUNT = "returnIssueCount";
-
 
     // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
     @Nullable
@@ -92,16 +90,16 @@ public class CheckForIssuesStep extends Step implements Serializable {
     @HelpMarkdown("If checked, will return the number of issues discovered in the specified Coverity view instead of throwing an exception.")
     private Boolean returnIssueCount;
 
-    @Nullable
-    private Boolean overrideDefaultCredentials;
-
     @DataBoundConstructor
     public CheckForIssuesStep() {
         // All fields are optional, so this constructor exists only to prevent some versions of the pipeline syntax generator from failing
     }
 
     public String getCredentialsId() {
-        return credentialsId;
+        if (StringUtils.isNotBlank(credentialsId)) {
+            return credentialsId;
+        }
+        return null;
     }
 
     @DataBoundSetter
@@ -157,15 +155,6 @@ public class CheckForIssuesStep extends Step implements Serializable {
         this.viewName = viewName;
     }
 
-    public Boolean getOverrideDefaultCredentials() {
-        return overrideDefaultCredentials;
-    }
-
-    @DataBoundSetter
-    public void setOverrideDefaultCredentials(Boolean overrideDefaultCredentials) {
-        this.overrideDefaultCredentials = overrideDefaultCredentials;
-    }
-
     @Override
     public StepExecution start(StepContext context) throws Exception {
         return new Execution(context);
@@ -209,10 +198,9 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
         public FormValidation doCheckCoverityInstanceUrl(
             @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
             @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
         ) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
         public ListBoxModel doFillCredentialsIdItems() {
@@ -221,42 +209,38 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
         public ListBoxModel doFillProjectNameItems(
             @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
             @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
             @QueryParameter("updateNow") boolean updateNow
         ) throws InterruptedException {
             if (updateNow) {
-                projectStreamFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+                projectStreamFieldHelper.updateNow(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
             }
-            return projectStreamFieldHelper.getProjectNamesForListBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+            return projectStreamFieldHelper.getProjectNamesForListBox(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
         public FormValidation doCheckProjectName(
             @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
             @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
         ) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
         public ListBoxModel doFillViewNameItems(
             @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
             @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
             @QueryParameter("updateNow") boolean updateNow
         ) throws InterruptedException {
             if (updateNow) {
-                issueViewFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+                issueViewFieldHelper.updateNow(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
             }
-            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+            return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
         public FormValidation doCheckViewName(
             @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
             @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
         ) {
-            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+            return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
     }
