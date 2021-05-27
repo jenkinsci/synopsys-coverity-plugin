@@ -34,6 +34,7 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
@@ -278,12 +279,20 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
             JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
 
+            String resolvedCredentialsId;
+            if (credentialsId != null) {
+                resolvedCredentialsId = credentialsId;
+            } else {
+                CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(resolvedCoverityInstanceUrl);
+                resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
+            }
+
             CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger,
                 jenkinsVersionHelper,
                 () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(credentialsId, resolvedCoverityInstanceUrl),
                 coverityWorkflowStepFactory,
                 resolvedCoverityInstanceUrl,
-                credentialsId,
+                resolvedCredentialsId,
                 resolvedProjectName,
                 resolvedViewName,
                 returnIssueCount,

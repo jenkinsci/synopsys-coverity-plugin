@@ -36,6 +36,7 @@ import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
@@ -201,15 +202,23 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             changeLogSets = Collections.emptyList();
         }
 
+        String resolvedCredentialsId;
+        if (credentialsId != null) {
+            resolvedCredentialsId = credentialsId;
+        } else {
+            CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(coverityInstanceUrl);
+            resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
+        }
+
         CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(
             logger,
             jenkinsVersionHelper,
-            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(getCredentialsId(), coverityInstanceUrl),
+            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCredentialsId, coverityInstanceUrl),
             coverityWorkflowStepFactory,
             context,
             workspace.getRemote(),
             coverityInstanceUrl,
-            credentialsId,
+            resolvedCredentialsId,
             projectName,
             streamName,
             viewName,

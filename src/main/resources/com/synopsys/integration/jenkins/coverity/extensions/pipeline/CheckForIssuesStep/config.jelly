@@ -6,11 +6,11 @@
         <f:select id="coverityInstanceUrlCheckIssuesId"/>
     </f:entry>
 
-    <f:optionalBlock inline="true" checked="${ instance.credentialsId != null }" name="overrideDefaultCredentials" title="Provide step-specific credentials">
-        <f:entry field="credentialsId">
+    <f:advanced>
+        <f:entry field="credentialsId" title="Override default credentials">
             <c:select id="coverityInstanceCredentialsIdCheckIssuesId"/>
         </f:entry>
-    </f:optionalBlock>
+    </f:advanced>
 
     <f:entry field="projectName" title="Coverity project">
         <f:select id="projectNameCheckIssuesId"/>

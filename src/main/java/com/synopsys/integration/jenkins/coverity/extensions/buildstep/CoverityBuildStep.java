@@ -26,6 +26,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView
 import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
+import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
@@ -178,15 +179,24 @@ public class CoverityBuildStep extends Builder {
         CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(build.getEnvironment(listener), build.getBuiltOn(), launcher, listener);
         JenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
         JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
+
+        String resolvedCredentialsId;
+        if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
+            resolvedCredentialsId = credentialsId;
+        } else {
+            CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(coverityInstanceUrl);
+            resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
+        }
+
         CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(
             logger,
             jenkinsVersionHelper,
-            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(credentialsId, coverityInstanceUrl),
+            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCredentialsId, coverityInstanceUrl),
             coverityWorkflowStepFactory,
             build,
             remoteWorkingDirectoryPath,
             coverityInstanceUrl,
-            credentialsId,
+            resolvedCredentialsId,
             projectName,
             streamName,
             coverityRunConfiguration,
