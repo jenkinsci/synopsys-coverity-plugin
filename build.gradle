@@ -21,7 +21,7 @@ artifactory {
 
 jenkinsPlugin {
     // Must be compatible with the version declared in Jenkins Common
-    coreVersion = '2.60.1'
+    coreVersion = '2.150.3'
     displayName = 'Synopsys Coverity plugin'
     url = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
     gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
@@ -34,7 +34,7 @@ dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
 
     implementation 'com.synopsys.integration:coverity-common:0.8.0'
-    implementation 'com.synopsys.integration:jenkins-common:0.2.1'
+    implementation 'com.synopsys.integration:jenkins-common:0.3.1'
 
 
     // Must be compatible with the versions declared in Jenkins Common

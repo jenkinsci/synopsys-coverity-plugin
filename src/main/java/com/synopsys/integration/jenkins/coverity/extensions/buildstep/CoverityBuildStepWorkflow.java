@@ -35,7 +35,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.CleanUpAction;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
+import com.synopsys.integration.jenkins.coverity.service.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;

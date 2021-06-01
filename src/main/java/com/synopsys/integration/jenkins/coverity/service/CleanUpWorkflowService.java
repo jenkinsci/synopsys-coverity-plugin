@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.jenkins.coverity.stepworkflow;
+package com.synopsys.integration.jenkins.coverity.service;
 
 import java.io.IOException;
 

@@ -40,7 +40,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConne
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
+import com.synopsys.integration.jenkins.coverity.service.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;

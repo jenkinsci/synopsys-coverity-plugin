@@ -9,8 +9,8 @@ package com.synopsys.integration.jenkins.coverity;
 
 import java.io.Serializable;
 
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 

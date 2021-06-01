@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mockito;
 
+import com.synopsys.integration.jenkins.coverity.service.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 
 import hudson.FilePath;

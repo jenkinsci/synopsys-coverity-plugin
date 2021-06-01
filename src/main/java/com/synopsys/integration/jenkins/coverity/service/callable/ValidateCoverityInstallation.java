@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.jenkins.coverity.stepworkflow;
+package com.synopsys.integration.jenkins.coverity.service.callable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +30,7 @@ public class ValidateCoverityInstallation extends CoverityRemoteCallable<Boolean
         this.validateVersion = validateVersion;
     }
 
+    @Override
     public Boolean call() throws CoverityJenkinsException {
         // Previously we would validate the location of coverityToolHome here, but that's too late for CoverityWorkflowStepFactory-- so now we validate it before this class is constructed.
         // If/when we switch to the services pattern that Detect and Polaris Jenkins use, that logic should likely return here.
