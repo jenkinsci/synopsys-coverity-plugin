@@ -34,7 +34,7 @@ public class CleanUpWorkflowServiceTest {
             Mockito.doThrow(e).when(mockedIntermediateDirectory).deleteRecursive();
         }
 
-        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger);
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger, coverityRemotingService);
         cleanUpWorkflowService.cleanUpIntermediateDirectory(mockedIntermediateDirectory);
 
         Mockito.verify(mockedIntermediateDirectory).deleteRecursive();
@@ -53,7 +53,7 @@ public class CleanUpWorkflowServiceTest {
     public void testCleanUpAuthKeyFile(Exception e) throws IOException, InterruptedException {
         JenkinsIntLogger mockedLogger = Mockito.mock(JenkinsIntLogger.class);
 
-        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger);
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger, coverityRemotingService);
         FilePath mockedAuthKeyFile = Mockito.mock(FilePath.class);
         if (e != null) {
             Mockito.when(mockedAuthKeyFile.delete()).thenThrow(e);

@@ -127,7 +127,7 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
     @Override
     public void cleanUp() throws CoverityJenkinsAbortException {
         IntEnvironmentVariables intEnvironmentVariables = coverityWorkflowStepFactory.getOrCreateEnvironmentVariables();
-        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger);
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, coverityRemotingService);
         String authKeyPath = intEnvironmentVariables.getValue(TEMPORARY_AUTH_KEY_PATH.toString());
         if (StringUtils.isNotBlank(authKeyPath)) {
             VirtualChannel virtualChannel = coverityWorkflowStepFactory.getOrCreateVirtualChannel();

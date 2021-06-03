@@ -6,8 +6,9 @@ import java.util.Optional;
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityFreestyleCommands;
 import com.synopsys.integration.jenkins.coverity.CoverityPipelineCommands;
+import com.synopsys.integration.jenkins.coverity.service.common.CoverityBuildService;
+import com.synopsys.integration.jenkins.coverity.service.common.CoverityRemotingService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-import com.synopsys.integration.jenkins.service.JenkinsBuildService;
 import com.synopsys.integration.jenkins.service.JenkinsConfigService;
 import com.synopsys.integration.jenkins.service.JenkinsRemotingService;
 import com.synopsys.integration.jenkins.service.JenkinsServicesFactory;
@@ -21,7 +22,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Node;
 import hudson.model.TaskListener;
-import hudson.slaves.WorkspaceList;
 
 public class CoverityCommandsFactory {
     private final JenkinsWrapper jenkinsWrapper;
@@ -37,14 +37,25 @@ public class CoverityCommandsFactory {
     }
 
     public static CoverityFreestyleCommands fromPostBuild(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
-        CoverityCommandsFactory detectCommandsFactory = new CoverityCommandsFactory(JenkinsWrapper.initializeFromJenkinsJVM(), listener, build.getEnvironment(listener), build.getWorkspace());
+        CoverityCommandsFactory coverityCommandsFactory = new CoverityCommandsFactory(JenkinsWrapper.initializeFromJenkinsJVM(), listener, build.getEnvironment(listener), build.getWorkspace());
 
-        JenkinsServicesFactory jenkinsServicesFactory = new JenkinsServicesFactory(detectCommandsFactory.getLogger(), build, build.getEnvironment(listener), launcher, listener, build.getBuiltOn(), build.getWorkspace());
-        JenkinsBuildService jenkinsBuildService = jenkinsServicesFactory.createJenkinsBuildService();
+        JenkinsServicesFactory jenkinsServicesFactory = new JenkinsServicesFactory(coverityCommandsFactory.getLogger(), build, build.getEnvironment(listener), launcher, listener, build.getBuiltOn(), build.getWorkspace());
         JenkinsConfigService jenkinsConfigService = jenkinsServicesFactory.createJenkinsConfigService();
-        JenkinsRemotingService jenkinsRemotingService = jenkinsServicesFactory.createJenkinsRemotingService();
 
-        return new CoverityFreestyleCommands(jenkinsBuildService, detectCommandsFactory.createDetectRunner(jenkinsConfigService, jenkinsRemotingService));
+        CoverityBuildService coverityBuildService = new CoverityBuildService(coverityCommandsFactory.getLogger(), build);
+        CoverityRemotingService coverityRemotingService = new CoverityRemotingService(launcher, build.getWorkspace() ,listener);
+
+        return new CoverityFreestyleCommands(
+            coverityCommandsFactory.getLogger(),
+            coverityBuildService,
+            coverityCommandsFactory.createCoverityPhoneHomeService(jenkinsConfigService),
+            coverityCommandsFactory.createCoverityWorkspaceService(coverityRemotingService, jenkinsConfigService),
+            coverityCommandsFactory.createCoverityEnvironmentService(jenkinsConfigService, coverityBuildService),
+            coverityCommandsFactory.createProjectStreamCreationService(jenkinsConfigService),
+            coverityCommandsFactory.createCoverityCommandService(coverityRemotingService),
+            coverityCommandsFactory.createIssuesInViewService(jenkinsConfigService),
+            coverityCommandsFactory.createCleanUpWorkflowService(coverityRemotingService)
+        );
     }
 
     public static CoverityPipelineCommands fromPipeline(TaskListener listener, EnvVars envVars, Launcher launcher, Node node, FilePath workspace) throws AbortException {
@@ -54,30 +65,37 @@ public class CoverityCommandsFactory {
         JenkinsConfigService jenkinsConfigService = jenkinsServicesFactory.createJenkinsConfigService();
         JenkinsRemotingService jenkinsRemotingService = jenkinsServicesFactory.createJenkinsRemotingService();
 
-        return new CoverityPipelineCommands(detectCommandsFactory.createDetectRunner(jenkinsConfigService, jenkinsRemotingService), detectCommandsFactory.getLogger());
+        // TODO: Implement
+
+        return new CoverityPipelineCommands();
     }
 
-    private DetectRunner createDetectRunner(JenkinsConfigService jenkinsConfigService, JenkinsRemotingService jenkinsRemotingService) throws AbortException {
-        return new DetectRunner(createCoverityEnvironmentService(jenkinsConfigService), jenkinsRemotingService, createDetectStrategyService(jenkinsConfigService), createDetectArgumentService());
+    private CleanUpWorkflowService createCleanUpWorkflowService(CoverityRemotingService coverityRemotingService) {
+        return new CleanUpWorkflowService(getLogger(), coverityRemotingService);
     }
 
-    private DetectArgumentService createDetectArgumentService() {
-        return new DetectArgumentService(getLogger(), jenkinsWrapper.getVersionHelper());
+    private IssuesInViewService createIssuesInViewService(JenkinsConfigService jenkinsConfigService) {
+        return new IssuesInViewService(getLogger(), createCoverityConfigService(jenkinsConfigService));
     }
 
-    private CoverityEnvironmentService createCoverityEnvironmentService(JenkinsConfigService jenkinsConfigService) {
-        return new CoverityEnvironmentService(getLogger(), createCoverityConfigService(jenkinsConfigService), envVars);
+    private CoverityCommandService createCoverityCommandService(JenkinsRemotingService jenkinsRemotingService) {
+        return new CoverityCommandService(getLogger(), jenkinsRemotingService);
+    }
+
+    private CoverityWorkspaceService createCoverityWorkspaceService(CoverityRemotingService coverityRemotingService, JenkinsConfigService jenkinsConfigService) {
+        return new CoverityWorkspaceService(getLogger(), coverityRemotingService, createCoverityConfigService(jenkinsConfigService));
+    }
+
+    private CoverityPhoneHomeService createCoverityPhoneHomeService(JenkinsConfigService jenkinsConfigService) {
+        return new CoverityPhoneHomeService(getLogger(), jenkinsWrapper.getVersionHelper(), createCoverityConfigService(jenkinsConfigService));
+    }
+
+    private CoverityEnvironmentService createCoverityEnvironmentService(JenkinsConfigService jenkinsConfigService, CoverityBuildService coverityBuildService) {
+        return new CoverityEnvironmentService(getLogger(), createCoverityConfigService(jenkinsConfigService), envVars, coverityBuildService);
     }
 
     private ProjectStreamCreationService createProjectStreamCreationService(JenkinsConfigService jenkinsConfigService) {
         return new ProjectStreamCreationService(getLogger(), createCoverityConfigService(jenkinsConfigService));
-    }
-
-    private DetectStrategyService createDetectStrategyService(JenkinsConfigService jenkinsConfigService) throws AbortException {
-        FilePath workspace = validatedWorkspace.get();
-        FilePath workspaceTempDir = WorkspaceList.tempDir(workspace);
-
-        return new DetectStrategyService(getLogger(), jenkinsWrapper.getProxyHelper(), workspaceTempDir.getRemote(), jenkinsConfigService);
     }
 
     private CoverityConfigService createCoverityConfigService(JenkinsConfigService jenkinsConfigService) {

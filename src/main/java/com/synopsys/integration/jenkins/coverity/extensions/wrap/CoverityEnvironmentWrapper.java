@@ -365,7 +365,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
             intEnvironmentVariables.putAll(environmentVariables);
             CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
-            CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger);
+            CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, coverityRemotingService);
 
             String authKeyPath = intEnvironmentVariables.getValue(TEMPORARY_AUTH_KEY_PATH.toString());
             if (StringUtils.isNotBlank(authKeyPath)) {

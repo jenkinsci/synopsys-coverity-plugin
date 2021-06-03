@@ -23,6 +23,7 @@ import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVaria
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
+import com.synopsys.integration.jenkins.coverity.service.common.CoverityBuildService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.log.LogLevel;
 import com.synopsys.integration.rest.RestConstants;
@@ -34,14 +35,20 @@ public class CoverityEnvironmentService {
     private final JenkinsIntLogger logger;
     private final CoverityConfigService coverityConfigService;
     private final Map<String, String> environmentVariables;
+    private final CoverityBuildService coverityBuildService;
 
-    public CoverityEnvironmentService(JenkinsIntLogger logger, CoverityConfigService coverityConfigService, Map<String, String> environmentVariables) {
+    public CoverityEnvironmentService(JenkinsIntLogger logger, CoverityConfigService coverityConfigService, Map<String, String> environmentVariables, CoverityBuildService coverityBuildService) {
         this.logger = logger;
         this.coverityConfigService = coverityConfigService;
         this.environmentVariables = environmentVariables;
+        this.coverityBuildService = coverityBuildService;
     }
 
-    public IntEnvironmentVariables createCoverityEnvironment(List<ChangeLogSet<?>> changeLogSets, ConfigureChangeSetPatterns configureChangeSetPatterns, String coverityInstanceUrl, String credentialsId, String projectName, String streamName, String viewName, String intermediateDirectoryPath, String coverityToolHomeBin, String authKeyFilePath) throws CoverityJenkinsAbortException {
+    public String getCoverityToolHome() {
+        return environmentVariables.get(JenkinsCoverityEnvironmentVariable.COVERITY_TOOL_HOME.toString());
+    }
+
+    public IntEnvironmentVariables createCoverityEnvironment(ConfigureChangeSetPatterns configureChangeSetPatterns, String coverityInstanceUrl, String credentialsId, String projectName, String streamName, String viewName, String intermediateDirectoryPath, String coverityToolHomeBin, String authKeyFilePath) throws CoverityJenkinsAbortException {
         CoverityConnectInstance coverityConnectInstance = coverityConfigService.getCoverityInstanceOrAbort(coverityInstanceUrl);
 
         IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.empty();
@@ -59,7 +66,8 @@ public class CoverityEnvironmentService {
             logger.alwaysLog("-- Change set exclusion patterns: " + configureChangeSetPatterns.getChangeSetExclusionPatterns());
         }
 
-        List<String> changeSet = changeLogSets.stream()
+        List<String> changeSet = coverityBuildService.getChangeLogSets()
+                                     .stream()
                                      .filter(changeLogSet -> !changeLogSet.isEmptySet())
                                      .flatMap(this::toEntries)
                                      .peek(this::logEntry)

@@ -11,7 +11,7 @@ import com.google.gson.Gson;
 import com.synopsys.integration.coverity.api.ws.configuration.ConfigurationService;
 import com.synopsys.integration.coverity.api.ws.configuration.LicenseDataObj;
 import com.synopsys.integration.coverity.api.ws.configuration.VersionDataObj;
-import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.phonehome.PhoneHomeClient;
@@ -23,15 +23,15 @@ import com.synopsys.integration.phonehome.request.PhoneHomeRequestBodyBuilder;
 public class CoverityPhoneHomeService {
     private final IntLogger logger;
     private final JenkinsVersionHelper jenkinsVersionHelper;
-    private final WebServiceFactory webServiceFactory;
+    private final CoverityConfigService coverityConfigService;
 
-    public CoverityPhoneHomeService(IntLogger logger, JenkinsVersionHelper jenkinsVersionHelper, WebServiceFactory webServiceFactory) {
+    public CoverityPhoneHomeService(IntLogger logger, JenkinsVersionHelper jenkinsVersionHelper, CoverityConfigService coverityConfigService) {
         this.logger = logger;
         this.jenkinsVersionHelper = jenkinsVersionHelper;
-        this.webServiceFactory = webServiceFactory;
+        this.coverityConfigService = coverityConfigService;
     }
 
-    public Optional<PhoneHomeResponse> phoneHome(String baseUrl) {
+    public Optional<PhoneHomeResponse> phoneHome(String coverityInstanceUrl, String credentialsId) {
         try {
             HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
             Gson gson = new Gson();
@@ -39,7 +39,7 @@ public class CoverityPhoneHomeService {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             PhoneHomeService phoneHomeService = PhoneHomeService.createAsynchronousPhoneHomeService(logger, phoneHomeClient, executor);
 
-            PhoneHomeRequestBodyBuilder phoneHomeRequestBodyBuilder = this.createPhoneHomeBuilder(baseUrl);
+            PhoneHomeRequestBodyBuilder phoneHomeRequestBodyBuilder = this.createPhoneHomeBuilder(coverityInstanceUrl, credentialsId);
 
             jenkinsVersionHelper.getJenkinsVersion()
                 .ifPresent(jenkinsVersionString -> phoneHomeRequestBodyBuilder.addToMetaData("jenkins.version", jenkinsVersionString));
@@ -53,12 +53,12 @@ public class CoverityPhoneHomeService {
         return Optional.empty();
     }
 
-    public PhoneHomeRequestBodyBuilder createPhoneHomeBuilder(String baseUrl) {
+    public PhoneHomeRequestBodyBuilder createPhoneHomeBuilder(String coverityInstanceUrl, String credentialsId) {
         String customerName;
         String cimVersion;
 
         try {
-            ConfigurationService configurationService = webServiceFactory.createConfigurationService();
+            ConfigurationService configurationService = coverityConfigService.getWebServiceFactoryFromUrl(coverityInstanceUrl, credentialsId).createConfigurationService();
             try {
                 LicenseDataObj licenseDataObj = configurationService.getLicenseConfiguration();
                 customerName = licenseDataObj.getCustomer();
@@ -74,7 +74,7 @@ public class CoverityPhoneHomeService {
                 logger.trace("Couldn't get the Coverity version: " + e.getMessage());
                 cimVersion = PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE;
             }
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException | CoverityJenkinsAbortException e) {
             logger.trace("Couldn't get the Coverity customer id: " + e.getMessage());
             logger.trace("Couldn't get the Coverity version: " + e.getMessage());
             cimVersion = PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE;
@@ -83,6 +83,6 @@ public class CoverityPhoneHomeService {
 
         String pluginVersion = jenkinsVersionHelper.getPluginVersion("synopsys-coverity").orElse(PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE);
 
-        return PhoneHomeRequestBodyBuilder.createForCoverity("synopsys-coverity", customerName, baseUrl, pluginVersion, cimVersion);
+        return PhoneHomeRequestBodyBuilder.createForCoverity("synopsys-coverity", customerName, coverityInstanceUrl, pluginVersion, cimVersion);
     }
 }

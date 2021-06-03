@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityBuildStep;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
+import com.synopsys.integration.jenkins.extensions.ChangeBuildStatusTo;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -37,15 +38,15 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
                       + "The resulting view name is stored in the $COV_VIEW environment variable, and affects checking for issues in both the full and incremental analysis, if configured.")
     private final String viewName;
     @HelpMarkdown("Specify the build status to set if issues are found in the configured view.")
-    private final BuildStatus buildStatusForIssues;
+    private final ChangeBuildStatusTo buildStatusForIssues;
 
     @DataBoundConstructor
     public CheckForIssuesInView(String viewName, String buildStatusForIssues) {
         this.viewName = viewName;
-        this.buildStatusForIssues = BuildStatus.valueOf(buildStatusForIssues);
+        this.buildStatusForIssues = ChangeBuildStatusTo.valueOf(buildStatusForIssues);
     }
 
-    public BuildStatus getBuildStatusForIssues() {
+    public ChangeBuildStatusTo getBuildStatusForIssues() {
         return buildStatusForIssues;
     }
 

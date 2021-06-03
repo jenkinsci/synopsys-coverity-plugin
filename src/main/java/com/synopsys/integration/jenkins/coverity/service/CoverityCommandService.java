@@ -7,6 +7,12 @@
  */
 package com.synopsys.integration.jenkins.coverity.service;
 
+import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.CHANGE_SET;
+import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE;
+import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType.COV_RUN_DESKTOP;
+import static com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType.THRESHOLD;
+import static com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRunConfiguration.RunConfigurationType.ADVANCED;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -67,7 +73,29 @@ public class CoverityCommandService {
                    .collect(Collectors.toList());
     }
 
-    public void run(IntEnvironmentVariables intEnvironmentVariables, List<List<String>> commands, String remoteWorkingDirectory, OnCommandFailure onCommandFailure) throws IntegrationException, IOException, InterruptedException {
+    public boolean shouldRunCoverityCommands(IntEnvironmentVariables intEnvironmentVariables, CoverityRunConfiguration coverityRunConfiguration) {
+        boolean analysisIsIncremental;
+        if (ADVANCED.equals(coverityRunConfiguration.getRunConFigurationType())) {
+            analysisIsIncremental = false;
+        } else {
+            SimpleCoverityRunConfiguration simpleCoverityRunConfiguration = (SimpleCoverityRunConfiguration) coverityRunConfiguration;
+            int changeSetSize;
+            changeSetSize = Integer.parseInt(intEnvironmentVariables.getValue(CHANGE_SET_SIZE.toString(), "0"));
+            CoverityAnalysisType coverityAnalysisType = simpleCoverityRunConfiguration.getCoverityAnalysisType();
+            int changeSetThreshold = simpleCoverityRunConfiguration.getChangeSetAnalysisThreshold();
+
+            analysisIsIncremental = COV_RUN_DESKTOP.equals(coverityAnalysisType) || (THRESHOLD.equals(coverityAnalysisType) && changeSetSize < changeSetThreshold);
+        }
+
+        String changeSetString = intEnvironmentVariables.getValue(CHANGE_SET.toString());
+        if (analysisIsIncremental && org.apache.commons.lang.StringUtils.isBlank(changeSetString)) {
+            logger.alwaysLog("Skipping Synopsys Coverity static analysis because the analysis type was determined to be Incremental Analysis and the Jenkins $CHANGE_SET was empty.");
+            return false;
+        }
+        return true;
+    }
+
+    public void runCommands(IntEnvironmentVariables intEnvironmentVariables, List<List<String>> commands, String remoteWorkingDirectory, OnCommandFailure onCommandFailure) throws IntegrationException, IOException, InterruptedException {
         boolean oneOrMoreCommandsFailed = false;
         for (List<String> arguments : commands) {
             if (arguments.isEmpty()) {
