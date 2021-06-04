@@ -51,8 +51,18 @@ public class CoverityFreestyleCommands {
         this.cleanUpWorkflowService = cleanUpWorkflowService;
     }
 
-    public void runCoverityCommands(String coverityInstanceUrl, String credentialsId, String projectName, String streamName, CoverityRunConfiguration coverityRunConfiguration, ConfigureChangeSetPatterns configureChangeSetPatterns,
-        CheckForIssuesInView checkForIssuesInView, OnCommandFailure onCommandFailure, CleanUpAction cleanUpAction) {
+    public void runCoverityCommands(
+        String coverityInstanceUrl,
+        String credentialsId,
+        String projectName,
+        String streamName,
+        String customWorkspacePath,
+        CoverityRunConfiguration coverityRunConfiguration,
+        ConfigureChangeSetPatterns configureChangeSetPatterns,
+        CheckForIssuesInView checkForIssuesInView,
+        OnCommandFailure onCommandFailure,
+        CleanUpAction cleanUpAction
+    ) {
         coverityPhoneHomeService.phoneHome(coverityInstanceUrl, credentialsId);
         String viewName = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getViewName).orElse(StringUtils.EMPTY);
         ChangeBuildStatusTo buildStatus = Optional.ofNullable(checkForIssuesInView).map(CheckForIssuesInView::getBuildStatusForIssues).orElse(ChangeBuildStatusTo.SUCCESS);
@@ -64,8 +74,8 @@ public class CoverityFreestyleCommands {
             String intermediateDirectoryPath = null;
             try {
                 String coverityToolHomeBin = coverityWorkspaceService.getValidatedCoverityToolHomeBin(shouldValidateVersion, coverityEnvironmentService.getCoverityToolHome());
-                authKeyFilePath = coverityWorkspaceService.createAuthenticationKeyFile(coverityInstanceUrl, credentialsId);
-                intermediateDirectoryPath = coverityWorkspaceService.getIntermediateDirectoryPath();
+                authKeyFilePath = coverityWorkspaceService.createAuthenticationKeyFile(coverityInstanceUrl, credentialsId, customWorkspacePath);
+                intermediateDirectoryPath = coverityWorkspaceService.getIntermediateDirectoryPath(customWorkspacePath);
 
                 IntEnvironmentVariables coverityEnvironment = coverityEnvironmentService.createCoverityEnvironment(
                     configureChangeSetPatterns,
@@ -82,7 +92,7 @@ public class CoverityFreestyleCommands {
                 projectStreamCreationService.createMissingProjectOrStream(coverityInstanceUrl, credentialsId, projectName, streamName);
                 if (coverityCommandService.shouldRunCoverityCommands(coverityEnvironment, coverityRunConfiguration)) {
                     List<List<String>> coverityCommands = coverityCommandService.getCommands(coverityEnvironment, coverityRunConfiguration);
-                    coverityCommandService.runCommands(coverityEnvironment, coverityCommands, "", onCommandFailure);
+                    coverityCommandService.runCommands(coverityEnvironment, coverityCommands, customWorkspacePath, onCommandFailure);
                 }
 
                 if (checkForIssuesInView != null) {

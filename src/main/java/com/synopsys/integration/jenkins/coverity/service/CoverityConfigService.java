@@ -14,9 +14,20 @@ import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGloba
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.jenkins.service.JenkinsConfigService;
 
+import hudson.model.TaskListener;
+
 public class CoverityConfigService {
     private final JenkinsIntLogger logger;
     private final JenkinsConfigService jenkinsConfigService;
+
+    public static CoverityConfigService fromListener(TaskListener listener) {
+        JenkinsIntLogger logger = new JenkinsIntLogger(listener);
+
+        // CoverityConfigService doesn't use the API of JenkinsConfigService that requires envVars or the node we're executing on
+        JenkinsConfigService jenkinsConfigService = new JenkinsConfigService(null, null, listener);
+
+        return new CoverityConfigService(logger, jenkinsConfigService);
+    }
 
     public CoverityConfigService(JenkinsIntLogger logger,  JenkinsConfigService jenkinsConfigService) {
         this.logger = logger;

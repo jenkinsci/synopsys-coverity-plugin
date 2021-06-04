@@ -36,22 +36,22 @@ public class CoverityWorkspaceService {
         return coverityRemotingService.call(validateCoverityInstallation);
     }
 
-    public String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId) throws IOException, InterruptedException {
+    public String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId, String workingDirectory) throws IOException, InterruptedException {
         CoverityConnectInstance coverityConnectInstance = coverityConfigService.getCoverityInstanceOrAbort(coverityServerUrl);
         Optional<String> authKeyContents = coverityConnectInstance.getAuthenticationKeyFileContents(logger, credentialsId);
 
-        FilePath workspace = coverityRemotingService.getWorkspace();
+        FilePath workingFilePath = coverityRemotingService.getRemoteFilePath(workingDirectory);
 
         if (authKeyContents.isPresent()) {
-            FilePath authKeyFile = workspace.createTextTempFile("auth-key", ".txt", authKeyContents.get());
+            FilePath authKeyFile = workingFilePath.createTextTempFile("auth-key", ".txt", authKeyContents.get());
             authKeyFile.chmod(0600);
             return authKeyFile.getRemote();
         }
         return StringUtils.EMPTY;
     }
 
-    public String getIntermediateDirectoryPath() {
-        return coverityRemotingService.getWorkspace().child("idir").getRemote();
+    public String getIntermediateDirectoryPath(String customWorkspacePath) {
+        return coverityRemotingService.getRemoteFilePath(customWorkspacePath).child("idir").getRemote();
     }
 
     private static class ValidateCoverityInstallation extends CoverityRemoteCallable<String> {
