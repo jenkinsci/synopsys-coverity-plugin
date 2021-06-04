@@ -21,7 +21,8 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.synopsys.integration.coverity.authentication.AuthenticationKeyFile;
 import com.synopsys.integration.coverity.authentication.AuthenticationKeyFileUtility;
-import com.synopsys.integration.jenkins.SynopsysCredentialsHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
+import com.synopsys.integration.jenkins.wrapper.SynopsysCredentialsHelper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.rest.credentials.CredentialsBuilder;
@@ -37,20 +38,24 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
     public static final CredentialsMatcher SUPPORTED_CREDENTIALS_TYPES = CredentialsMatchers.anyOf(AUTH_KEY_FILE_CREDENTIALS, CredentialsMatchers.instanceOf(USERNAME_PASSWORD_CREDENTIALS_CLASS));
     private final IntLogger logger;
 
-    public SynopsysCoverityCredentialsHelper(IntLogger logger, Jenkins jenkins) {
-        super(jenkins);
+    public SynopsysCoverityCredentialsHelper(IntLogger logger, JenkinsWrapper jenkinsWrapper) {
+        super(jenkinsWrapper);
         this.logger = logger;
     }
 
-    public static SynopsysCoverityCredentialsHelper silentHelper(Jenkins jenkins) {
-        return new SynopsysCoverityCredentialsHelper(new SilentIntLogger(), jenkins);
+    public static SynopsysCoverityCredentialsHelper silentHelper(JenkinsWrapper jenkinsWrapper) {
+        return new SynopsysCoverityCredentialsHelper(new SilentIntLogger(), jenkinsWrapper);
     }
 
     public ListBoxModel listSupportedCredentials() {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
+        if (jenkins == null) {
+            return new StandardListBoxModel().includeEmptyValue();
+        }
+        jenkins.checkPermission(Jenkins.ADMINISTER);
         return new StandardListBoxModel()
                    .includeEmptyValue()
-                   .includeMatchingAs(ACL.SYSTEM, Jenkins.getInstance(), StandardCredentials.class, Collections.emptyList(), SUPPORTED_CREDENTIALS_TYPES);
+                   .includeMatchingAs(ACL.SYSTEM, jenkins, StandardCredentials.class, Collections.emptyList(), SUPPORTED_CREDENTIALS_TYPES);
     }
 
     public Optional<FileCredentials> getAuthenticationKeyFileCredentialsById(String credentialsId) {

@@ -27,7 +27,7 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
-import com.synopsys.integration.jenkins.extensions.SerializationHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.rest.credentials.Credentials;
@@ -41,7 +41,8 @@ import jenkins.model.Jenkins;
 
 public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> {
     static {
-        SerializationHelper.migrateFieldFrom("credentialsId", CoverityConnectInstance.class,"defaultCredentialsId");
+        JenkinsWrapper jenkinsWrapper = JenkinsWrapper.initializeFromJenkinsJVM();
+        jenkinsWrapper.migrateFieldFrom("credentialsId", CoverityConnectInstance.class,"defaultCredentialsId");
     }
 
     @HelpMarkdown("Specify the URL for your Coverity Connect instance.  \r\n"
@@ -88,22 +89,22 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
     }
 
     public Credentials getCoverityServerCredentials(IntLogger logger, String credentialId) {
-        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, Jenkins.getInstance());
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, JenkinsWrapper.initializeFromJenkinsJVM());
         return synopsysCoverityCredentialsHelper.getIntegrationCredentialsById(credentialId);
     }
 
     public Optional<String> getUsername(IntLogger logger, String credentialId) {
-        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, Jenkins.getInstance());
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, JenkinsWrapper.initializeFromJenkinsJVM());
         return synopsysCoverityCredentialsHelper.getCoverityUsernameById(credentialId);
     }
 
     public Optional<String> getPassphrase(String credentialId) {
-        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = SynopsysCoverityCredentialsHelper.silentHelper(Jenkins.getInstance());
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = SynopsysCoverityCredentialsHelper.silentHelper(JenkinsWrapper.initializeFromJenkinsJVM());
         return synopsysCoverityCredentialsHelper.getCoverityPassphraseById(credentialId);
     }
 
     public Optional<String> getAuthenticationKeyFileContents(IntLogger logger, String credentialId) throws CoverityJenkinsAbortException {
-        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, Jenkins.getInstance());
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, JenkinsWrapper.initializeFromJenkinsJVM());
         Optional<FileCredentials> authenticationKeyFileCredentials = synopsysCoverityCredentialsHelper.getAuthenticationKeyFileCredentialsById(credentialId);
         String contents = null;
 
@@ -137,11 +138,11 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
             load();
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
-            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
         public FormValidation doCheckUrl(@QueryParameter("url") String url) {
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            JenkinsWrapper.initializeFromJenkinsJVM().getJenkins().ifPresent(jenkins -> jenkins.checkPermission(Jenkins.ADMINISTER));
             if (StringUtils.isBlank(url)) {
                 return FormValidation.error("Please provide a URL for the Coverity Connect instance.");
             }
@@ -159,7 +160,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
 
         @POST
         public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("defaultCredentialsId") String defaultCredentialsId) {
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            JenkinsWrapper.initializeFromJenkinsJVM().getJenkins().ifPresent(jenkins -> jenkins.checkPermission(Jenkins.ADMINISTER));
             FormValidation urlValidation = doCheckUrl(url);
             if (!FormValidation.Kind.OK.equals(urlValidation.kind)) {
                 return urlValidation;

@@ -32,6 +32,7 @@ import com.synopsys.integration.jenkins.coverity.service.CoverityConfigService;
 import com.synopsys.integration.jenkins.coverity.service.common.CoverityBuildService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 import hudson.Extension;
@@ -45,7 +46,6 @@ import hudson.tasks.Builder;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 
 public class CoverityBuildStep extends Builder {
     // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
@@ -179,7 +179,7 @@ public class CoverityBuildStep extends Builder {
         }
 
         if (workingDirectory == null) {
-            CoverityBuildService coverityBuildService = new CoverityBuildService(new JenkinsIntLogger(listener), build);
+            CoverityBuildService coverityBuildService = new CoverityBuildService(JenkinsIntLogger.logToListener(listener), build);
             workingDirectory = coverityBuildService.getWorkspaceOrProjectWorkspace();
         }
 
@@ -222,7 +222,7 @@ public class CoverityBuildStep extends Builder {
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
-            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
         @Override

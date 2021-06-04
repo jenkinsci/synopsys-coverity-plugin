@@ -21,7 +21,7 @@ public class CoverityConfigService {
     private final JenkinsConfigService jenkinsConfigService;
 
     public static CoverityConfigService fromListener(TaskListener listener) {
-        JenkinsIntLogger logger = new JenkinsIntLogger(listener);
+        JenkinsIntLogger logger = JenkinsIntLogger.logToListener(listener);
 
         // CoverityConfigService doesn't use the API of JenkinsConfigService that requires envVars or the node we're executing on
         JenkinsConfigService jenkinsConfigService = new JenkinsConfigService(null, null, listener);

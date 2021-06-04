@@ -38,6 +38,7 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewField
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.service.CoverityCommandsFactory;
 import com.synopsys.integration.jenkins.coverity.service.CoverityConfigService;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 import hudson.AbortException;
@@ -50,7 +51,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 
 public class CheckForIssuesStep extends Step implements Serializable {
     public static final String DISPLAY_NAME = "Check for Issues in Coverity View";
@@ -172,7 +172,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
             coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
             issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
-            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
         @Override

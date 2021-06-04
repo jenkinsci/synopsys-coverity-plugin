@@ -17,15 +17,15 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
-import com.synopsys.integration.jenkins.extensions.SerializationHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 
 import hudson.Extension;
 import hudson.util.ListBoxModel;
 
 public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     static {
-        // TODO: Migrated in 2.1.0 -- Remove migration in 3.0.0
-        SerializationHelper.migrateFieldFrom("buildCommand", SimpleCoverityRunConfiguration.class, "sourceArgument");
+        JenkinsWrapper jenkinsWrapper = JenkinsWrapper.initializeFromJenkinsJVM();
+        jenkinsWrapper.migrateFieldFrom("buildCommand", SimpleCoverityRunConfiguration.class, "sourceArgument");
     }
 
     private final CommandArguments commandArguments;
@@ -78,14 +78,14 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     private Integer changeSetAnalysisThreshold;
 
     @DataBoundConstructor
-    public SimpleCoverityRunConfiguration(final CoverityAnalysisType coverityAnalysisType, final String sourceArgument, final CommandArguments commandArguments) {
+    public SimpleCoverityRunConfiguration(CoverityAnalysisType coverityAnalysisType, String sourceArgument, CommandArguments commandArguments) {
         this.coverityAnalysisType = coverityAnalysisType;
         this.sourceArgument = sourceArgument;
         this.commandArguments = commandArguments;
     }
 
     public static SimpleCoverityRunConfiguration DEFAULT_CONFIGURATION() {
-        final SimpleCoverityRunConfiguration defaultCoverityRunConfiguration = new SimpleCoverityRunConfiguration(CoverityAnalysisType.COV_ANALYZE, "", null);
+        SimpleCoverityRunConfiguration defaultCoverityRunConfiguration = new SimpleCoverityRunConfiguration(CoverityAnalysisType.COV_ANALYZE, "", null);
         defaultCoverityRunConfiguration.setCoverityCaptureType(CoverityCaptureType.COV_BUILD);
         defaultCoverityRunConfiguration.setChangeSetAnalysisThreshold(100);
         return defaultCoverityRunConfiguration;
@@ -115,7 +115,7 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     }
 
     @DataBoundSetter
-    public void setChangeSetAnalysisThreshold(final Integer changeSetAnalysisThreshold) {
+    public void setChangeSetAnalysisThreshold(Integer changeSetAnalysisThreshold) {
         this.changeSetAnalysisThreshold = changeSetAnalysisThreshold;
     }
 
@@ -124,7 +124,7 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     }
 
     @DataBoundSetter
-    public void setCustomWorkingDirectory(final String customWorkingDirectory) {
+    public void setCustomWorkingDirectory(String customWorkingDirectory) {
         this.customWorkingDirectory = customWorkingDirectory;
     }
 
@@ -133,7 +133,7 @@ public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     }
 
     @DataBoundSetter
-    public void setCoverityCaptureType(final CoverityCaptureType coverityCaptureType) {
+    public void setCoverityCaptureType(CoverityCaptureType coverityCaptureType) {
         this.coverityCaptureType = coverityCaptureType;
     }
 
