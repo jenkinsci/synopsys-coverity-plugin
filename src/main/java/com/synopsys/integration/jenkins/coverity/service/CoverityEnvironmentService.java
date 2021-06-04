@@ -8,40 +8,35 @@
 package com.synopsys.integration.jenkins.coverity.service;
 
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import org.apache.commons.lang.StringUtils;
 
 import com.synopsys.integration.coverity.executable.CoverityToolEnvironmentVariable;
-import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
+import com.synopsys.integration.jenkins.ChangeSetFilter;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
-import com.synopsys.integration.jenkins.coverity.service.common.CoverityBuildService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-import com.synopsys.integration.log.LogLevel;
-import com.synopsys.integration.rest.RestConstants;
+import com.synopsys.integration.jenkins.service.JenkinsScmService;
 import com.synopsys.integration.util.IntEnvironmentVariables;
-
-import hudson.scm.ChangeLogSet;
 
 public class CoverityEnvironmentService {
     private final JenkinsIntLogger logger;
     private final CoverityConfigService coverityConfigService;
     private final Map<String, String> environmentVariables;
-    private final CoverityBuildService coverityBuildService;
+    private final JenkinsScmService jenkinsScmService;
 
-    public CoverityEnvironmentService(JenkinsIntLogger logger, CoverityConfigService coverityConfigService, Map<String, String> environmentVariables, CoverityBuildService coverityBuildService) {
+    public CoverityEnvironmentService(JenkinsIntLogger logger, CoverityConfigService coverityConfigService, Map<String, String> environmentVariables, JenkinsScmService jenkinsScmService) {
         this.logger = logger;
         this.coverityConfigService = coverityConfigService;
         this.environmentVariables = environmentVariables;
-        this.coverityBuildService = coverityBuildService;
+        this.jenkinsScmService = jenkinsScmService;
+    }
+
+    public String getAuthKeyFilePath() {
+        return environmentVariables.get(JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH.toString());
     }
 
     public String getCoverityToolHome() {
@@ -56,28 +51,30 @@ public class CoverityEnvironmentService {
         logger.setLogLevel(intEnvironmentVariables);
 
         logger.debug("Computing $CHANGE_SET");
-        ChangeSetFilter changeSetFilter;
+        ChangeSetFilter changeSetFilter = new ChangeSetFilter(logger);
         if (configureChangeSetPatterns == null) {
-            changeSetFilter = ChangeSetFilter.createAcceptAllFilter();
             logger.alwaysLog("-- No change set inclusion or exclusion patterns set");
         } else {
-            changeSetFilter = configureChangeSetPatterns.createChangeSetFilter();
-            logger.alwaysLog("-- Change set inclusion patterns: " + configureChangeSetPatterns.getChangeSetInclusionPatterns());
-            logger.alwaysLog("-- Change set exclusion patterns: " + configureChangeSetPatterns.getChangeSetExclusionPatterns());
+            String inclusionPatterns = configureChangeSetPatterns.getChangeSetInclusionPatterns();
+            logger.alwaysLog("-- Change set inclusion patterns: " + inclusionPatterns);
+            changeSetFilter.includeMatching(inclusionPatterns);
+
+            String exclusionPatterns = configureChangeSetPatterns.getChangeSetExclusionPatterns();
+            logger.alwaysLog("-- Change set exclusion patterns: " + exclusionPatterns);
+            changeSetFilter.excludeMatching(exclusionPatterns);
         }
 
-        List<String> changeSet = coverityBuildService.getChangeLogSets()
-                                     .stream()
-                                     .filter(changeLogSet -> !changeLogSet.isEmptySet())
-                                     .flatMap(this::toEntries)
-                                     .peek(this::logEntry)
-                                     .flatMap(this::toAffectedFiles)
-                                     .filter(changeSetFilter::shouldInclude)
-                                     .map(ChangeLogSet.AffectedFile::getPath)
-                                     .filter(StringUtils::isNotBlank)
-                                     .collect(Collectors.toList());
+        List<String> changeSet;
+        try {
+            changeSet = jenkinsScmService.getFilePathsFromChangeSet(changeSetFilter);
+            logger.alwaysLog("Computed a $CHANGE_SET of " + changeSet.size() + " files");
+        } catch (Exception e) {
+            logger.warn(String.format("WARNING: Synopsys Coverity for Jenkins could not determine the change set, %s will be empty and %s will be 0.",
+                JenkinsCoverityEnvironmentVariable.CHANGE_SET,
+                JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE));
 
-        logger.alwaysLog("Computed a $CHANGE_SET of " + changeSet.size() + " files");
+            changeSet = Collections.emptyList();
+        }
 
         intEnvironmentVariables.put("PATH+COVERITYTOOLBIN", coverityToolHomeBin);
         coverityConnectInstance
@@ -104,21 +101,5 @@ public class CoverityEnvironmentService {
             .forEach(logger::alwaysLog);
 
         return intEnvironmentVariables;
-    }
-
-    private Stream<? extends ChangeLogSet.Entry> toEntries(ChangeLogSet<? extends ChangeLogSet.Entry> changeLogSet) {
-        return StreamSupport.stream(changeLogSet.spliterator(), false);
-    }
-
-    private Stream<? extends ChangeLogSet.AffectedFile> toAffectedFiles(ChangeLogSet.Entry entry) {
-        return entry.getAffectedFiles().stream();
-    }
-
-    private void logEntry(ChangeLogSet.Entry entry) {
-        if (logger.getLogLevel().isLoggable(LogLevel.DEBUG)) {
-            Date date = new Date(entry.getTimestamp());
-            logger.debug(String.format("Commit %s by %s on %s: %s", entry.getCommitId(), entry.getAuthor(), RestConstants.formatDate(date), entry.getMsg()));
-        }
-
     }
 }

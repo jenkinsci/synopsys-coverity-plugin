@@ -7,44 +7,33 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
-import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
-import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.GlobalValueHelper;
-import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
-import com.synopsys.integration.jenkins.coverity.service.CleanUpWorkflowService;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
+import com.synopsys.integration.jenkins.coverity.service.CoverityCommandsFactory;
+import com.synopsys.integration.jenkins.coverity.service.CoverityConfigService;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -52,11 +41,8 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractProject;
-import hudson.model.Computer;
-import hudson.model.Node;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
@@ -183,55 +169,18 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     @Override
     public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
-        Node node = Optional.ofNullable(workspace.toComputer())
-                        .map(Computer::getNode)
-                        .orElse(null);
-        RunWrapper runWrapper = new RunWrapper(build, true);
-
-        CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(initialEnvironment, node, launcher, listener);
-        CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-        JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
-        List<ChangeLogSet<?>> changeLogSets;
-        try {
-            changeLogSets = runWrapper.getChangeSets();
-        } catch (Exception e) {
-            logger.warn(String.format("WARNING: Synopsys Coverity for Jenkins could not determine the change set, %s will be empty and %s will be 0.",
-                JenkinsCoverityEnvironmentVariable.CHANGE_SET,
-                JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE));
-
-            changeLogSets = Collections.emptyList();
-        }
-
         String resolvedCredentialsId;
         if (credentialsId != null) {
             resolvedCredentialsId = credentialsId;
         } else {
-            CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(coverityInstanceUrl);
+            CoverityConnectInstance coverityConnectInstance = CoverityConfigService.fromListener(listener).getCoverityInstanceOrAbort(coverityInstanceUrl);
             resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
         }
 
-        CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(
-            logger,
-            jenkinsVersionHelper,
-            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCredentialsId, coverityInstanceUrl),
-            coverityWorkflowStepFactory,
-            context,
-            workspace.getRemote(),
-            coverityInstanceUrl,
-            resolvedCredentialsId,
-            projectName,
-            streamName,
-            viewName,
-            createMissingProjectsAndStreams,
-            changeLogSets,
-            configureChangeSetPatterns
-        );
-        Boolean environmentInjectedSuccessfully = coverityEnvironmentWrapperStepWorkflow.perform();
-        if (Boolean.TRUE.equals(environmentInjectedSuccessfully)) {
-            logger.info("Coverity environment injected successfully.");
-        }
+        CoverityCommandsFactory.fromBuildWrapper(context, build, workspace, launcher, listener, initialEnvironment)
+            .injectCoverityEnvironment(coverityInstanceUrl, resolvedCredentialsId, projectName, streamName, viewName, configureChangeSetPatterns, createMissingProjectsAndStreams);
 
-        context.setDisposer(new DisposerImpl((HashMap<String, String>) coverityWorkflowStepFactory.getOrCreateEnvironmentVariables().getVariables()));
+        context.setDisposer(new DisposerImpl());
     }
 
     @Override
@@ -354,24 +303,11 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
     private static final class DisposerImpl extends SimpleBuildWrapper.Disposer {
         private static final long serialVersionUID = 4771346213830683656L;
-        private final HashMap<String, String> environmentVariables;
-
-        public DisposerImpl(HashMap<String, String> intEnvironmentVariables) {
-            this.environmentVariables = intEnvironmentVariables;
-        }
 
         @Override
         public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
-            IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
-            intEnvironmentVariables.putAll(environmentVariables);
-            CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
-            CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger, coverityRemotingService);
-
-            String authKeyPath = intEnvironmentVariables.getValue(TEMPORARY_AUTH_KEY_PATH.toString());
-            if (StringUtils.isNotBlank(authKeyPath)) {
-                FilePath authKeyFile = new FilePath(launcher.getChannel(), authKeyPath);
-                cleanUpWorkflowService.cleanUpAuthenticationFile(authKeyFile);
-            }
+            CoverityCommandsFactory.fromDisposer(build, workspace, launcher, listener, build.getEnvironment(listener))
+                .cleanUp();
         }
     }
 

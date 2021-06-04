@@ -37,21 +37,35 @@ public class CoverityWorkspaceService {
     }
 
     public String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId, String workingDirectory) throws IOException, InterruptedException {
+        return createAuthenticationKeyFile(coverityServerUrl, credentialsId, coverityRemotingService.getRemoteFilePath(workingDirectory));
+    }
+
+    public String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId) throws IOException, InterruptedException {
+        return createAuthenticationKeyFile(coverityServerUrl, credentialsId, coverityRemotingService.getWorkspace());
+    }
+
+    private String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId, FilePath workingDirectoryFilePath) throws IOException, InterruptedException {
         CoverityConnectInstance coverityConnectInstance = coverityConfigService.getCoverityInstanceOrAbort(coverityServerUrl);
         Optional<String> authKeyContents = coverityConnectInstance.getAuthenticationKeyFileContents(logger, credentialsId);
 
-        FilePath workingFilePath = coverityRemotingService.getRemoteFilePath(workingDirectory);
-
         if (authKeyContents.isPresent()) {
-            FilePath authKeyFile = workingFilePath.createTextTempFile("auth-key", ".txt", authKeyContents.get());
+            FilePath authKeyFile = workingDirectoryFilePath.createTextTempFile("auth-key", ".txt", authKeyContents.get());
             authKeyFile.chmod(0600);
             return authKeyFile.getRemote();
         }
         return StringUtils.EMPTY;
     }
 
+    public String getIntermediateDirectoryPath() {
+        return getIntermediateDirectoryPath(coverityRemotingService.getWorkspace());
+    }
+
     public String getIntermediateDirectoryPath(String customWorkspacePath) {
-        return coverityRemotingService.getRemoteFilePath(customWorkspacePath).child("idir").getRemote();
+        return getIntermediateDirectoryPath(coverityRemotingService.getRemoteFilePath(customWorkspacePath));
+    }
+
+    private String getIntermediateDirectoryPath(FilePath workingDirectoryFilePath) {
+        return workingDirectoryFilePath.child("idir").getRemote();
     }
 
     private static class ValidateCoverityInstallation extends CoverityRemoteCallable<String> {
