@@ -29,9 +29,9 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnec
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.service.CoverityCommandsFactory;
 import com.synopsys.integration.jenkins.coverity.service.CoverityConfigService;
-import com.synopsys.integration.jenkins.coverity.service.common.CoverityBuildService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
+import com.synopsys.integration.jenkins.service.JenkinsBuildService;
 import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
@@ -179,8 +179,8 @@ public class CoverityBuildStep extends Builder {
         }
 
         if (workingDirectory == null) {
-            CoverityBuildService coverityBuildService = new CoverityBuildService(JenkinsIntLogger.logToListener(listener), build);
-            workingDirectory = coverityBuildService.getWorkspaceOrProjectWorkspace();
+            JenkinsBuildService jenkinsBuildService = new JenkinsBuildService(JenkinsIntLogger.logToListener(listener), build);
+            workingDirectory = jenkinsBuildService.getWorkspaceOrProjectWorkspace();
         }
 
         String resolvedCredentialsId;

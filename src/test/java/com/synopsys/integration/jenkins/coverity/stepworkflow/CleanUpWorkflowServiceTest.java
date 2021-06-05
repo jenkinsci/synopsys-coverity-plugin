@@ -13,6 +13,7 @@ import org.mockito.Mockito;
 
 import com.synopsys.integration.jenkins.coverity.service.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.service.JenkinsRemotingService;
 
 import hudson.FilePath;
 
@@ -28,14 +29,19 @@ public class CleanUpWorkflowServiceTest {
     @NullSource
     @MethodSource("provideExceptions")
     public void testCleanUpIntermediateDirectory(Exception e) throws IOException, InterruptedException {
+        String intermediateDirectoryPath = "/some/file/path/idir/";
+
         JenkinsIntLogger mockedLogger = Mockito.mock(JenkinsIntLogger.class);
         FilePath mockedIntermediateDirectory = Mockito.mock(FilePath.class);
         if (e != null) {
             Mockito.doThrow(e).when(mockedIntermediateDirectory).deleteRecursive();
         }
 
-        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger, coverityRemotingService);
-        cleanUpWorkflowService.cleanUpIntermediateDirectory(mockedIntermediateDirectory);
+        JenkinsRemotingService mockedRemotingService = Mockito.mock(JenkinsRemotingService.class);
+        Mockito.when(mockedRemotingService.getRemoteFilePath(Mockito.any())).thenReturn(mockedIntermediateDirectory);
+
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger, mockedRemotingService);
+        cleanUpWorkflowService.cleanUpIntermediateDirectory(intermediateDirectoryPath);
 
         Mockito.verify(mockedIntermediateDirectory).deleteRecursive();
         if (e != null) {
@@ -51,9 +57,8 @@ public class CleanUpWorkflowServiceTest {
     @NullSource
     @MethodSource("provideExceptions")
     public void testCleanUpAuthKeyFile(Exception e) throws IOException, InterruptedException {
-        JenkinsIntLogger mockedLogger = Mockito.mock(JenkinsIntLogger.class);
+        String authKeyFilePath = "/some/file/path/authkey";
 
-        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger, coverityRemotingService);
         FilePath mockedAuthKeyFile = Mockito.mock(FilePath.class);
         if (e != null) {
             Mockito.when(mockedAuthKeyFile.delete()).thenThrow(e);
@@ -61,7 +66,14 @@ public class CleanUpWorkflowServiceTest {
             Mockito.when(mockedAuthKeyFile.delete()).thenReturn(true);
         }
 
-        cleanUpWorkflowService.cleanUpAuthenticationFile(mockedAuthKeyFile);
+        JenkinsIntLogger mockedLogger = Mockito.mock(JenkinsIntLogger.class);
+
+        JenkinsRemotingService mockedRemotingService = Mockito.mock(JenkinsRemotingService.class);
+        Mockito.when(mockedRemotingService.getRemoteFilePath(Mockito.any())).thenReturn(mockedAuthKeyFile);
+
+        CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(mockedLogger, mockedRemotingService);
+
+        cleanUpWorkflowService.cleanUpAuthenticationFile(authKeyFilePath);
 
         Mockito.verify(mockedAuthKeyFile).delete();
         if (e != null) {

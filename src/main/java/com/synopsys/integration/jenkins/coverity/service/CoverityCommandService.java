@@ -124,7 +124,7 @@ public class CoverityCommandService {
         }
     }
 
-    private RepeatableCommand[] getSimpleModeCommands(SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, int changeSetSize, String pathToAuthKeyFile) throws CoverityJenkinsException {
+    public RepeatableCommand[] getSimpleModeCommands(SimpleCoverityRunConfiguration simpleCoverityRunConfiguration, int changeSetSize, String pathToAuthKeyFile) throws CoverityJenkinsException {
         RepeatableCommand[] repeatableCommands = new RepeatableCommand[3];
 
         CommandArguments commandArguments = simpleCoverityRunConfiguration.getCommandArguments();

@@ -19,20 +19,20 @@ import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortE
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-import com.synopsys.integration.jenkins.service.JenkinsScmService;
+import com.synopsys.integration.jenkins.service.JenkinsRunService;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 public class CoverityEnvironmentService {
     private final JenkinsIntLogger logger;
     private final CoverityConfigService coverityConfigService;
     private final Map<String, String> environmentVariables;
-    private final JenkinsScmService jenkinsScmService;
+    private final JenkinsRunService jenkinsRunService;
 
-    public CoverityEnvironmentService(JenkinsIntLogger logger, CoverityConfigService coverityConfigService, Map<String, String> environmentVariables, JenkinsScmService jenkinsScmService) {
+    public CoverityEnvironmentService(JenkinsIntLogger logger, CoverityConfigService coverityConfigService, Map<String, String> environmentVariables, JenkinsRunService jenkinsRunService) {
         this.logger = logger;
         this.coverityConfigService = coverityConfigService;
         this.environmentVariables = environmentVariables;
-        this.jenkinsScmService = jenkinsScmService;
+        this.jenkinsRunService = jenkinsRunService;
     }
 
     public String getAuthKeyFilePath() {
@@ -66,7 +66,7 @@ public class CoverityEnvironmentService {
 
         List<String> changeSet;
         try {
-            changeSet = jenkinsScmService.getFilePathsFromChangeSet(changeSetFilter);
+            changeSet = jenkinsRunService.getFilePathsFromChangeSet(changeSetFilter);
             logger.alwaysLog("Computed a $CHANGE_SET of " + changeSet.size() + " files");
         } catch (Exception e) {
             logger.warn(String.format("WARNING: Synopsys Coverity for Jenkins could not determine the change set, %s will be empty and %s will be 0.",

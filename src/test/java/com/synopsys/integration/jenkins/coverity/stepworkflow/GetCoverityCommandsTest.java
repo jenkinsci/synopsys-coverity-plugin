@@ -9,7 +9,7 @@ import static com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptu
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,9 +28,8 @@ import com.synopsys.integration.jenkins.coverity.extensions.buildstep.AdvancedCo
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CommandArguments;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.RepeatableCommand;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.SimpleCoverityRunConfiguration;
-import com.synopsys.integration.log.IntLogger;
-import com.synopsys.integration.log.SilentIntLogger;
-import com.synopsys.integration.stepworkflow.SubStepResponse;
+import com.synopsys.integration.jenkins.coverity.service.CoverityCommandService;
+import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 public class GetCoverityCommandsTest {
@@ -69,16 +68,14 @@ public class GetCoverityCommandsTest {
     @ParameterizedTest
     @MethodSource("testGetSimpleModeCommandsArguments")
     public void testGetSimpleModeCommands(CoverityCaptureType coverityCaptureType, CoverityAnalysisType coverityAnalysisType, int changeSetSize, RepeatableCommand[] expectedCommands) {
-        IntLogger logger = new SilentIntLogger();
-        IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
         CommandArguments commandArguments = new CommandArguments(COV_BUILD_ARGUMENTS, COV_ANALYZE_ARGUMENTS, COV_RUN_DESKTOP_ARGUMENTS, COV_COMMIT_DEFECTS_ARGUMENTS, COV_CAPTURE_ARGUMENTS);
         SimpleCoverityRunConfiguration coverityRunConfiguration = new SimpleCoverityRunConfiguration(coverityAnalysisType, SOURCE_ARGUMENT, commandArguments);
         coverityRunConfiguration.setCoverityCaptureType(coverityCaptureType);
         coverityRunConfiguration.setChangeSetAnalysisThreshold(ANALYSIS_THRESHOLD);
 
-        GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
+        CoverityCommandService coverityCommandService = new CoverityCommandService(JenkinsIntLogger.logToStandardOut(),null);
         try {
-            RepeatableCommand[] actualCommands = getCoverityCommands.getSimpleModeCommands(coverityRunConfiguration, changeSetSize, AUTH_KEY_FILE_PATH);
+            RepeatableCommand[] actualCommands = coverityCommandService.getSimpleModeCommands(coverityRunConfiguration, changeSetSize, AUTH_KEY_FILE_PATH);
 
             assertEquals(expectedCommands.length, actualCommands.length, "Command array was not the expected size: ");
             for (int i = 0; i < expectedCommands.length; i++) {
@@ -91,9 +88,7 @@ public class GetCoverityCommandsTest {
 
     @Test
     public void testGetCoverityCommandsFromSimpleConfig() {
-        IntLogger logger = new SilentIntLogger();
-
-        IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
+        IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.empty();
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), String.valueOf(ANALYSIS_THRESHOLD));
         String coverityIntermediateDirectory = "/some/path";
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY.toString(), coverityIntermediateDirectory);
@@ -107,22 +102,21 @@ public class GetCoverityCommandsTest {
         List<String> expectedCovAnalyze = Arrays.asList("cov-analyze", "--dir", "/some/path", "$ADDITIONAL_COV_ANALYZE_ARGUMENTS");
         List<String> expectedCovCommitDefects = Arrays.asList("cov-commit-defects", "--dir", "/some/path", "--url", "${COV_URL}", "--stream", "${COV_STREAM}", "$ADDITIONAL_COV_COMMIT_DEFECTS_ARGUMENTS");
 
-        GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
-        SubStepResponse<List<List<String>>> commandResponse = getCoverityCommands.run();
-        List<List<String>> commandList = commandResponse.getData();
+        CoverityCommandService coverityCommandService = new CoverityCommandService(JenkinsIntLogger.logToStandardOut(),null);
+        try {
+            List<List<String>> commandList = coverityCommandService.getCommands(intEnvironmentVariables, coverityRunConfiguration);
 
-        assertTrue(commandResponse.isSuccess(), "GetCoverityCommands was not successful");
-        assertTrue(commandResponse.hasData(), "GetCoverityCommands did not return data");
-        assertEquals(expectedCovBuild, commandList.get(0));
-        assertEquals(expectedCovAnalyze, commandList.get(1));
-        assertEquals(expectedCovCommitDefects, commandList.get(2));
+            assertEquals(expectedCovBuild, commandList.get(0));
+            assertEquals(expectedCovAnalyze, commandList.get(1));
+            assertEquals(expectedCovCommitDefects, commandList.get(2));
+        } catch (CoverityJenkinsException e) {
+            fail("Unexpected exception occurred getting the coverity commands, you may need to fix the test code.", e);
+        }
     }
 
     @Test
     public void testGetCoverityCommandsFromAdvancedConfig() {
-        IntLogger logger = new SilentIntLogger();
-
-        IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
+        IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.empty();
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), String.valueOf(ANALYSIS_THRESHOLD));
         String coverityIntermediateDirectory = "/some/path";
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY.toString(), coverityIntermediateDirectory);
@@ -136,15 +130,16 @@ public class GetCoverityCommandsTest {
         List<String> expectedCovAnalyze = Arrays.asList("cov-analyze", "--dir", "/some/path");
         List<String> expectedCovCommitDefects = Arrays.asList("cov-commit-defects", "--dir", "/some/path", "--url", "${COV_URL}", "--stream", "${COV_STREAM}");
 
-        GetCoverityCommands getCoverityCommands = new GetCoverityCommands(logger, intEnvironmentVariables, coverityRunConfiguration);
-        SubStepResponse<List<List<String>>> commandResponse = getCoverityCommands.run();
-        List<List<String>> commandList = commandResponse.getData();
+        CoverityCommandService coverityCommandService = new CoverityCommandService(JenkinsIntLogger.logToStandardOut(),null);
+        try {
+            List<List<String>> commandList = coverityCommandService.getCommands(intEnvironmentVariables, coverityRunConfiguration);
 
-        assertTrue(commandResponse.isSuccess(), "GetCoverityCommands was not successful");
-        assertTrue(commandResponse.hasData(), "GetCoverityCommands did not return data");
-        assertEquals(expectedCovBuild, commandList.get(0));
-        assertEquals(expectedCovAnalyze, commandList.get(1));
-        assertEquals(expectedCovCommitDefects, commandList.get(2));
+            assertEquals(expectedCovBuild, commandList.get(0));
+            assertEquals(expectedCovAnalyze, commandList.get(1));
+            assertEquals(expectedCovCommitDefects, commandList.get(2));
+        } catch (CoverityJenkinsException e) {
+            fail("Unexpected exception occurred getting the coverity commands, you may need to fix the test code.", e);
+        }
     }
 
 }

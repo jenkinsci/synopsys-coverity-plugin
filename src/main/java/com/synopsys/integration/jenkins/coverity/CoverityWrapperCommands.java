@@ -1,3 +1,10 @@
+/*
+ * synopsys-coverity
+ *
+ * Copyright (c) 2021 Synopsys, Inc.
+ *
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
+ */
 package com.synopsys.integration.jenkins.coverity;
 
 import java.io.IOException;
@@ -9,8 +16,8 @@ import com.synopsys.integration.jenkins.coverity.service.CoverityEnvironmentServ
 import com.synopsys.integration.jenkins.coverity.service.CoverityPhoneHomeService;
 import com.synopsys.integration.jenkins.coverity.service.CoverityWorkspaceService;
 import com.synopsys.integration.jenkins.coverity.service.ProjectStreamCreationService;
-import com.synopsys.integration.jenkins.coverity.service.common.JenkinsWrapperContextService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.service.JenkinsWrapperContextService;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 public class CoverityWrapperCommands {

@@ -27,6 +27,7 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsSerializationHelper;
 import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -41,8 +42,7 @@ import jenkins.model.Jenkins;
 
 public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> {
     static {
-        JenkinsWrapper jenkinsWrapper = JenkinsWrapper.initializeFromJenkinsJVM();
-        jenkinsWrapper.migrateFieldFrom("credentialsId", CoverityConnectInstance.class,"defaultCredentialsId");
+        JenkinsSerializationHelper.migrateFieldFrom("credentialsId", CoverityConnectInstance.class,"defaultCredentialsId");
     }
 
     @HelpMarkdown("Specify the URL for your Coverity Connect instance.  \r\n"

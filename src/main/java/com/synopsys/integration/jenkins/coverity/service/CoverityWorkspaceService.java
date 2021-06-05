@@ -1,3 +1,10 @@
+/*
+ * synopsys-coverity
+ *
+ * Copyright (c) 2021 Synopsys, Inc.
+ *
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
+ */
 package com.synopsys.integration.jenkins.coverity.service;
 
 import java.io.IOException;
@@ -14,34 +21,34 @@ import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.service.callable.CoverityRemoteCallable;
-import com.synopsys.integration.jenkins.coverity.service.common.CoverityRemotingService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.service.JenkinsRemotingService;
 
 import hudson.FilePath;
 
 public class CoverityWorkspaceService {
     private final JenkinsIntLogger logger;
-    private final CoverityRemotingService coverityRemotingService;
+    private final JenkinsRemotingService jenkinsRemotingService;
     private final CoverityConfigService coverityConfigService;
 
-    public CoverityWorkspaceService(JenkinsIntLogger logger, CoverityRemotingService coverityRemotingService, CoverityConfigService coverityConfigService) {
+    public CoverityWorkspaceService(JenkinsIntLogger logger, JenkinsRemotingService jenkinsRemotingService, CoverityConfigService coverityConfigService) {
         this.logger = logger;
-        this.coverityRemotingService = coverityRemotingService;
+        this.jenkinsRemotingService = jenkinsRemotingService;
         this.coverityConfigService = coverityConfigService;
     }
 
     public String getValidatedCoverityToolHomeBin(Boolean validateVersion, String coverityToolHome) throws IntegrationException, IOException, InterruptedException {
         ValidateCoverityInstallation validateCoverityInstallation = new ValidateCoverityInstallation(logger, validateVersion, coverityToolHome);
 
-        return coverityRemotingService.call(validateCoverityInstallation);
+        return jenkinsRemotingService.call(validateCoverityInstallation);
     }
 
     public String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId, String workingDirectory) throws IOException, InterruptedException {
-        return createAuthenticationKeyFile(coverityServerUrl, credentialsId, coverityRemotingService.getRemoteFilePath(workingDirectory));
+        return createAuthenticationKeyFile(coverityServerUrl, credentialsId, jenkinsRemotingService.getRemoteFilePath(workingDirectory));
     }
 
     public String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId) throws IOException, InterruptedException {
-        return createAuthenticationKeyFile(coverityServerUrl, credentialsId, coverityRemotingService.getWorkspace());
+        return createAuthenticationKeyFile(coverityServerUrl, credentialsId, jenkinsRemotingService.getWorkspace());
     }
 
     private String createAuthenticationKeyFile(String coverityServerUrl, String credentialsId, FilePath workingDirectoryFilePath) throws IOException, InterruptedException {
@@ -57,11 +64,11 @@ public class CoverityWorkspaceService {
     }
 
     public String getIntermediateDirectoryPath() {
-        return getIntermediateDirectoryPath(coverityRemotingService.getWorkspace());
+        return getIntermediateDirectoryPath(jenkinsRemotingService.getWorkspace());
     }
 
     public String getIntermediateDirectoryPath(String customWorkspacePath) {
-        return getIntermediateDirectoryPath(coverityRemotingService.getRemoteFilePath(customWorkspacePath));
+        return getIntermediateDirectoryPath(jenkinsRemotingService.getRemoteFilePath(customWorkspacePath));
     }
 
     private String getIntermediateDirectoryPath(FilePath workingDirectoryFilePath) {

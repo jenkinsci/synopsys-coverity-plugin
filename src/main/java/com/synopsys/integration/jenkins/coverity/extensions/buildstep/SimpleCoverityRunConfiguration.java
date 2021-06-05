@@ -17,15 +17,14 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityAnalysisType;
 import com.synopsys.integration.jenkins.coverity.extensions.CoverityCaptureType;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
-import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsSerializationHelper;
 
 import hudson.Extension;
 import hudson.util.ListBoxModel;
 
 public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     static {
-        JenkinsWrapper jenkinsWrapper = JenkinsWrapper.initializeFromJenkinsJVM();
-        jenkinsWrapper.migrateFieldFrom("buildCommand", SimpleCoverityRunConfiguration.class, "sourceArgument");
+        JenkinsSerializationHelper.migrateFieldFrom("buildCommand", SimpleCoverityRunConfiguration.class, "sourceArgument");
     }
 
     private final CommandArguments commandArguments;

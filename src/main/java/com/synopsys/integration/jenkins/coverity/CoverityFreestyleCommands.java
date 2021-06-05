@@ -1,3 +1,10 @@
+/*
+ * synopsys-coverity
+ *
+ * Copyright (c) 2021 Synopsys, Inc.
+ *
+ * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
+ */
 package com.synopsys.integration.jenkins.coverity;
 
 import java.util.List;
@@ -21,14 +28,14 @@ import com.synopsys.integration.jenkins.coverity.service.CoverityPhoneHomeServic
 import com.synopsys.integration.jenkins.coverity.service.CoverityWorkspaceService;
 import com.synopsys.integration.jenkins.coverity.service.IssuesInViewService;
 import com.synopsys.integration.jenkins.coverity.service.ProjectStreamCreationService;
-import com.synopsys.integration.jenkins.coverity.service.common.CoverityBuildService;
 import com.synopsys.integration.jenkins.extensions.ChangeBuildStatusTo;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.service.JenkinsBuildService;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
 public class CoverityFreestyleCommands {
     private final JenkinsIntLogger logger;
-    private final CoverityBuildService coverityBuildService;
+    private final JenkinsBuildService jenkinsBuildService;
     private final CoverityPhoneHomeService coverityPhoneHomeService;
     private final CoverityWorkspaceService coverityWorkspaceService;
     private final CoverityEnvironmentService coverityEnvironmentService;
@@ -37,11 +44,11 @@ public class CoverityFreestyleCommands {
     private final IssuesInViewService issuesInViewService;
     private final CleanUpWorkflowService cleanUpWorkflowService;
 
-    public CoverityFreestyleCommands(JenkinsIntLogger logger, CoverityBuildService coverityBuildService, CoverityPhoneHomeService coverityPhoneHomeService,
+    public CoverityFreestyleCommands(JenkinsIntLogger logger, JenkinsBuildService jenkinsBuildService, CoverityPhoneHomeService coverityPhoneHomeService,
         CoverityWorkspaceService coverityWorkspaceService, CoverityEnvironmentService coverityEnvironmentService, ProjectStreamCreationService projectStreamCreationService,
         CoverityCommandService coverityCommandService, IssuesInViewService issuesInViewService, CleanUpWorkflowService cleanUpWorkflowService){
         this.logger = logger;
-        this.coverityBuildService = coverityBuildService;
+        this.jenkinsBuildService = jenkinsBuildService;
         this.coverityPhoneHomeService = coverityPhoneHomeService;
         this.coverityWorkspaceService = coverityWorkspaceService;
         this.coverityEnvironmentService = coverityEnvironmentService;
@@ -105,11 +112,11 @@ public class CoverityFreestyleCommands {
                     ViewContents viewContents = viewReportWrapper.getViewContents();
                     String viewReportUrl = viewReportWrapper.getViewReportUrl();
                     int defectCount = viewContents.getTotalRows().intValue();
-                    coverityBuildService.addAction(new IssueReportAction(defectCount, viewReportUrl));
+                    jenkinsBuildService.addAction(new IssueReportAction(defectCount, viewReportUrl));
                     logger.alwaysLog(String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl));
 
                     if (defectCount > 0) {
-                        coverityBuildService.markBuildAs(buildStatus);
+                        jenkinsBuildService.markBuildAs(buildStatus);
                     }
                 }
             } finally {
@@ -123,12 +130,12 @@ public class CoverityFreestyleCommands {
             }
         } catch (InterruptedException e) {
             logger.error("[ERROR] Synopsys Coverity thread was interrupted.", e);
-            coverityBuildService.markBuildInterrupted();
+            jenkinsBuildService.markBuildInterrupted();
             Thread.currentThread().interrupt();
         } catch (IntegrationException e) {
-            coverityBuildService.markBuildFailed(e);
+            jenkinsBuildService.markBuildFailed(e);
         } catch (Exception e) {
-            coverityBuildService.markBuildUnstable(e);
+            jenkinsBuildService.markBuildUnstable(e);
         }
     }
 

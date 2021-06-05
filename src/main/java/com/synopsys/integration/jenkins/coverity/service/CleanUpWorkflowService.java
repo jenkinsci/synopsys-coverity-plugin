@@ -9,21 +9,21 @@ package com.synopsys.integration.jenkins.coverity.service;
 
 import java.io.IOException;
 
-import com.synopsys.integration.jenkins.coverity.service.common.CoverityRemotingService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.service.JenkinsRemotingService;
 
 public class CleanUpWorkflowService {
     private final JenkinsIntLogger logger;
-    private final CoverityRemotingService coverityRemotingService;
+    private final JenkinsRemotingService jenkinsRemotingService;
 
-    public CleanUpWorkflowService(JenkinsIntLogger logger, CoverityRemotingService coverityRemotingService) {
+    public CleanUpWorkflowService(JenkinsIntLogger logger, JenkinsRemotingService jenkinsRemotingService) {
         this.logger = logger;
-        this.coverityRemotingService = coverityRemotingService;
+        this.jenkinsRemotingService = jenkinsRemotingService;
     }
 
     public void cleanUpIntermediateDirectory(String intermediateDirectory) {
         try {
-            coverityRemotingService.getRemoteFilePath(intermediateDirectory).deleteRecursive();
+            jenkinsRemotingService.getRemoteFilePath(intermediateDirectory).deleteRecursive();
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -35,7 +35,7 @@ public class CleanUpWorkflowService {
 
     public void cleanUpAuthenticationFile(String authKeyFilePath) {
         try {
-            if (coverityRemotingService.getRemoteFilePath(authKeyFilePath).delete()) {
+            if (jenkinsRemotingService.getRemoteFilePath(authKeyFilePath).delete()) {
                 logger.debug("Authentication keyfile deleted successfully");
             } else {
                 logger.warn("WARNING: Synopsys Coverity for Jenkins could not clean up the authentication key file. It may have been cleaned up by something else.");
