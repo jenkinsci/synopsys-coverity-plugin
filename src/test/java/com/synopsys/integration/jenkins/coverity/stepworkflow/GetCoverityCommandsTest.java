@@ -70,7 +70,7 @@ public class GetCoverityCommandsTest {
     @MethodSource("testGetSimpleModeCommandsArguments")
     public void testGetSimpleModeCommands(CoverityCaptureType coverityCaptureType, CoverityAnalysisType coverityAnalysisType, int changeSetSize, RepeatableCommand[] expectedCommands) {
         IntLogger logger = new SilentIntLogger();
-        IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
+        IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.empty();
         CommandArguments commandArguments = new CommandArguments(COV_BUILD_ARGUMENTS, COV_ANALYZE_ARGUMENTS, COV_RUN_DESKTOP_ARGUMENTS, COV_COMMIT_DEFECTS_ARGUMENTS, COV_CAPTURE_ARGUMENTS);
         SimpleCoverityRunConfiguration coverityRunConfiguration = new SimpleCoverityRunConfiguration(coverityAnalysisType, SOURCE_ARGUMENT, commandArguments);
         coverityRunConfiguration.setCoverityCaptureType(coverityCaptureType);
@@ -93,7 +93,7 @@ public class GetCoverityCommandsTest {
     public void testGetCoverityCommandsFromSimpleConfig() {
         IntLogger logger = new SilentIntLogger();
 
-        IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
+        IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.empty();
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), String.valueOf(ANALYSIS_THRESHOLD));
         String coverityIntermediateDirectory = "/some/path";
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY.toString(), coverityIntermediateDirectory);
@@ -122,7 +122,7 @@ public class GetCoverityCommandsTest {
     public void testGetCoverityCommandsFromAdvancedConfig() {
         IntLogger logger = new SilentIntLogger();
 
-        IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
+        IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.empty();
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.CHANGE_SET_SIZE.toString(), String.valueOf(ANALYSIS_THRESHOLD));
         String coverityIntermediateDirectory = "/some/path";
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_INTERMEDIATE_DIRECTORY.toString(), coverityIntermediateDirectory);

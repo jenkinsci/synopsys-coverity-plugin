@@ -19,7 +19,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.CheckForIssuesInView;
@@ -32,6 +31,8 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamF
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
+import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 import hudson.Extension;
@@ -46,7 +47,6 @@ import hudson.tasks.Builder;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 
 public class CoverityBuildStep extends Builder {
     // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
@@ -178,7 +178,7 @@ public class CoverityBuildStep extends Builder {
 
         CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(build.getEnvironment(listener), build.getBuiltOn(), launcher, listener);
         JenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-        JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
+        JenkinsVersionHelper jenkinsVersionHelper = JenkinsWrapper.initializeFromJenkinsJVM().getVersionHelper();
 
         String resolvedCredentialsId;
         if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
@@ -235,7 +235,7 @@ public class CoverityBuildStep extends Builder {
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(this.getClass()));
             coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
-            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
         @Override

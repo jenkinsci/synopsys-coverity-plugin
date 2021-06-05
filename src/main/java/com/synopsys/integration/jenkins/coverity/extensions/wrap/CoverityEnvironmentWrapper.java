@@ -28,7 +28,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
@@ -42,6 +41,8 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewField
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowService;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
+import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -61,7 +62,6 @@ import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
@@ -190,7 +190,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(initialEnvironment, node, launcher, listener);
         CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-        JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
+        JenkinsVersionHelper jenkinsVersionHelper = JenkinsWrapper.initializeFromJenkinsJVM().getVersionHelper();
         List<ChangeLogSet<?>> changeLogSets;
         try {
             changeLogSets = runWrapper.getChangeSets();
@@ -260,7 +260,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
             issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
-            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
         public ListBoxModel doFillCoverityInstanceUrlItems() {
@@ -362,7 +362,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
 
         @Override
         public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
-            IntEnvironmentVariables intEnvironmentVariables = new IntEnvironmentVariables(false);
+            IntEnvironmentVariables intEnvironmentVariables = IntEnvironmentVariables.empty();
             intEnvironmentVariables.putAll(environmentVariables);
             CoverityJenkinsIntLogger logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
             CleanUpWorkflowService cleanUpWorkflowService = new CleanUpWorkflowService(logger);

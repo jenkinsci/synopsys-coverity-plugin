@@ -15,10 +15,9 @@ import com.synopsys.integration.coverity.api.ws.configuration.VersionDataObj;
 import com.synopsys.integration.coverity.config.CoverityHttpClient;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.function.ThrowingSupplier;
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-import com.synopsys.integration.phonehome.request.CoverityPhoneHomeRequestFactory;
+import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
 import com.synopsys.integration.phonehome.request.PhoneHomeRequestBody;
 import com.synopsys.integration.phonehome.request.PhoneHomeRequestBodyBuilder;
 import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
@@ -53,8 +52,8 @@ public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow
 
     protected abstract void cleanUp() throws AbortException;
 
+    @Override
     protected PhoneHomeRequestBodyBuilder createPhoneHomeBuilder() {
-        CoverityPhoneHomeRequestFactory coverityPhoneHomeRequestFactory = new CoverityPhoneHomeRequestFactory("synopsys-coverity");
         CoverityHttpClient coverityHttpClient = webServiceFactory.getCoverityHttpClient();
         String customerName;
         String cimVersion;
@@ -85,7 +84,7 @@ public abstract class CoverityJenkinsStepWorkflow<T> extends JenkinsStepWorkflow
 
         String pluginVersion = jenkinsVersionHelper.getPluginVersion("synopsys-coverity").orElse(PhoneHomeRequestBody.UNKNOWN_FIELD_VALUE);
 
-        return coverityPhoneHomeRequestFactory.create(customerName, coverityHttpClient.getBaseUrl(), pluginVersion, cimVersion);
+        return PhoneHomeRequestBodyBuilder.createForCoverity("synopsys-coverity", customerName, coverityHttpClient.getBaseUrl(), pluginVersion, cimVersion);
     }
 
 }

@@ -25,7 +25,6 @@ import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewService;
 import com.synopsys.integration.function.ThrowingSupplier;
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.ConfigureChangeSetPatterns;
@@ -34,6 +33,8 @@ import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityRu
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityGlobalConfig;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.stepworkflow.SubStep;
 import com.synopsys.integration.stepworkflow.jenkins.RemoteSubStep;
 import com.synopsys.integration.util.IntEnvironmentVariables;
@@ -46,7 +47,6 @@ import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.scm.ChangeLogSet;
 import jenkins.model.GlobalConfiguration;
-import jenkins.model.Jenkins;
 
 public class CoverityWorkflowStepFactory {
     private final EnvVars envVars;
@@ -153,7 +153,7 @@ public class CoverityWorkflowStepFactory {
     public CoverityJenkinsIntLogger getOrCreateLogger() {
         IntEnvironmentVariables intEnvironmentVariables = getOrCreateEnvironmentVariables();
         if (_logger == null) {
-            JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
+            JenkinsVersionHelper jenkinsVersionHelper = JenkinsWrapper.initializeFromJenkinsJVM().getVersionHelper();
             _logger = CoverityJenkinsIntLogger.initializeLogger(listener, intEnvironmentVariables);
             _logger.logInitializationMessage(jenkinsVersionHelper);
         }
@@ -162,7 +162,7 @@ public class CoverityWorkflowStepFactory {
 
     public IntEnvironmentVariables getOrCreateEnvironmentVariables() {
         if (_intEnvironmentVariables == null) {
-            _intEnvironmentVariables = new IntEnvironmentVariables(false);
+            _intEnvironmentVariables = IntEnvironmentVariables.empty();
             _intEnvironmentVariables.putAll(envVars);
         }
         return _intEnvironmentVariables;

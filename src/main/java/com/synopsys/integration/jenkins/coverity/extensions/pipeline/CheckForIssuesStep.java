@@ -29,7 +29,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
@@ -39,6 +38,8 @@ import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnec
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
+import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
 
@@ -52,7 +53,6 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
 
 public class CheckForIssuesStep extends Step implements Serializable {
     public static final String DISPLAY_NAME = "Check for Issues in Coverity View";
@@ -174,7 +174,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
             coverityConnectionFieldHelper = new CoverityConnectionFieldHelper(slf4jIntLogger);
             projectStreamFieldHelper = new ProjectStreamFieldHelper(slf4jIntLogger);
             issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
-            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, Jenkins.getInstance());
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
         @Override
@@ -277,7 +277,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
             String unresolvedViewName = getRequiredValueOrDie(viewName, FIELD_VIEW_NAME, JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
             String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
 
-            JenkinsVersionHelper jenkinsVersionHelper = new JenkinsVersionHelper(Jenkins.getInstanceOrNull());
+            JenkinsVersionHelper jenkinsVersionHelper = JenkinsWrapper.initializeFromJenkinsJVM().getVersionHelper();
 
             String resolvedCredentialsId;
             if (credentialsId != null) {

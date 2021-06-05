@@ -26,7 +26,6 @@ import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.exception.IntegrationException;
 import com.synopsys.integration.function.ThrowingSupplier;
-import com.synopsys.integration.jenkins.JenkinsVersionHelper;
 import com.synopsys.integration.jenkins.coverity.actions.IssueReportAction;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.BuildStatus;
@@ -39,6 +38,7 @@ import com.synopsys.integration.jenkins.coverity.stepworkflow.CleanUpWorkflowSer
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityJenkinsStepWorkflow;
 import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
 import com.synopsys.integration.stepworkflow.StepWorkflow;
 import com.synopsys.integration.stepworkflow.StepWorkflowResponse;
 import com.synopsys.integration.stepworkflow.SubStep;
