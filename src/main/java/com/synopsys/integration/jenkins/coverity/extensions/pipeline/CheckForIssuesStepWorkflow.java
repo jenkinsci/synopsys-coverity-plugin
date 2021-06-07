@@ -7,6 +7,9 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.pipeline;
 
+import org.jenkinsci.plugins.workflow.actions.WarningAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
 import com.synopsys.integration.function.ThrowingSupplier;
@@ -21,6 +24,7 @@ import com.synopsys.integration.stepworkflow.StepWorkflow;
 import com.synopsys.integration.stepworkflow.SubStep;
 
 import hudson.AbortException;
+import hudson.model.Result;
 import hudson.model.Run;
 
 public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Integer> {
@@ -30,10 +34,13 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
     private final String projectName;
     private final String viewName;
     private final Boolean returnIssueCount;
+    private final Boolean markUnstable;
     private final Run<?, ?> run;
+    private final FlowNode flowNode;
 
     public CheckForIssuesStepWorkflow(JenkinsIntLogger jenkinsIntLogger, JenkinsVersionHelper jenkinsVersionHelper, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
-        CoverityWorkflowStepFactory coverityWorkflowStepFactory, String coverityInstanceUrl, String credentialsId, String projectName, String viewName, Boolean returnIssueCount, Run<?, ?> run) {
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory, String coverityInstanceUrl, String credentialsId, String projectName, String viewName, Boolean returnIssueCount, Boolean markUnstable, Run<?, ?> run,
+        FlowNode flowNode) {
         super(jenkinsIntLogger, jenkinsVersionHelper, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.coverityInstanceUrl = coverityInstanceUrl;
@@ -41,7 +48,9 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
         this.projectName = projectName;
         this.viewName = viewName;
         this.returnIssueCount = returnIssueCount;
+        this.markUnstable = markUnstable;
         this.run = run;
+        this.flowNode = flowNode;
     }
 
     @Override
@@ -63,7 +72,11 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
         run.addAction(new IssueReportAction(defectCount, viewReportUrl));
 
         if (defectCount > 0) {
-            if (Boolean.TRUE.equals(returnIssueCount)) {
+            if (Boolean.TRUE.equals(markUnstable)) {
+                logger.warn(defectMessage);
+                flowNode.addOrReplaceAction(new WarningAction(Result.UNSTABLE).withMessage(defectMessage));
+                run.setResult(Result.UNSTABLE);
+            } else if (Boolean.TRUE.equals(returnIssueCount)) {
                 logger.error(defectMessage);
             } else {
                 throw new CoverityJenkinsException(defectMessage);

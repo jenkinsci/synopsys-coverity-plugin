@@ -33,10 +33,10 @@ public abstract class ConnectionCachingFieldHelper<T extends CoverityConnectData
             CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
             if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
                 T cache = getCache(coverityConnectUrl, credentialsId);
-                cache.refresh(credentialsId, coverityConnectInstance);
+                cache.refresh(coverityConnectInstance, credentialsId);
             } else {
                 T cache = getCache(coverityConnectUrl, coverityConnectInstance.getDefaultCredentialsId());
-                cache.refresh(coverityConnectInstance.getDefaultCredentialsId(), coverityConnectInstance);
+                cache.refresh(coverityConnectInstance, coverityConnectInstance.getDefaultCredentialsId());
             }
         } catch (CoverityIntegrationException ignored) {
             // Handled by form validation

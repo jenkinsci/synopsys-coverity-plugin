@@ -24,6 +24,10 @@
         <f:checkbox id="returnIssueCountCheckIssuesId"/>
     </f:entry>
 
+    <f:entry field="markUnstable" title="Issues mark the stage unstable">
+        <f:checkbox id="markUnstableId"/>
+    </f:entry>
+
     <f:entry>
         <div style="float:right">
             <input type="button" value="Refresh Coverity projects and views" class="yui-button ${attrs.clazz}"

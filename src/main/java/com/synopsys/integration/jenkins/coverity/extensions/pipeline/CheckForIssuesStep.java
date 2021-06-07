@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -69,6 +70,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
     public static final String FIELD_VIEW_NAME = "viewName";
     public static final String FIELD_CREDENTIALS_ID = "credentialsId";
     public static final String FIELD_RETURN_ISSUE_COUNT = "returnIssueCount";
+    public static final String FIELD_MARK_UNSTABLE = "markUnstable";
 
     // Any field set by a DataBoundSetter should be explicitly declared as nullable to avoid NPEs
     @Nullable
@@ -90,6 +92,11 @@ public class CheckForIssuesStep extends Step implements Serializable {
     @Nullable
     @HelpMarkdown("If checked, will return the number of issues discovered in the specified Coverity view instead of throwing an exception.")
     private Boolean returnIssueCount;
+
+    @Nullable
+    @HelpMarkdown("If checked, will mark the stage Unstable but otherwise allow the pipeline to proceed instead of throwing an exception.  \r\n"
+                      + "As a byproduct, this also allows the step to return the issue count. Use returnIssueCount if you want to make this behavior more explicit.")
+    private Boolean markUnstable;
 
     @DataBoundConstructor
     public CheckForIssuesStep() {
@@ -154,6 +161,18 @@ public class CheckForIssuesStep extends Step implements Serializable {
     @DataBoundSetter
     public void setViewName(String viewName) {
         this.viewName = viewName;
+    }
+
+    public Boolean getMarkUnstable() {
+        if (Boolean.FALSE.equals(markUnstable)) {
+            return null;
+        }
+        return markUnstable;
+    }
+
+    @DataBoundSetter
+    public void setMarkUnstable(Boolean markUnstable) {
+        this.markUnstable = markUnstable;
     }
 
     @Override
@@ -253,6 +272,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         private final transient Node node;
         private final transient Launcher launcher;
         private final transient Run<?, ?> run;
+        private final transient FlowNode flowNode;
 
         protected Execution(@Nonnull StepContext context) throws InterruptedException, IOException {
             super(context);
@@ -261,6 +281,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
             node = context.get(Node.class);
             launcher = context.get(Launcher.class);
             run = context.get(Run.class);
+            flowNode = context.get(FlowNode.class);
         }
 
         @Override
@@ -289,14 +310,16 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
             CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger,
                 jenkinsVersionHelper,
-                () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(credentialsId, resolvedCoverityInstanceUrl),
+                () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl, credentialsId),
                 coverityWorkflowStepFactory,
                 resolvedCoverityInstanceUrl,
                 resolvedCredentialsId,
                 resolvedProjectName,
                 resolvedViewName,
                 returnIssueCount,
-                run);
+                markUnstable,
+                run,
+                flowNode);
             return checkForIssuesStepWorkflow.perform();
         }
 

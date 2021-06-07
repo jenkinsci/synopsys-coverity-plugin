@@ -191,7 +191,7 @@ public class CoverityBuildStep extends Builder {
         CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(
             logger,
             jenkinsVersionHelper,
-            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCredentialsId, coverityInstanceUrl),
+            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl, resolvedCredentialsId),
             coverityWorkflowStepFactory,
             build,
             remoteWorkingDirectoryPath,

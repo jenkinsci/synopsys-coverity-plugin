@@ -32,21 +32,21 @@ public abstract class CoverityConnectDataCache<T> {
         this.cachedData = getEmptyData();
     }
 
-    public T getData(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public T getData(CoverityConnectInstance coverityConnectInstance, String credentialsId) throws InterruptedException {
         semaphore.acquire();
         semaphore.release();
-        refreshIfStale(credentialId, coverityConnectInstance);
+        refreshIfStale(coverityConnectInstance, credentialsId);
         return cachedData;
     }
 
-    public void refreshIfStale(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public void refreshIfStale(CoverityConnectInstance coverityConnectInstance, String credentialsId) throws InterruptedException {
         long cacheTimeInSeconds = TimeUnit.MINUTES.toSeconds(CACHE_TIME_IN_MINUTES);
         if (Instant.now().minusSeconds(cacheTimeInSeconds).isAfter(lastTimeRetrieved)) {
-            refresh(credentialId, coverityConnectInstance);
+            refresh(coverityConnectInstance, credentialsId);
         }
     }
 
-    public void refresh(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public void refresh(CoverityConnectInstance coverityConnectInstance, String credentialsId) throws InterruptedException {
         semaphore.acquire();
         Thread thread = Thread.currentThread();
         ClassLoader threadClassLoader = thread.getContextClassLoader();
@@ -55,7 +55,7 @@ public abstract class CoverityConnectDataCache<T> {
         try {
             logger.info("Refreshing connection to Coverity Connect instance...");
 
-            CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger, credentialId);
+            CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger, credentialsId);
             WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
             webServiceFactory.connect();
 

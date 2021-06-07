@@ -64,7 +64,7 @@ public class CreateAuthenticationKeyFileTest {
         CoverityWorkflowStepFactory spiedFactory = Mockito.spy(realFactory);
         Mockito.doReturn(mockedInstance).when(spiedFactory).getCoverityConnectInstanceFromUrl(coverityServerUrl);
 
-        SubStep<Object, String> createAuthenticationKeyFile = spiedFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, credentialsId, coverityServerUrl);
+        SubStep<Object, String> createAuthenticationKeyFile = spiedFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, coverityServerUrl, credentialsId);
         SubStepResponse<String> subStepResponse = createAuthenticationKeyFile.run(SubStepResponse.SUCCESS());
 
         assertTrue(subStepResponse.isSuccess());

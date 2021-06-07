@@ -40,10 +40,10 @@ public class IssueViewFieldHelper extends ConnectionCachingFieldHelper<IssueView
         CoverityConnectInstance coverityConnectInstance = GlobalValueHelper.getCoverityInstanceWithUrlOrDie(logger, coverityConnectUrl);
         if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
             IssueViewCache issueViewCache = getCache(coverityConnectUrl, credentialsId);
-            return issueViewCache.getData(credentialsId, coverityConnectInstance);
+            return issueViewCache.getData(coverityConnectInstance, credentialsId);
         } else {
             IssueViewCache issueViewCache = getCache(coverityConnectUrl, coverityConnectInstance.getDefaultCredentialsId());
-            return issueViewCache.getData(coverityConnectInstance.getDefaultCredentialsId(), coverityConnectInstance);
+            return issueViewCache.getData(coverityConnectInstance, coverityConnectInstance.getDefaultCredentialsId());
         }
     }
 

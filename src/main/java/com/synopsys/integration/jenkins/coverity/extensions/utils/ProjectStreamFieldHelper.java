@@ -113,10 +113,10 @@ public class ProjectStreamFieldHelper extends ConnectionCachingFieldHelper<Proje
         List<ProjectDataObj> projectDataObjs;
         if (Boolean.TRUE.equals(overrideDefaultCredentialsId)) {
             projectStreamCache = getCache(coverityInstanceUrl, credentialsId);
-            projectDataObjs = projectStreamCache.getData(credentialsId, coverityConnectInstance);
+            projectDataObjs = projectStreamCache.getData(coverityConnectInstance, credentialsId);
         } else {
             projectStreamCache = getCache(coverityInstanceUrl, coverityConnectInstance.getDefaultCredentialsId());
-            projectDataObjs = projectStreamCache.getData(coverityConnectInstance.getDefaultCredentialsId(), coverityConnectInstance);
+            projectDataObjs = projectStreamCache.getData(coverityConnectInstance, coverityConnectInstance.getDefaultCredentialsId());
         }
         return projectDataObjs != null ? projectDataObjs : Collections.emptyList();
     }
