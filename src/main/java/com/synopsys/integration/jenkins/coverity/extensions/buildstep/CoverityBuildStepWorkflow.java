@@ -91,13 +91,13 @@ public class CoverityBuildStepWorkflow extends CoverityJenkinsStepWorkflow<Objec
         boolean shouldValidateVersion = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
 
         return StepWorkflow.first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(shouldValidateVersion))
-                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, credentialsId, coverityInstanceUrl))
-                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(build.getChangeSets(), configureChangeSetPatterns, workspaceRemotePath, credentialsId, coverityInstanceUrl, projectName, streamName, viewName))
+                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl, credentialsId))
+                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(build.getChangeSets(), configureChangeSetPatterns, workspaceRemotePath, coverityInstanceUrl, credentialsId, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, credentialsId, projectName, streamName))
                    .andSometimes(coverityWorkflowStepFactory.createStepGetCoverityCommands(coverityRunConfiguration))
                    .then(coverityWorkflowStepFactory.createStepRunCoverityCommands(workspaceRemotePath, onCommandFailure))
                    .butOnlyIf(coverityWorkflowStepFactory.getOrCreateEnvironmentVariables(), intEnvironmentVariables -> this.shouldRunCoverityCommands(intEnvironmentVariables, coverityRunConfiguration))
-                   .andSometimes(coverityWorkflowStepFactory.createStepGetIssuesInView(credentialsId, coverityInstanceUrl, projectName, viewName))
+                   .andSometimes(coverityWorkflowStepFactory.createStepGetIssuesInView(coverityInstanceUrl, credentialsId, projectName, viewName))
                    .then(SubStep.ofConsumer(viewReportWrapper -> handleIssues(viewReportWrapper, build, projectName, viewName, buildStatus)))
                    .butOnlyIf(checkForIssuesInView, Objects::nonNull)
                    .build();

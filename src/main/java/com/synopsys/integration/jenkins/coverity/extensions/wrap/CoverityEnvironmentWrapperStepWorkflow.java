@@ -62,8 +62,8 @@ public class CoverityEnvironmentWrapperStepWorkflow extends CoverityJenkinsStepW
     protected StepWorkflow<Object> buildWorkflow() throws AbortException {
         return StepWorkflow
                    .first(coverityWorkflowStepFactory.createStepValidateCoverityInstallation(false))
-                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, credentialsId, coverityInstanceUrl))
-                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(changeSets, configureChangeSetPatterns, workspaceRemotePath, credentialsId, coverityInstanceUrl, projectName, streamName, viewName))
+                   .then(coverityWorkflowStepFactory.createStepCreateAuthenticationKeyFile(workspaceRemotePath, coverityInstanceUrl, credentialsId))
+                   .then(coverityWorkflowStepFactory.createStepSetUpCoverityEnvironment(changeSets, configureChangeSetPatterns, workspaceRemotePath, coverityInstanceUrl, credentialsId, projectName, streamName, viewName))
                    .then(coverityWorkflowStepFactory.createStepPopulateEnvVars(context::env))
                    .andSometimes(coverityWorkflowStepFactory.createStepCreateMissingProjectsAndStreams(coverityInstanceUrl, credentialsId, projectName, streamName)).butOnlyIf(createMissingProjectsAndStreams, Boolean.TRUE::equals)
                    .build();

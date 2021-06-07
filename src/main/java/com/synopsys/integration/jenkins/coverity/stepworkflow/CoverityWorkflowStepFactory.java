@@ -70,7 +70,7 @@ public class CoverityWorkflowStepFactory {
     }
 
     public CreateMissingProjectsAndStreams createStepCreateMissingProjectsAndStreams(String coverityServerUrl, String credentialsId, String projectName, String streamName) throws CoverityJenkinsAbortException {
-        WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(credentialsId, coverityServerUrl);
+        WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(coverityServerUrl, credentialsId);
         ConfigurationServiceWrapper configurationServiceWrapper;
         try {
             configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
@@ -85,8 +85,8 @@ public class CoverityWorkflowStepFactory {
         return new GetCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), coverityRunConfiguration);
     }
 
-    public GetIssuesInView createStepGetIssuesInView(String credentialsId, String coverityServerUrl, String projectName, String viewName) throws CoverityJenkinsAbortException {
-        WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(credentialsId, coverityServerUrl);
+    public GetIssuesInView createStepGetIssuesInView(String coverityServerUrl, String credentialsId, String projectName, String viewName) throws CoverityJenkinsAbortException {
+        WebServiceFactory webServiceFactory = getWebServiceFactoryFromUrl(coverityServerUrl, credentialsId);
         ConfigurationServiceWrapper configurationServiceWrapper;
         try {
             configurationServiceWrapper = webServiceFactory.createConfigurationServiceWrapper();
@@ -102,7 +102,7 @@ public class CoverityWorkflowStepFactory {
         return new RunCoverityCommands(initializedLogger.get(), initializedIntEnvrionmentVariables.get(), workspaceRemotePath, onCommandFailure, initializedVirtualChannel.get());
     }
 
-    public SubStep<Object, String> createStepCreateAuthenticationKeyFile(String workspaceRemotePath, String credentialsId, String coverityServerUrl) throws CoverityJenkinsAbortException {
+    public SubStep<Object, String> createStepCreateAuthenticationKeyFile(String workspaceRemotePath, String coverityServerUrl, String credentialsId) throws CoverityJenkinsAbortException {
         CoverityJenkinsIntLogger logger = initializedLogger.get();
         CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
         Optional<String> authKeyContents = coverityConnectInstance.getAuthenticationKeyFileContents(logger, credentialsId);
@@ -118,7 +118,7 @@ public class CoverityWorkflowStepFactory {
         });
     }
 
-    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(List<ChangeLogSet<?>> changeLogSets, ConfigureChangeSetPatterns configureChangeSetPatterns, String workspaceRemotePath, String credentialsId, String coverityServerUrl, String projectName,
+    public SetUpCoverityEnvironment createStepSetUpCoverityEnvironment(List<ChangeLogSet<?>> changeLogSets, ConfigureChangeSetPatterns configureChangeSetPatterns, String workspaceRemotePath, String coverityServerUrl, String credentialsId, String projectName,
         String streamName, String viewName) throws CoverityJenkinsAbortException {
         CoverityJenkinsIntLogger logger = initializedLogger.get();
         IntEnvironmentVariables intEnvironmentVariables = initializedIntEnvrionmentVariables.get();
@@ -134,8 +134,7 @@ public class CoverityWorkflowStepFactory {
                                          .child("bin")
                                          .getRemote();
 
-        return new SetUpCoverityEnvironment(logger, intEnvironmentVariables, changeLogSets, configureChangeSetPatterns, coverityServerUrl, coverityUsername, coverityPassphrase, projectName, streamName, viewName,
-            remoteIntermediateDirectory, coverityToolHomeBin);
+        return new SetUpCoverityEnvironment(logger, intEnvironmentVariables, changeLogSets, configureChangeSetPatterns, coverityServerUrl, coverityUsername, coverityPassphrase, projectName, streamName, viewName, remoteIntermediateDirectory, coverityToolHomeBin);
     }
 
     public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(boolean shouldValidateVersion) throws CoverityJenkinsAbortException {
@@ -198,7 +197,7 @@ public class CoverityWorkflowStepFactory {
 
     }
 
-    public WebServiceFactory getWebServiceFactoryFromUrl(String credentialsId, String coverityServerUrl) throws CoverityJenkinsAbortException {
+    public WebServiceFactory getWebServiceFactoryFromUrl(String coverityServerUrl, String credentialsId) throws CoverityJenkinsAbortException {
         CoverityConnectInstance coverityConnectInstance = getCoverityConnectInstanceFromUrl(coverityServerUrl);
         JenkinsIntLogger logger = getOrCreateLogger();
 

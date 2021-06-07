@@ -213,7 +213,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
         CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(
             logger,
             jenkinsVersionHelper,
-            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCredentialsId, coverityInstanceUrl),
+            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl, resolvedCredentialsId),
             coverityWorkflowStepFactory,
             context,
             workspace.getRemote(),
