@@ -68,19 +68,18 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
     private Integer getDefectCount(ViewReportWrapper viewReportWrapper) throws CoverityJenkinsException {
         String viewReportUrl = viewReportWrapper.getViewReportUrl();
         int defectCount = viewReportWrapper.getViewContents().getTotalRows().intValue();
-        String defectLogMessage = String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl);
+        String defectMessage = String.format("[Coverity] Found %s issues: %s", defectCount, viewReportUrl);
         run.addAction(new IssueReportAction(defectCount, viewReportUrl));
 
         if (defectCount > 0) {
             if (Boolean.TRUE.equals(markUnstable)) {
-                logger.warn(defectLogMessage);
-                String defectWarningMessage = String.format("Coverity found %s issues", defectCount);
-                flowNode.addOrReplaceAction(new WarningAction(Result.UNSTABLE).withMessage(defectWarningMessage));
+                logger.warn(defectMessage);
+                flowNode.addOrReplaceAction(new WarningAction(Result.UNSTABLE).withMessage(defectMessage));
                 run.setResult(Result.UNSTABLE);
             } else if (Boolean.TRUE.equals(returnIssueCount)) {
-                logger.error(defectLogMessage);
+                logger.error(defectMessage);
             } else {
-                throw new CoverityJenkinsException(defectLogMessage);
+                throw new CoverityJenkinsException(defectMessage);
             }
         }
 
