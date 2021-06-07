@@ -19,6 +19,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -271,6 +272,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
         private final transient Node node;
         private final transient Launcher launcher;
         private final transient Run<?, ?> run;
+        private final transient FlowNode flowNode;
 
         protected Execution(@Nonnull StepContext context) throws InterruptedException, IOException {
             super(context);
@@ -279,6 +281,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
             node = context.get(Node.class);
             launcher = context.get(Launcher.class);
             run = context.get(Run.class);
+            flowNode = context.get(FlowNode.class);
         }
 
         @Override
@@ -307,7 +310,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
             CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger,
                 jenkinsVersionHelper,
-                () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(credentialsId, resolvedCoverityInstanceUrl),
+                () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl, credentialsId),
                 coverityWorkflowStepFactory,
                 resolvedCoverityInstanceUrl,
                 resolvedCredentialsId,
@@ -315,7 +318,8 @@ public class CheckForIssuesStep extends Step implements Serializable {
                 resolvedViewName,
                 returnIssueCount,
                 markUnstable,
-                run);
+                run,
+                flowNode);
             return checkForIssuesStepWorkflow.perform();
         }
 

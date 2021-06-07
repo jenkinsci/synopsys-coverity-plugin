@@ -8,6 +8,7 @@
 package com.synopsys.integration.jenkins.coverity.extensions.pipeline;
 
 import org.jenkinsci.plugins.workflow.actions.WarningAction;
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
 
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
@@ -35,9 +36,11 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
     private final Boolean returnIssueCount;
     private final Boolean markUnstable;
     private final Run<?, ?> run;
+    private final FlowNode flowNode;
 
     public CheckForIssuesStepWorkflow(JenkinsIntLogger jenkinsIntLogger, JenkinsVersionHelper jenkinsVersionHelper, ThrowingSupplier<WebServiceFactory, CoverityJenkinsAbortException> webServiceFactorySupplier,
-        CoverityWorkflowStepFactory coverityWorkflowStepFactory, String coverityInstanceUrl, String credentialsId, String projectName, String viewName, Boolean returnIssueCount, Boolean markUnstable, Run<?, ?> run) {
+        CoverityWorkflowStepFactory coverityWorkflowStepFactory, String coverityInstanceUrl, String credentialsId, String projectName, String viewName, Boolean returnIssueCount, Boolean markUnstable, Run<?, ?> run,
+        FlowNode flowNode) {
         super(jenkinsIntLogger, jenkinsVersionHelper, webServiceFactorySupplier);
         this.coverityWorkflowStepFactory = coverityWorkflowStepFactory;
         this.coverityInstanceUrl = coverityInstanceUrl;
@@ -47,6 +50,7 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
         this.returnIssueCount = returnIssueCount;
         this.markUnstable = markUnstable;
         this.run = run;
+        this.flowNode = flowNode;
     }
 
     @Override
@@ -71,7 +75,8 @@ public class CheckForIssuesStepWorkflow extends CoverityJenkinsStepWorkflow<Inte
             if (Boolean.TRUE.equals(markUnstable)) {
                 logger.warn(defectLogMessage);
                 String defectWarningMessage = String.format("Coverity found %s issues", defectCount);
-                run.addOrReplaceAction(new WarningAction(Result.UNSTABLE).withMessage(defectWarningMessage));
+                flowNode.addOrReplaceAction(new WarningAction(Result.UNSTABLE).withMessage(defectWarningMessage));
+                run.setResult(Result.UNSTABLE);
             } else if (Boolean.TRUE.equals(returnIssueCount)) {
                 logger.error(defectLogMessage);
             } else {
