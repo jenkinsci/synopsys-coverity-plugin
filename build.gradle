@@ -46,7 +46,8 @@ dependencies {
     testCompile 'org.mockito:mockito-junit-jupiter:3.3.3'
 
     optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.9'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-cps:2.23'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-step-api:2.10'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.32'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-cps:2.66'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-step-api:2.19'
+    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-api:2.34'
 }
