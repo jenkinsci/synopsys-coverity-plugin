@@ -7,13 +7,11 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
-import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
@@ -63,7 +61,7 @@ public abstract class CoverityConnectDataCache<T> {
 
             lastTimeRetrieved = Instant.now();
             logger.info("Connection refreshed successfully.");
-        } catch (MalformedURLException | IllegalArgumentException | IllegalStateException | CoverityIntegrationException e) {
+        } catch (Exception e) {
             logger.error("[ERROR] Could not refresh connection to Coverity Connect instance. Please confirm you have a valid URL.");
             logger.trace("Stack trace:", e);
         } finally {
