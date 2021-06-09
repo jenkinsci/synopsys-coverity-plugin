@@ -17,6 +17,7 @@ import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsExcept
 import com.synopsys.integration.jenkins.coverity.service.CoverityPhoneHomeService;
 import com.synopsys.integration.jenkins.coverity.service.IssuesInViewService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
+import com.synopsys.integration.jenkins.service.JenkinsPipelineFlowService;
 import com.synopsys.integration.jenkins.service.JenkinsRunService;
 
 public class CoverityPipelineCommands {
@@ -24,15 +25,17 @@ public class CoverityPipelineCommands {
     private final JenkinsRunService jenkinsRunService;
     private final CoverityPhoneHomeService coverityPhoneHomeService;
     private final IssuesInViewService issuesInViewService;
+    private final JenkinsPipelineFlowService jenkinsPipelineFlowService;
 
-    public CoverityPipelineCommands(JenkinsIntLogger logger, JenkinsRunService jenkinsRunService, CoverityPhoneHomeService coverityPhoneHomeService, IssuesInViewService issuesInViewService){
+    public CoverityPipelineCommands(JenkinsIntLogger logger, JenkinsPipelineFlowService jenkinsPipelineFlowService, JenkinsRunService jenkinsRunService, CoverityPhoneHomeService coverityPhoneHomeService, IssuesInViewService issuesInViewService){
         this.logger = logger;
+        this.jenkinsPipelineFlowService = jenkinsPipelineFlowService;
         this.jenkinsRunService = jenkinsRunService;
         this.coverityPhoneHomeService = coverityPhoneHomeService;
         this.issuesInViewService = issuesInViewService;
     }
 
-    public int getIssueCount(String coverityInstanceUrl, String credentialsId, String projectName, String viewName, Boolean returnIssueCount) throws IntegrationException, CovRemoteServiceException_Exception, IOException {
+    public int getIssueCount(String coverityInstanceUrl, String credentialsId, String projectName, String viewName, Boolean returnIssueCount, Boolean markUnstable) throws IntegrationException, CovRemoteServiceException_Exception, IOException {
         coverityPhoneHomeService.phoneHome(coverityInstanceUrl, credentialsId);
 
         ViewReportWrapper viewReportWrapper = issuesInViewService.getIssuesInView(coverityInstanceUrl, credentialsId, projectName, viewName);
@@ -42,7 +45,9 @@ public class CoverityPipelineCommands {
 
         jenkinsRunService.addAction(new IssueReportAction(defectCount, viewReportUrl));
         if (defectCount > 0) {
-            if (Boolean.TRUE.equals(returnIssueCount)) {
+            if (Boolean.TRUE.equals(markUnstable)) {
+                jenkinsPipelineFlowService.markStageUnstable(defectMessage);
+            } else if (Boolean.TRUE.equals(returnIssueCount)) {
                 logger.error(defectMessage);
             } else {
                 throw new CoverityJenkinsException(defectMessage);

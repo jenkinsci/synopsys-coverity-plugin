@@ -10,6 +10,8 @@ package com.synopsys.integration.jenkins.coverity.service;
 import java.io.IOException;
 import java.util.Optional;
 
+import org.jenkinsci.plugins.workflow.graph.FlowNode;
+
 import com.synopsys.integration.function.ThrowingSupplier;
 import com.synopsys.integration.jenkins.coverity.CoverityDisposerCommands;
 import com.synopsys.integration.jenkins.coverity.CoverityFreestyleCommands;
@@ -19,6 +21,8 @@ import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.jenkins.service.JenkinsBuildService;
 import com.synopsys.integration.jenkins.service.JenkinsConfigService;
 import com.synopsys.integration.jenkins.service.JenkinsFreestyleServicesFactory;
+import com.synopsys.integration.jenkins.service.JenkinsPipelineFlowService;
+import com.synopsys.integration.jenkins.service.JenkinsPipelineServicesFactory;
 import com.synopsys.integration.jenkins.service.JenkinsRemotingService;
 import com.synopsys.integration.jenkins.service.JenkinsRunService;
 import com.synopsys.integration.jenkins.service.JenkinsServicesFactory;
@@ -72,15 +76,17 @@ public class CoverityCommandsFactory {
         );
     }
 
-    public static CoverityPipelineCommands fromPipeline(TaskListener listener, EnvVars envVars, Run<?, ?> run, Launcher launcher, Node node, FilePath workspace) {
+    public static CoverityPipelineCommands fromPipeline(EnvVars envVars, FlowNode flowNode, Launcher launcher, TaskListener listener, Node node, Run<?, ?> run, FilePath workspace) {
         CoverityCommandsFactory coverityCommandsFactory = new CoverityCommandsFactory(JenkinsWrapper.initializeFromJenkinsJVM(), listener, envVars, workspace);
 
-        JenkinsServicesFactory jenkinsServicesFactory = new JenkinsServicesFactory(coverityCommandsFactory.getLogger(), envVars, launcher, listener, node, run, workspace);
+        JenkinsPipelineServicesFactory jenkinsServicesFactory = new JenkinsPipelineServicesFactory(coverityCommandsFactory.getLogger(), envVars, flowNode, launcher, listener, node, run, workspace);
         JenkinsConfigService jenkinsConfigService = jenkinsServicesFactory.createJenkinsConfigService();
         JenkinsRunService jenkinsRunService = jenkinsServicesFactory.createJenkinsRunService();
+        JenkinsPipelineFlowService jenkinsPipelineFlowService = jenkinsServicesFactory.createJenkinsPipelineFlowService();
 
         return new CoverityPipelineCommands(
             coverityCommandsFactory.getLogger(),
+            jenkinsPipelineFlowService,
             jenkinsRunService,
             coverityCommandsFactory.createCoverityPhoneHomeService(jenkinsConfigService),
             coverityCommandsFactory.createIssuesInViewService(jenkinsConfigService)

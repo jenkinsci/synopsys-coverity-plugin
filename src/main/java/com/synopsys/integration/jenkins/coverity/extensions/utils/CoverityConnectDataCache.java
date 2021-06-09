@@ -7,13 +7,11 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.utils;
 
-import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
-import com.synopsys.integration.coverity.exception.CoverityIntegrationException;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.log.IntLogger;
@@ -32,21 +30,21 @@ public abstract class CoverityConnectDataCache<T> {
         this.cachedData = getEmptyData();
     }
 
-    public T getData(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public T getData(CoverityConnectInstance coverityConnectInstance, String credentialsId) throws InterruptedException {
         semaphore.acquire();
         semaphore.release();
-        refreshIfStale(credentialId, coverityConnectInstance);
+        refreshIfStale(coverityConnectInstance, credentialsId);
         return cachedData;
     }
 
-    public void refreshIfStale(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public void refreshIfStale(CoverityConnectInstance coverityConnectInstance, String credentialsId) throws InterruptedException {
         long cacheTimeInSeconds = TimeUnit.MINUTES.toSeconds(CACHE_TIME_IN_MINUTES);
         if (Instant.now().minusSeconds(cacheTimeInSeconds).isAfter(lastTimeRetrieved)) {
-            refresh(credentialId, coverityConnectInstance);
+            refresh(coverityConnectInstance, credentialsId);
         }
     }
 
-    public void refresh(String credentialId, CoverityConnectInstance coverityConnectInstance) throws InterruptedException {
+    public void refresh(CoverityConnectInstance coverityConnectInstance, String credentialsId) throws InterruptedException {
         semaphore.acquire();
         Thread thread = Thread.currentThread();
         ClassLoader threadClassLoader = thread.getContextClassLoader();
@@ -55,7 +53,7 @@ public abstract class CoverityConnectDataCache<T> {
         try {
             logger.info("Refreshing connection to Coverity Connect instance...");
 
-            CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger, credentialId);
+            CoverityServerConfig coverityServerConfig = coverityConnectInstance.getCoverityServerConfig(logger, credentialsId);
             WebServiceFactory webServiceFactory = coverityServerConfig.createWebServiceFactory(logger);
             webServiceFactory.connect();
 
@@ -63,7 +61,7 @@ public abstract class CoverityConnectDataCache<T> {
 
             lastTimeRetrieved = Instant.now();
             logger.info("Connection refreshed successfully.");
-        } catch (MalformedURLException | IllegalArgumentException | IllegalStateException | CoverityIntegrationException e) {
+        } catch (Exception e) {
             logger.error("[ERROR] Could not refresh connection to Coverity Connect instance. Please confirm you have a valid URL.");
             logger.trace("Stack trace:", e);
         } finally {

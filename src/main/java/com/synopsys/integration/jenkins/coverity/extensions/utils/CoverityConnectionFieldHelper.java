@@ -59,7 +59,7 @@ public class CoverityConnectionFieldHelper extends FieldHelper {
         FormValidation formValidation = doCheckCoverityInstanceUrl(coverityInstance, overrideDefaultCredentials, credentialsId);
 
         if (formValidation.kind.equals(FormValidation.Kind.ERROR)) {
-            return FormValidation.error("Selected Coverity instance is invalid.");
+            return FormValidation.error("Could not connect to selected Coverity instance.");
         } else {
             return FormValidation.ok();
         }

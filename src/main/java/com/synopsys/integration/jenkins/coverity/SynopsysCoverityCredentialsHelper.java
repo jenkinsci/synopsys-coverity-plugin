@@ -37,9 +37,11 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
     public static final CredentialsMatcher AUTH_KEY_FILE_CREDENTIALS = CredentialsMatchers.instanceOf(AUTH_KEY_FILE_CREDENTIALS_CLASS);
     public static final CredentialsMatcher SUPPORTED_CREDENTIALS_TYPES = CredentialsMatchers.anyOf(AUTH_KEY_FILE_CREDENTIALS, CredentialsMatchers.instanceOf(USERNAME_PASSWORD_CREDENTIALS_CLASS));
     private final IntLogger logger;
+    private final JenkinsWrapper jenkinsWrapper;
 
     public SynopsysCoverityCredentialsHelper(IntLogger logger, JenkinsWrapper jenkinsWrapper) {
         super(jenkinsWrapper);
+        this.jenkinsWrapper = jenkinsWrapper;
         this.logger = logger;
     }
 
@@ -48,14 +50,16 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
     }
 
     public ListBoxModel listSupportedCredentials() {
-        Jenkins jenkins = Jenkins.getInstanceOrNull();
-        if (jenkins == null) {
-            return new StandardListBoxModel().includeEmptyValue();
+        Optional<Jenkins> optionalJenkins = jenkinsWrapper.getJenkins();
+        if (optionalJenkins.isPresent()) {
+            Jenkins jenkins = optionalJenkins.get();
+            return new StandardListBoxModel()
+                       .includeEmptyValue()
+                       .includeMatchingAs(ACL.SYSTEM, jenkins, StandardCredentials.class, Collections.emptyList(), SUPPORTED_CREDENTIALS_TYPES);
+        } else {
+            return new StandardListBoxModel()
+                .includeEmptyValue();
         }
-        jenkins.checkPermission(Jenkins.ADMINISTER);
-        return new StandardListBoxModel()
-                   .includeEmptyValue()
-                   .includeMatchingAs(ACL.SYSTEM, jenkins, StandardCredentials.class, Collections.emptyList(), SUPPORTED_CREDENTIALS_TYPES);
     }
 
     public Optional<FileCredentials> getAuthenticationKeyFileCredentialsById(String credentialsId) {

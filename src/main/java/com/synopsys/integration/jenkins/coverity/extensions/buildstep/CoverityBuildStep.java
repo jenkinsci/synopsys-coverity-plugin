@@ -8,7 +8,6 @@
 package com.synopsys.integration.jenkins.coverity.extensions.buildstep;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -256,10 +255,12 @@ public class CoverityBuildStep extends Builder {
         }
 
         public FormValidation doCheckProjectName(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId, @QueryParameter(FIELD_PROJECT_NAME) String projectName) {
-            return FormValidation.aggregate(Arrays.asList(
-                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId),
-                projectStreamFieldHelper.checkForProjectInCache(coverityInstanceUrl, overrideDefaultCredentials, credentialsId, projectName)
-            ));
+            FormValidation urlValidation = coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+            if (urlValidation.kind == FormValidation.Kind.ERROR) {
+                return urlValidation;
+            } else {
+                return projectStreamFieldHelper.checkForProjectInCache(coverityInstanceUrl, overrideDefaultCredentials, credentialsId, projectName);
+            }
         }
 
         public ComboBoxModel doFillStreamNameItems(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId, @QueryParameter(FIELD_PROJECT_NAME) String projectName) throws InterruptedException {
@@ -267,10 +268,12 @@ public class CoverityBuildStep extends Builder {
         }
 
         public FormValidation doCheckStreamName(@QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl, @QueryParameter(FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials, @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId, @QueryParameter(FIELD_PROJECT_NAME) String projectName, @QueryParameter(FIELD_STREAM_NAME) String streamName) {
-            return FormValidation.aggregate(Arrays.asList(
-                coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId),
-                projectStreamFieldHelper.checkForStreamInCache(coverityInstanceUrl, overrideDefaultCredentials, credentialsId, projectName, streamName)
-            ));
+            FormValidation urlValidation = coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
+            if (urlValidation.kind == FormValidation.Kind.ERROR) {
+                return urlValidation;
+            } else {
+                return projectStreamFieldHelper.checkForStreamInCache(coverityInstanceUrl, overrideDefaultCredentials, credentialsId, projectName, streamName);
+            }
         }
 
         public ListBoxModel doFillOnCommandFailureItems() {
