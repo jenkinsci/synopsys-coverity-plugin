@@ -1,7 +1,8 @@
 package com.synopsys.integration.jenkins.coverity.stepworkflow;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import java.net.MalformedURLException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -16,8 +17,11 @@ import com.synopsys.integration.coverity.api.ws.configuration.CovRemoteServiceEx
 import com.synopsys.integration.coverity.api.ws.configuration.ProjectDataObj;
 import com.synopsys.integration.coverity.api.ws.configuration.StreamDataObj;
 import com.synopsys.integration.coverity.ws.ConfigurationServiceWrapper;
+import com.synopsys.integration.coverity.ws.WebServiceFactory;
+import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
+import com.synopsys.integration.jenkins.coverity.service.CoverityConfigService;
+import com.synopsys.integration.jenkins.coverity.service.ProjectStreamCreationService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-import com.synopsys.integration.stepworkflow.SubStepResponse;
 
 public class CreateMissingProjectsAndStreamsTest {
     private static final String EXISTING_PROJECT = "existingProject";
@@ -73,14 +77,24 @@ public class CreateMissingProjectsAndStreamsTest {
 
     @ParameterizedTest
     @MethodSource("getTestProjectAndStreamNames")
-    public void testCreateMissingProjectsAndStreams(String projectName, String streamName) {
+    public void testCreateMissingProjectsAndStreams(String projectName, String streamName) throws CoverityJenkinsAbortException, MalformedURLException {
+        String coverityServerUrl = "www.example.com/coverity";
+        String credentialsId = "SOME-CREDENTIALS-ID";
+
         JenkinsIntLogger mockedLogger = Mockito.mock(JenkinsIntLogger.class);
 
-        CreateMissingProjectsAndStreams createMissingProjectsAndStreams = new CreateMissingProjectsAndStreams(mockedLogger, mockConfigurationServiceWrapper, projectName, streamName);
+        WebServiceFactory mockedWebServiceFactory = Mockito.mock(WebServiceFactory.class);
+        Mockito.when(mockedWebServiceFactory.createConfigurationServiceWrapper()).thenReturn(mockConfigurationServiceWrapper);
+        CoverityConfigService mockedCoverityConfigService = Mockito.mock(CoverityConfigService.class);
+        Mockito.when(mockedCoverityConfigService.getWebServiceFactoryFromUrl(coverityServerUrl, credentialsId)).thenReturn(mockedWebServiceFactory);
 
-        SubStepResponse<Object> response = createMissingProjectsAndStreams.run();
+        ProjectStreamCreationService projectStreamCreationService = new ProjectStreamCreationService(mockedLogger, mockedCoverityConfigService);
 
-        assertTrue(response.isSuccess());
+        try {
+            projectStreamCreationService.createMissingProjectOrStream(coverityServerUrl, credentialsId, projectName, streamName);
+        } catch (Exception e) {
+            fail("Unexpected exception was thrown-- this test should be mocked such that it throws no exceptions. Please fix the test code.", e);
+        }
 
         // The plugin only logs based on whether or not it was able to create given projects or streams, so we have to verify the mocked logger's behavior. --rotte JUN 2020
         if (projectName.equals(EXISTING_PROJECT)) {

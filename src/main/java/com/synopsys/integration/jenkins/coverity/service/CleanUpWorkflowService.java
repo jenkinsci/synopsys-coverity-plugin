@@ -5,24 +5,25 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.jenkins.coverity.stepworkflow;
+package com.synopsys.integration.jenkins.coverity.service;
 
 import java.io.IOException;
 
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
-
-import hudson.FilePath;
+import com.synopsys.integration.jenkins.service.JenkinsRemotingService;
 
 public class CleanUpWorkflowService {
     private final JenkinsIntLogger logger;
+    private final JenkinsRemotingService jenkinsRemotingService;
 
-    public CleanUpWorkflowService(JenkinsIntLogger logger) {
+    public CleanUpWorkflowService(JenkinsIntLogger logger, JenkinsRemotingService jenkinsRemotingService) {
         this.logger = logger;
+        this.jenkinsRemotingService = jenkinsRemotingService;
     }
 
-    public void cleanUpIntermediateDirectory(FilePath intermediateDirectory) {
+    public void cleanUpIntermediateDirectory(String intermediateDirectory) {
         try {
-            intermediateDirectory.deleteRecursive();
+            jenkinsRemotingService.getRemoteFilePath(intermediateDirectory).deleteRecursive();
         } catch (IOException | InterruptedException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -32,9 +33,9 @@ public class CleanUpWorkflowService {
         }
     }
 
-    public void cleanUpAuthenticationFile(FilePath authenticationKeyFile) {
+    public void cleanUpAuthenticationFile(String authKeyFilePath) {
         try {
-            if (authenticationKeyFile.delete()) {
+            if (jenkinsRemotingService.getRemoteFilePath(authKeyFilePath).delete()) {
                 logger.debug("Authentication keyfile deleted successfully");
             } else {
                 logger.warn("WARNING: Synopsys Coverity for Jenkins could not clean up the authentication key file. It may have been cleaned up by something else.");

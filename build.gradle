@@ -34,7 +34,7 @@ dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
 
     implementation 'com.synopsys.integration:coverity-common:0.8.1'
-    implementation 'com.synopsys.integration:jenkins-common:0.4.0'
+    implementation 'com.synopsys.integration:jenkins-common:0.5.0'
 
 
     // Must be compatible with the versions declared in Jenkins Common

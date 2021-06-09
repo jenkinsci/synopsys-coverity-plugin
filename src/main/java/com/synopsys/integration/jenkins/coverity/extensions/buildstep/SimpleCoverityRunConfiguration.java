@@ -24,7 +24,6 @@ import hudson.util.ListBoxModel;
 
 public class SimpleCoverityRunConfiguration extends CoverityRunConfiguration {
     static {
-        // TODO: Migrated in 2.1.0 -- Remove migration in 3.0.0
         JenkinsSerializationHelper.migrateFieldFrom("buildCommand", SimpleCoverityRunConfiguration.class, "sourceArgument");
     }
 

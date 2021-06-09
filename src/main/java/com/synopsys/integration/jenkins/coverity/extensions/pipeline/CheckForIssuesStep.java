@@ -31,18 +31,16 @@ import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.LoggerFactory;
 
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
-import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
-import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
+import com.synopsys.integration.jenkins.coverity.service.CoverityCommandsFactory;
+import com.synopsys.integration.jenkins.coverity.service.CoverityConfigService;
 import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
-import com.synopsys.integration.util.IntEnvironmentVariables;
 
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -286,41 +284,25 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
         @Override
         protected Integer run() throws Exception {
-            CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(envVars, node, launcher, listener);
-            CoverityJenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-            IntEnvironmentVariables intEnvironmentVariables = coverityWorkflowStepFactory.getOrCreateEnvironmentVariables();
-            String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, FIELD_COVERITY_INSTANCE_URL, JenkinsCoverityEnvironmentVariable.COVERITY_URL, intEnvironmentVariables::getValue);
-            String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, intEnvironmentVariables.getVariables());
+            String unresolvedCoverityInstanceUrl = getRequiredValueOrDie(coverityInstanceUrl, FIELD_COVERITY_INSTANCE_URL, JenkinsCoverityEnvironmentVariable.COVERITY_URL, envVars::get);
+            String resolvedCoverityInstanceUrl = Util.replaceMacro(unresolvedCoverityInstanceUrl, envVars);
 
-            String unresolvedProjectName = getRequiredValueOrDie(projectName, FIELD_PROJECT_NAME, JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, intEnvironmentVariables::getValue);
-            String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, intEnvironmentVariables.getVariables());
+            String unresolvedProjectName = getRequiredValueOrDie(projectName, FIELD_PROJECT_NAME, JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT, envVars::get);
+            String resolvedProjectName = Util.replaceMacro(unresolvedProjectName, envVars);
 
-            String unresolvedViewName = getRequiredValueOrDie(viewName, FIELD_VIEW_NAME, JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, intEnvironmentVariables::getValue);
-            String resolvedViewName = Util.replaceMacro(unresolvedViewName, intEnvironmentVariables.getVariables());
-
-            JenkinsVersionHelper jenkinsVersionHelper = JenkinsWrapper.initializeFromJenkinsJVM().getVersionHelper();
+            String unresolvedViewName = getRequiredValueOrDie(viewName, FIELD_VIEW_NAME, JenkinsCoverityEnvironmentVariable.COVERITY_VIEW, envVars::get);
+            String resolvedViewName = Util.replaceMacro(unresolvedViewName, envVars);
 
             String resolvedCredentialsId;
             if (credentialsId != null) {
                 resolvedCredentialsId = credentialsId;
             } else {
-                CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(resolvedCoverityInstanceUrl);
+                CoverityConnectInstance coverityConnectInstance = CoverityConfigService.fromListener(listener).getCoverityInstanceOrAbort(resolvedCoverityInstanceUrl);
                 resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
             }
 
-            CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger,
-                jenkinsVersionHelper,
-                () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl, credentialsId),
-                coverityWorkflowStepFactory,
-                resolvedCoverityInstanceUrl,
-                resolvedCredentialsId,
-                resolvedProjectName,
-                resolvedViewName,
-                returnIssueCount,
-                markUnstable,
-                run,
-                flowNode);
-            return checkForIssuesStepWorkflow.perform();
+            return CoverityCommandsFactory.fromPipeline(envVars, flowNode, launcher, listener, node, run, null)
+                    .getIssueCount(resolvedCoverityInstanceUrl, resolvedCredentialsId, resolvedProjectName, resolvedViewName, returnIssueCount, markUnstable);
         }
 
         private String getRequiredValueOrDie(String pipelineParameter, String parameterName, JenkinsCoverityEnvironmentVariable environmentVariable, UnaryOperator<String> getter) throws AbortException {

@@ -9,13 +9,19 @@ package com.synopsys.integration.jenkins.coverity.actions;
 
 import javax.annotation.CheckForNull;
 
+import com.synopsys.integration.coverity.ws.view.ViewReportWrapper;
+
 import hudson.model.Action;
 
 public class IssueReportAction implements Action {
     private final int defectCount;
     private final String cimViewUrl;
 
-    public IssueReportAction(final int defectCount, final String cimViewUrl) {
+    public static IssueReportAction fromViewReportWrapper(ViewReportWrapper viewReportWrapper) {
+        return new IssueReportAction(viewReportWrapper.getViewContents().getTotalRows().intValue(), viewReportWrapper.getViewReportUrl());
+    }
+
+    public IssueReportAction(int defectCount, String cimViewUrl) {
         this.defectCount = defectCount;
         this.cimViewUrl = cimViewUrl;
     }

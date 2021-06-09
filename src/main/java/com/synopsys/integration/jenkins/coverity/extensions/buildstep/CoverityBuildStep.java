@@ -12,7 +12,6 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -27,15 +26,15 @@ import com.synopsys.integration.jenkins.coverity.extensions.OnCommandFailure;
 import com.synopsys.integration.jenkins.coverity.extensions.global.CoverityConnectInstance;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.ProjectStreamFieldHelper;
-import com.synopsys.integration.jenkins.coverity.stepworkflow.CoverityWorkflowStepFactory;
+import com.synopsys.integration.jenkins.coverity.service.CoverityCommandsFactory;
+import com.synopsys.integration.jenkins.coverity.service.CoverityConfigService;
 import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
-import com.synopsys.integration.jenkins.wrapper.JenkinsVersionHelper;
+import com.synopsys.integration.jenkins.service.JenkinsBuildService;
 import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
 
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -173,52 +172,40 @@ public class CoverityBuildStep extends Builder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
-        String remoteWorkingDirectoryPath = computeRemoteWorkingDirectory(coverityRunConfiguration, build.getWorkspace(), build.getProject());
+        String workingDirectory = null;
+        if (CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType())) {
+            workingDirectory = ((SimpleCoverityRunConfiguration) coverityRunConfiguration).getCustomWorkingDirectory();
+        }
 
-        CoverityWorkflowStepFactory coverityWorkflowStepFactory = new CoverityWorkflowStepFactory(build.getEnvironment(listener), build.getBuiltOn(), launcher, listener);
-        JenkinsIntLogger logger = coverityWorkflowStepFactory.getOrCreateLogger();
-        JenkinsVersionHelper jenkinsVersionHelper = JenkinsWrapper.initializeFromJenkinsJVM().getVersionHelper();
+        if (workingDirectory == null) {
+            JenkinsBuildService jenkinsBuildService = new JenkinsBuildService(JenkinsIntLogger.logToListener(listener), build);
+            workingDirectory = jenkinsBuildService.getWorkspaceOrProjectWorkspace();
+        }
 
         String resolvedCredentialsId;
         if (Boolean.TRUE.equals(overrideDefaultCredentials)) {
             resolvedCredentialsId = credentialsId;
         } else {
-            CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(coverityInstanceUrl);
+            CoverityConnectInstance coverityConnectInstance = CoverityConfigService.fromListener(listener).getCoverityInstanceOrAbort(coverityInstanceUrl);
             resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
         }
 
-        CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(
-            logger,
-            jenkinsVersionHelper,
-            () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(coverityInstanceUrl, resolvedCredentialsId),
-            coverityWorkflowStepFactory,
-            build,
-            remoteWorkingDirectoryPath,
-            coverityInstanceUrl,
-            resolvedCredentialsId,
-            projectName,
-            streamName,
-            coverityRunConfiguration,
-            configureChangeSetPatterns,
-            checkForIssuesInView,
-            onCommandFailure,
-            cleanUpAction
-        );
+        CoverityCommandsFactory
+            .fromPostBuild(build, launcher, listener)
+            .runCoverityCommands(
+                coverityInstanceUrl,
+                resolvedCredentialsId,
+                projectName,
+                streamName,
+                workingDirectory,
+                coverityRunConfiguration,
+                configureChangeSetPatterns,
+                checkForIssuesInView,
+                onCommandFailure,
+                cleanUpAction
+            );
 
-        return coverityBuildStepWorkflow.perform();
-    }
-
-    private String computeRemoteWorkingDirectory(CoverityRunConfiguration coverityRunConfiguration, FilePath buildWorkspace, AbstractProject<?, ?> project) {
-        boolean isDefaultCoverityWorkflow = CoverityRunConfiguration.RunConfigurationType.SIMPLE.equals(coverityRunConfiguration.getRunConFigurationType());
-        String customWorkingDirectory = isDefaultCoverityWorkflow ? ((SimpleCoverityRunConfiguration) coverityRunConfiguration).getCustomWorkingDirectory() : null;
-
-        if (StringUtils.isNotBlank(customWorkingDirectory)) {
-            return customWorkingDirectory;
-        } else if (buildWorkspace != null) {
-            return buildWorkspace.getRemote();
-        } else {
-            return project.getCustomWorkspace();
-        }
+        return true;
     }
 
     @Extension

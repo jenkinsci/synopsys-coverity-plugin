@@ -94,7 +94,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
     }
 
     public Optional<String> getUsername(IntLogger logger, String credentialId) {
-        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger,JenkinsWrapper.initializeFromJenkinsJVM());
+        SynopsysCoverityCredentialsHelper synopsysCoverityCredentialsHelper = new SynopsysCoverityCredentialsHelper(logger, JenkinsWrapper.initializeFromJenkinsJVM());
         return synopsysCoverityCredentialsHelper.getCoverityUsernameById(credentialId);
     }
 

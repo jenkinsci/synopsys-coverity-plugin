@@ -5,7 +5,7 @@
  *
  * Use subject to the terms and conditions of the Synopsys End User Software License and Maintenance Agreement. All rights reserved worldwide.
  */
-package com.synopsys.integration.jenkins.coverity.stepworkflow;
+package com.synopsys.integration.jenkins.coverity.service.callable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -19,8 +19,8 @@ import com.synopsys.integration.coverity.exception.ExecutableException;
 import com.synopsys.integration.coverity.exception.ExecutableRunnerException;
 import com.synopsys.integration.coverity.executable.Executable;
 import com.synopsys.integration.coverity.executable.ExecutableManager;
-import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsException;
+import com.synopsys.integration.jenkins.extensions.JenkinsIntLogger;
 
 public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
     private static final long serialVersionUID = -1777043273065180425L;
@@ -30,7 +30,7 @@ public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
 
     private final String workingDirectoryPath;
 
-    public CoverityRemoteToolRunner(final CoverityJenkinsIntLogger logger, final String coverityToolHome, final List<String> arguments, final String workingDirectoryPath, final HashMap<String, String> environmentVariables) {
+    public CoverityRemoteToolRunner(JenkinsIntLogger logger, String coverityToolHome, List<String> arguments, String workingDirectoryPath, HashMap<String, String> environmentVariables) {
         super(logger);
         this.environmentVariables = environmentVariables;
         this.coverityToolHome = coverityToolHome;
@@ -38,18 +38,19 @@ public class CoverityRemoteToolRunner extends CoverityRemoteCallable<Integer> {
         this.workingDirectoryPath = workingDirectoryPath;
     }
 
+    @Override
     public Integer call() throws CoverityJenkinsException {
-        final File workingDirectory = new File(workingDirectoryPath);
-        final Executable executable = new Executable(arguments, workingDirectory, environmentVariables);
-        final ExecutableManager executableManager = new ExecutableManager(new File(coverityToolHome));
-        final Integer exitCode;
-        final ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
-        try (final PrintStream errorStream = new PrintStream(errorOutputStream, true, "UTF-8")) {
-            final PrintStream jenkinsPrintStream = logger.getTaskListener().getLogger();
+        File workingDirectory = new File(workingDirectoryPath);
+        Executable executable = new Executable(arguments, workingDirectory, environmentVariables);
+        ExecutableManager executableManager = new ExecutableManager(new File(coverityToolHome));
+        Integer exitCode;
+        ByteArrayOutputStream errorOutputStream = new ByteArrayOutputStream();
+        try (PrintStream errorStream = new PrintStream(errorOutputStream, true, "UTF-8")) {
+            PrintStream jenkinsPrintStream = logger.getTaskListener().getLogger();
             exitCode = executableManager.execute(executable, logger, jenkinsPrintStream, errorStream);
-        } catch (final UnsupportedEncodingException | ExecutableException | ExecutableRunnerException e) {
+        } catch (UnsupportedEncodingException | ExecutableException | ExecutableRunnerException e) {
             throw new CoverityJenkinsException(e);
-        } catch (final InterruptedException e) {
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new CoverityJenkinsException(e);
         } finally {
