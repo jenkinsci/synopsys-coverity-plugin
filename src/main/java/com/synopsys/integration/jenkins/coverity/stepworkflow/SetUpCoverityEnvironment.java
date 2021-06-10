@@ -35,6 +35,7 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<String> {
     private final List<ChangeLogSet<?>> changeLogSets;
     private final ConfigureChangeSetPatterns configureChangeSetPatterns;
     private final String coverityInstanceUrl;
+    private final String coverityCredentialsId;
     private final String coverityUsername;
     private final String coverityPassword;
     private final String projectName;
@@ -44,12 +45,13 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<String> {
     private final String coverityToolHomeBin;
 
     public SetUpCoverityEnvironment(CoverityJenkinsIntLogger logger, IntEnvironmentVariables intEnvironmentVariables, List<ChangeLogSet<?>> changeLogSets, ConfigureChangeSetPatterns configureChangeSetPatterns, String coverityInstanceUrl,
-        String coverityUsername, String coverityPassphrase, String projectName, String streamName, String viewName, String intermediateDirectoryPath, String coverityToolHomeBin) {
+        String coverityCredentialsId, String coverityUsername, String coverityPassphrase, String projectName, String streamName, String viewName, String intermediateDirectoryPath, String coverityToolHomeBin) {
         this.logger = logger;
         this.intEnvironmentVariables = intEnvironmentVariables;
         this.changeLogSets = changeLogSets;
         this.configureChangeSetPatterns = configureChangeSetPatterns;
         this.coverityInstanceUrl = coverityInstanceUrl;
+        this.coverityCredentialsId = coverityCredentialsId;
         this.coverityUsername = coverityUsername;
         this.coverityPassword = coverityPassphrase;
         this.projectName = projectName;
@@ -89,6 +91,7 @@ public class SetUpCoverityEnvironment extends AbstractConsumingSubStep<String> {
         intEnvironmentVariables.put(CoverityToolEnvironmentVariable.PASSPHRASE.toString(), coverityPassword);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH.toString(), authKeyFilePath);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_URL.toString(), coverityInstanceUrl);
+        intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.CREDENTIALS_ID.toString(), coverityCredentialsId);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_PROJECT.toString(), projectName);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_STREAM.toString(), streamName);
         intEnvironmentVariables.put(JenkinsCoverityEnvironmentVariable.COVERITY_VIEW.toString(), viewName);

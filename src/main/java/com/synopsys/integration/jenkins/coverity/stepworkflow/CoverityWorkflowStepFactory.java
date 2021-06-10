@@ -134,7 +134,7 @@ public class CoverityWorkflowStepFactory {
                                          .child("bin")
                                          .getRemote();
 
-        return new SetUpCoverityEnvironment(logger, intEnvironmentVariables, changeLogSets, configureChangeSetPatterns, coverityServerUrl, coverityUsername, coverityPassphrase, projectName, streamName, viewName, remoteIntermediateDirectory, coverityToolHomeBin);
+        return new SetUpCoverityEnvironment(logger, intEnvironmentVariables, changeLogSets, configureChangeSetPatterns, coverityServerUrl, credentialsId, coverityUsername, coverityPassphrase, projectName, streamName, viewName, remoteIntermediateDirectory, coverityToolHomeBin);
     }
 
     public RemoteSubStep<Boolean> createStepValidateCoverityInstallation(boolean shouldValidateVersion) throws CoverityJenkinsAbortException {

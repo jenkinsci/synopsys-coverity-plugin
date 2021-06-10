@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
@@ -301,8 +302,9 @@ public class CheckForIssuesStep extends Step implements Serializable {
             JenkinsVersionHelper jenkinsVersionHelper = JenkinsWrapper.initializeFromJenkinsJVM().getVersionHelper();
 
             String resolvedCredentialsId;
-            if (credentialsId != null) {
-                resolvedCredentialsId = credentialsId;
+            Optional<String> possibleCredentialsId = getValueFromStepOrEnvironment(credentialsId, JenkinsCoverityEnvironmentVariable.CREDENTIALS_ID, intEnvironmentVariables::getValue);
+            if (possibleCredentialsId.isPresent()) {
+                resolvedCredentialsId = possibleCredentialsId.get();
             } else {
                 CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(resolvedCoverityInstanceUrl);
                 resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
@@ -310,7 +312,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
 
             CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger,
                 jenkinsVersionHelper,
-                () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl, credentialsId),
+                () -> coverityWorkflowStepFactory.getWebServiceFactoryFromUrl(resolvedCoverityInstanceUrl, resolvedCredentialsId),
                 coverityWorkflowStepFactory,
                 resolvedCoverityInstanceUrl,
                 resolvedCredentialsId,
@@ -323,18 +325,23 @@ public class CheckForIssuesStep extends Step implements Serializable {
             return checkForIssuesStepWorkflow.perform();
         }
 
-        private String getRequiredValueOrDie(String pipelineParameter, String parameterName, JenkinsCoverityEnvironmentVariable environmentVariable, UnaryOperator<String> getter) throws AbortException {
+        private Optional<String> getValueFromStepOrEnvironment(String pipelineParameter, JenkinsCoverityEnvironmentVariable environmentVariable, UnaryOperator<String> getter) {
             if (StringUtils.isNotBlank(pipelineParameter)) {
-                return pipelineParameter;
+                return Optional.of(pipelineParameter);
             }
 
             String valueFromEnvironmentVariable = getter.apply(environmentVariable.toString());
             if (StringUtils.isNotBlank(valueFromEnvironmentVariable)) {
-                return valueFromEnvironmentVariable;
+                return Optional.of(valueFromEnvironmentVariable);
             }
 
-            throw new AbortException(
-                "Coverity issue check failed because required parameter " + parameterName + " was not set. Please set " + parameterName + " or populate $" + environmentVariable.toString() + " with the desired value.");
+            return Optional.empty();
+        }
+
+        private String getRequiredValueOrDie(String pipelineParameter, String parameterName, JenkinsCoverityEnvironmentVariable environmentVariable, UnaryOperator<String> getter) throws AbortException {
+            return getValueFromStepOrEnvironment(pipelineParameter, environmentVariable, getter)
+                       .orElseThrow(() -> new AbortException( "Coverity issue check failed because required parameter " + parameterName + " was not set. "
+                                                                  + "Please set " + parameterName + " or populate $" + environmentVariable.toString() + " with the desired value."));
         }
 
     }
