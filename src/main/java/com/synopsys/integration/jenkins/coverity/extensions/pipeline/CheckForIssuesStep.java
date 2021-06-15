@@ -307,7 +307,7 @@ public class CheckForIssuesStep extends Step implements Serializable {
                 resolvedCredentialsId = possibleCredentialsId.get();
             } else {
                 CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(resolvedCoverityInstanceUrl);
-                resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
+                resolvedCredentialsId = coverityConnectInstance.getCredentialId();
             }
 
             CheckForIssuesStepWorkflow checkForIssuesStepWorkflow = new CheckForIssuesStepWorkflow(logger,

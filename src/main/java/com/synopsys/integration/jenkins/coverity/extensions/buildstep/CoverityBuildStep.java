@@ -184,7 +184,7 @@ public class CoverityBuildStep extends Builder {
             resolvedCredentialsId = credentialsId;
         } else {
             CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(coverityInstanceUrl);
-            resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
+            resolvedCredentialsId = coverityConnectInstance.getCredentialId();
         }
 
         CoverityBuildStepWorkflow coverityBuildStepWorkflow = new CoverityBuildStepWorkflow(

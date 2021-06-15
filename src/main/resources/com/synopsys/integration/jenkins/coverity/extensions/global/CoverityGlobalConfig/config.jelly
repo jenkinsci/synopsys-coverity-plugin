@@ -7,11 +7,11 @@
                         <f:textbox/>
                     </f:entry>
 
-                    <f:entry field="defaultCredentialsId" title="Default credentials">
+                    <f:entry field="credentialId" title="Default credentials">
                         <c:select/>
                     </f:entry>
 
-                    <f:validateButton method="testConnection" title="Test Connection" progress="Testing..." with="url,defaultCredentialsId"/>
+                    <f:validateButton method="testConnection" title="Test Connection" progress="Testing..." with="url,credentialId"/>
 
                     <f:repeatableDeleteButton value="Delete Coverity Connect instance"/>
                 </table>

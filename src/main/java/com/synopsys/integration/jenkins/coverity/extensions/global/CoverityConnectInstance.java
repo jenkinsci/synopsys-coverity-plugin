@@ -27,7 +27,6 @@ import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.exception.CoverityJenkinsAbortException;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.CoverityConnectionFieldHelper;
-import com.synopsys.integration.jenkins.wrapper.JenkinsSerializationHelper;
 import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
@@ -41,10 +40,8 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> {
-    static {
-        JenkinsSerializationHelper.migrateFieldFrom("credentialId", CoverityConnectInstance.class,"defaultCredentialsId");
-    }
-
+    // It does not seem as though these field names can ever change. For whatever reason, XSTREAM aliasing does not appear to work on them.
+    // --rotte JUN 2021
     @HelpMarkdown("Specify the URL for your Coverity Connect instance.  \r\n"
                       + "Populates the $COV_HOST and $COV_PORT environment variables")
     private final String url;
@@ -52,16 +49,16 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
     @HelpMarkdown("Specify the default credentials or authentication key file for authenticating with your Coverity Connect instance. Credentials can be specified on a per-execution basis in the Freestyle or Pipeline job config.  \r\n"
                       + "The credentials specified here will be used if no other credentials are provided in the job config.  \r\n"
                       + "**Note:** \"Username with password\" and \"Secret File\" are the only kind of credentials supported.")
-    private final String defaultCredentialsId;
+    private final String credentialId;
 
     @DataBoundConstructor
-    public CoverityConnectInstance(String url, String defaultCredentialsId) {
+    public CoverityConnectInstance(String url, String credentialId) {
         this.url = url;
-        this.defaultCredentialsId = defaultCredentialsId;
+        this.credentialId = credentialId;
     }
 
-    public String getDefaultCredentialsId() {
-        return defaultCredentialsId;
+    public String getCredentialId() {
+        return credentialId;
     }
 
     public String getUrl() {
@@ -120,7 +117,7 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
     }
 
     public boolean isEmpty() {
-        return null == url && null == defaultCredentialsId;
+        return null == url && null == credentialId;
     }
 
     @Override
@@ -154,24 +151,24 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillDefaultCredentialsIdItems() {
+        public ListBoxModel doFillCredentialIdItems() {
             return credentialsHelper.listSupportedCredentials();
         }
 
         @POST
-        public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("defaultCredentialsId") String defaultCredentialsId) {
+        public FormValidation doTestConnection(@QueryParameter("url") String url, @QueryParameter("credentialId") String credentialId) {
             JenkinsWrapper.initializeFromJenkinsJVM().getJenkins().ifPresent(jenkins -> jenkins.checkPermission(Jenkins.ADMINISTER));
             FormValidation urlValidation = doCheckUrl(url);
             if (!FormValidation.Kind.OK.equals(urlValidation.kind)) {
                 return urlValidation;
             }
 
-            if (StringUtils.isBlank(defaultCredentialsId)) {
+            if (StringUtils.isBlank(credentialId)) {
                 return FormValidation.error("Please specify the credentials for the Coverity Connect instance.");
             }
 
-            CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, defaultCredentialsId);
-            return coverityConnectionFieldHelper.testConnectionToCoverityInstance(coverityConnectInstance, defaultCredentialsId);
+            CoverityConnectInstance coverityConnectInstance = new CoverityConnectInstance(url, credentialId);
+            return coverityConnectionFieldHelper.testConnectionToCoverityInstance(coverityConnectInstance, credentialId);
         }
     }
 
