@@ -67,7 +67,7 @@ public class CoverityConnectionFieldHelper extends FieldHelper {
 
     public FormValidation testConnectionIgnoreSuccessMessage(String jenkinsCoverityInstanceUrl) {
         return GlobalValueHelper.getCoverityInstanceWithUrl(logger, jenkinsCoverityInstanceUrl)
-                   .map(coverityConnectInstance -> this.testConnectionIgnoreSuccessMessage(coverityConnectInstance, coverityConnectInstance.getCredentialId()))
+                   .map(coverityConnectInstance -> this.testConnectionIgnoreSuccessMessage(coverityConnectInstance, coverityConnectInstance.getDefaultCredentialsId()))
                    .orElse(FormValidation.error("There are no Coverity instances configured with the name %s", jenkinsCoverityInstanceUrl));
     }
 

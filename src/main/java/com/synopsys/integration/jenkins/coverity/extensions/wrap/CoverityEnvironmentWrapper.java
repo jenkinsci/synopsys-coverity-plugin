@@ -207,7 +207,7 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             resolvedCredentialsId = credentialsId;
         } else {
             CoverityConnectInstance coverityConnectInstance = coverityWorkflowStepFactory.getCoverityConnectInstanceFromUrl(coverityInstanceUrl);
-            resolvedCredentialsId = coverityConnectInstance.getCredentialId();
+            resolvedCredentialsId = coverityConnectInstance.getDefaultCredentialsId();
         }
 
         CoverityEnvironmentWrapperStepWorkflow coverityEnvironmentWrapperStepWorkflow = new CoverityEnvironmentWrapperStepWorkflow(

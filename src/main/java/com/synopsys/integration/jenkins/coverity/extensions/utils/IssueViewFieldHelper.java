@@ -42,8 +42,8 @@ public class IssueViewFieldHelper extends ConnectionCachingFieldHelper<IssueView
             IssueViewCache issueViewCache = getCache(coverityConnectUrl, credentialsId);
             return issueViewCache.getData(coverityConnectInstance, credentialsId);
         } else {
-            IssueViewCache issueViewCache = getCache(coverityConnectUrl, coverityConnectInstance.getCredentialId());
-            return issueViewCache.getData(coverityConnectInstance, coverityConnectInstance.getCredentialId());
+            IssueViewCache issueViewCache = getCache(coverityConnectUrl, coverityConnectInstance.getDefaultCredentialsId());
+            return issueViewCache.getData(coverityConnectInstance, coverityConnectInstance.getDefaultCredentialsId());
         }
     }
 
