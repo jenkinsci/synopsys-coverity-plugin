@@ -42,7 +42,7 @@ import jenkins.model.Jenkins;
 
 public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> {
     static {
-        JenkinsSerializationHelper.migrateFieldFrom("credentialsId", CoverityConnectInstance.class,"defaultCredentialsId");
+        JenkinsSerializationHelper.migrateFieldFrom("credentialId", CoverityConnectInstance.class,"defaultCredentialsId");
     }
 
     @HelpMarkdown("Specify the URL for your Coverity Connect instance.  \r\n"
