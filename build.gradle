@@ -11,6 +11,10 @@ group = 'org.jenkins-ci.plugins'
 version = '3.0.2-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
+repositories {
+    maven { url "https://repo.jenkins-ci.org/releases/" }
+}
+
 apply plugin: 'com.synopsys.integration.solution'
 
 artifactory {
