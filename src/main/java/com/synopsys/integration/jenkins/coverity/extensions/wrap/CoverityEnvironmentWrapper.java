@@ -7,27 +7,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.wrap;
 
-import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import org.apache.commons.lang3.StringUtils;
-import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.slf4j.LoggerFactory;
-
 import com.synopsys.integration.jenkins.PasswordMaskingOutputStream;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.CoverityJenkinsIntLogger;
@@ -46,23 +25,39 @@ import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.util.IntEnvironmentVariables;
-
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.console.ConsoleLogFilter;
-import hudson.model.AbstractProject;
-import hudson.model.Computer;
-import hudson.model.Node;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.BuildWrapperDescriptor;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildWrapper;
+import org.apache.commons.lang3.StringUtils;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+
+import static com.synopsys.integration.jenkins.coverity.JenkinsCoverityEnvironmentVariable.TEMPORARY_AUTH_KEY_PATH;
 
 public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
     // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
@@ -263,67 +258,92 @@ public class CoverityEnvironmentWrapper extends SimpleBuildWrapper {
             credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
-        public ListBoxModel doFillCoverityInstanceUrlItems() {
+        @POST
+        public ListBoxModel doFillCoverityInstanceUrlItems(@AncestorInPath Item item) {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return coverityConnectionFieldHelper.doFillCoverityInstanceUrlItems();
         }
 
+        @POST
         public FormValidation doCheckCoverityInstanceUrl(
-            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
+                @AncestorInPath Item item,
+                @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
         ) {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
-        public ListBoxModel doFillCredentialsIdItems() {
+        @POST
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item) {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return credentialsHelper.listSupportedCredentials();
         }
 
+        @POST
         public ComboBoxModel doFillProjectNameItems(
-            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
-            @QueryParameter("updateNow") boolean updateNow
+                @AncestorInPath Item item,
+                @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
+                @QueryParameter("updateNow") boolean updateNow
         ) throws InterruptedException {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             if (updateNow) {
                 projectStreamFieldHelper.updateNow(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
             }
             return projectStreamFieldHelper.getProjectNamesForComboBox(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
+        @POST
         public FormValidation doCheckProjectName(
-            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
+                @AncestorInPath Item item,
+                @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId
         ) {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
+        @POST
         public ComboBoxModel doFillStreamNameItems(
-            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
-            @QueryParameter(FIELD_PROJECT_NAME) String projectName
+                @AncestorInPath Item item,
+                @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
+                @QueryParameter(FIELD_PROJECT_NAME) String projectName
         ) throws InterruptedException {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return projectStreamFieldHelper.getStreamNamesForComboBox(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId, projectName);
         }
 
+        @POST
         public FormValidation doCheckStreamName(
-            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId) {
+                @AncestorInPath Item item,
+                @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId) {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return coverityConnectionFieldHelper.doCheckCoverityInstanceUrlIgnoreMessage(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
+        @POST
         public ListBoxModel doFillViewNameItems(
-            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
-            @QueryParameter("updateNow") boolean updateNow
+                @AncestorInPath Item item,
+                @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId,
+                @QueryParameter("updateNow") boolean updateNow
         ) throws InterruptedException {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             if (updateNow) {
                 issueViewFieldHelper.updateNow(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
             }
             return issueViewFieldHelper.getViewNamesForListBox(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 
+        @POST
         public FormValidation doCheckViewName(
-            @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId) {
+                @AncestorInPath Item item,
+                @QueryParameter(FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @QueryParameter(FIELD_CREDENTIALS_ID) String credentialsId) {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return coverityConnectionFieldHelper.doCheckCoverityInstanceUrl(coverityInstanceUrl, StringUtils.isNotBlank(credentialsId), credentialsId);
         }
 

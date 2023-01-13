@@ -7,15 +7,9 @@
  */
 package com.synopsys.integration.jenkins.coverity;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.Optional;
-
-import org.jenkinsci.plugins.plaincredentials.FileCredentials;
-
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
@@ -26,11 +20,18 @@ import com.synopsys.integration.jenkins.wrapper.SynopsysCredentialsHelper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.SilentIntLogger;
 import com.synopsys.integration.rest.credentials.CredentialsBuilder;
-
+import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.plaincredentials.FileCredentials;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Optional;
 
 public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper {
     public static final Class<FileCredentials> AUTH_KEY_FILE_CREDENTIALS_CLASS = FileCredentials.class;
@@ -106,4 +107,27 @@ public class SynopsysCoverityCredentialsHelper extends SynopsysCredentialsHelper
         return credentialsBuilder.build();
     }
 
+    public void checkPermissionToAccessCredentials(Item item) {
+        Jenkins jenkins = getJenkins();
+        if (jenkins == null) {
+            throw new RuntimeException("Jenkins instance is null");
+        }
+
+        if (item == null) {
+            jenkins.checkPermission(Jenkins.ADMINISTER);
+        } else {
+            item.checkPermission(Item.EXTENDED_READ);
+            item.checkPermission(CredentialsProvider.USE_ITEM);
+        }
+    }
+
+    @Nullable
+    private Jenkins getJenkins() {
+        Optional<Jenkins> optionalJenkins = jenkinsWrapper.getJenkins();
+        if (optionalJenkins.isPresent()) {
+            return optionalJenkins.get();
+        } else {
+            return null;
+        }
+    }
 }

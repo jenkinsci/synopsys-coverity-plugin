@@ -7,21 +7,24 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions;
 
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.slf4j.LoggerFactory;
-
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
+import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
 import com.synopsys.integration.jenkins.coverity.extensions.buildstep.CoverityBuildStep;
 import com.synopsys.integration.jenkins.coverity.extensions.utils.IssueViewFieldHelper;
 import com.synopsys.integration.jenkins.extensions.JenkinsSelectBoxEnum;
+import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.Slf4jIntLogger;
-
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.util.ListBoxModel;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
+import org.slf4j.LoggerFactory;
 
 public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssuesInView> {
     // Jenkins directly serializes the names of the fields, so they are an important part of the plugin's API.
@@ -61,20 +64,25 @@ public class CheckForIssuesInView extends AbstractDescribableImpl<CheckForIssues
     @Extension
     public static class DescriptorImpl extends Descriptor<CheckForIssuesInView> {
         private final IssueViewFieldHelper issueViewFieldHelper;
+        private final SynopsysCoverityCredentialsHelper credentialsHelper;
 
         public DescriptorImpl() {
             super(CheckForIssuesInView.class);
             load();
             Slf4jIntLogger slf4jIntLogger = new Slf4jIntLogger(LoggerFactory.getLogger(CheckForIssuesInView.class));
             issueViewFieldHelper = new IssueViewFieldHelper(slf4jIntLogger);
+            credentialsHelper = new SynopsysCoverityCredentialsHelper(slf4jIntLogger, JenkinsWrapper.initializeFromJenkinsJVM());
         }
 
+        @POST
         public ListBoxModel doFillViewNameItems(
-            @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
-            @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
-            @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_CREDENTIALS_ID) String credentialsId,
-            @QueryParameter("updateNow") boolean updateNow
+                @AncestorInPath Item item,
+                @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_COVERITY_INSTANCE_URL) String coverityInstanceUrl,
+                @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_OVERRIDE_CREDENTIALS) Boolean overrideDefaultCredentials,
+                @RelativePath(PATH_TO_COVERITY_BUILD_STEP) @QueryParameter(CoverityBuildStep.FIELD_CREDENTIALS_ID) String credentialsId,
+                @QueryParameter("updateNow") boolean updateNow
         ) throws InterruptedException {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             if (updateNow) {
                 issueViewFieldHelper.updateNow(coverityInstanceUrl, overrideDefaultCredentials, credentialsId);
             }
