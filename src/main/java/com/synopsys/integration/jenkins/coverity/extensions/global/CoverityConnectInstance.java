@@ -7,22 +7,6 @@
  */
 package com.synopsys.integration.jenkins.coverity.extensions.global;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jenkinsci.plugins.plaincredentials.FileCredentials;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.verb.POST;
-import org.slf4j.LoggerFactory;
-
 import com.synopsys.integration.coverity.config.CoverityServerConfig;
 import com.synopsys.integration.jenkins.annotations.HelpMarkdown;
 import com.synopsys.integration.jenkins.coverity.SynopsysCoverityCredentialsHelper;
@@ -32,13 +16,29 @@ import com.synopsys.integration.jenkins.wrapper.JenkinsWrapper;
 import com.synopsys.integration.log.IntLogger;
 import com.synopsys.integration.log.Slf4jIntLogger;
 import com.synopsys.integration.rest.credentials.Credentials;
-
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jenkinsci.plugins.plaincredentials.FileCredentials;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityConnectInstance> {
     @HelpMarkdown("Specify the URL for your Coverity Connect instance.  \r\n"
@@ -163,7 +163,9 @@ public class CoverityConnectInstance extends AbstractDescribableImpl<CoverityCon
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillDefaultCredentialsIdItems() {
+        @POST
+        public ListBoxModel doFillDefaultCredentialsIdItems(@AncestorInPath Item item) {
+            credentialsHelper.checkPermissionToAccessCredentials(item);
             return credentialsHelper.listSupportedCredentials();
         }
 
