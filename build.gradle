@@ -11,9 +11,17 @@ group = 'org.jenkins-ci.plugins'
 version = '3.0.2-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
-repositories {
-    maven { url "https://repo.jenkins-ci.org/releases/" }
-}
+/*repositories {
+    maven {
+        def artifactoryUserName = "schatti"
+        def artifactoryPassword = System.getenv('SCHATTI_SYNOPSYS_COVERITY_PLUGIN_DEPLOY_TOKEN')
+        url "https://repo.jenkins-ci.org/releases/"
+        credentials {
+            username "$artifactoryUserName"
+            password "$artifactoryPassword"
+        }
+    }
+}*/
 
 apply plugin: 'com.synopsys.integration.solution'
 
