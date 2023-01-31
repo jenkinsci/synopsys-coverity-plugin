@@ -12,7 +12,12 @@ version = '3.0.2-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 repositories {
-    maven { url "https://repo.jenkins-ci.org/releases/" }
+   // maven { url "https://repo.jenkins-ci.org/releases/" }
+    maven { url "https://repo1.maven.org/maven2/" }
+    maven { url "https://sig-artifactory.internal.synopsys.com/artifactory/ngp-snapshot-local" }
+    maven { url "https://sig-artifactory.internal.synopsys.com/artifactory/plugins-releases" }
+    maven { url "https://artifacts-oss.talend.com/nexus/content/repositories/TalendOpenSourceRelease/" }
+    maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
 }
 
 apply plugin: 'com.synopsys.integration.solution'
