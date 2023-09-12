@@ -9,4 +9,4 @@ Synopsys Coverity for Jenkins simplifies running Coverity commands in Jenkins bu
 You can download the latest artifact from releases: https://updates.jenkins-ci.org/download/plugins/synopsys-coverity/
 
 ## Documentation ##
-All documentation for Synopsys Coverity for Jenkins can be found at: https://synopsys.atlassian.net/wiki/spaces/INTDOCS/pages/623018/Synopsys+Coverity+for+Jenkins
+All documentation for Synopsys Coverity for Jenkins can be found at: [Documentation](https://sig-product-docs.synopsys.com/bundle/integrations-coverity-jenkins/page/topics/c_cov_jenkins_ovr.html)
