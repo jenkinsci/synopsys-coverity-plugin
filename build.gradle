@@ -4,11 +4,26 @@ buildscript {
 }
 
 plugins {
-    id 'org.jenkins-ci.jpi' version '0.38.0'
+    id 'org.jenkins-ci.jpi' version '0.43.0'
+}
+
+java {
+    registerFeature('workflowJob') {
+        usingSourceSet(sourceSets.main)
+    }
+    registerFeature('workflowJobDsl') {
+        usingSourceSet(sourceSets.main)
+    }
+    registerFeature('workflowCps') {
+        usingSourceSet(sourceSets.main)
+    }
+    registerFeature('workflowStepApi') {
+        usingSourceSet(sourceSets.main)
+    }
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '3.0.4-SNAPSHOT'
+version = '3.0.5-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
@@ -19,35 +34,70 @@ artifactory {
     }
 }
 
+repositories {
+    //jcenter is going away,exclude any dependency search https://blog.gradle.org/jcenter-shutdown
+    maven { url "https://repo1.maven.org/maven2/" }
+    maven { url "https://sig-artifactory.internal.synopsys.com/artifactory/ngp-snapshot-local" }
+    maven { url "https://sig-artifactory.internal.synopsys.com/artifactory/plugins-releases" }
+    maven { url "https://artifacts-oss.talend.com/nexus/content/repositories/TalendOpenSourceRelease/" }
+    maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
+    maven { url "https://repo.jenkins-ci.org/releases/"}
+}
+
 jenkinsPlugin {
     // Must be compatible with the version declared in Jenkins Common
-    coreVersion = '2.150.3'
+    jenkinsVersion = '2.401.3' // as of version 0.40.0 of jpi, it's jenkinsVersion
     displayName = 'Synopsys Coverity plugin'
     url = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
     gitHubUrl = 'https://github.com/jenkinsci/synopsys-coverity-plugin'
 
     compatibleSinceVersion = '2.0.0'
     pluginFirstClassLoader = false
+
+    maskClasses = 'org.apache.commons.compress'
 }
 
 dependencies {
-    annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.1'
+    annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.7'
 
-    implementation 'com.synopsys.integration:coverity-common:0.8.1'
-    implementation 'com.synopsys.integration:jenkins-common:0.4.0'
+    implementation ('com.synopsys.integration:coverity-common:0.8.1') {
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "net.minidev", module: "json-smart"
+        exclude group: "org.springframework.security", module: "spring-security-web"
+    }
 
+    implementation 'org.apache.commons:commons-text:1.10.0'
+
+    implementation ('com.synopsys.integration:jenkins-common:0.4.0') {
+        exclude group: "org.jenkins-ci.main", module: "jenkins-core"
+        exclude group: "org.jenkins-ci.plugins", module: "credentials"
+        exclude group: "org.jenkins-ci.plugins", module: "plain-credentials"
+        exclude group: "org.jenkins-ci.plugins.workflow", module: "workflow-support"
+        exclude group: "org.jenkins-ci.plugins.workflow", module: "workflow-api"
+        exclude group: "org.apache.commons", module: "commons-text"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
+        exclude group: "net.minidev", module: "json-smart"
+    }
 
     // Must be compatible with the versions declared in Jenkins Common
-    jenkinsPlugins 'org.jenkins-ci.plugins:credentials:2.1.10'
-    jenkinsPlugins 'org.jenkins-ci.plugins:plain-credentials:1.0'
+    implementation 'org.jenkins-ci.plugins:credentials:1139.veb_9579fca_33b_'
+    implementation 'org.jenkins-ci.plugins:plain-credentials:1.8'
 
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.6.2'
     testCompile 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
     testCompile 'org.mockito:mockito-junit-jupiter:3.3.3'
 
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins:job-dsl:1.67'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-job:2.32'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-cps:2.66'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-step-api:2.19'
-    optionalJenkinsPlugins 'org.jenkins-ci.plugins.workflow:workflow-api:2.34'
+    workflowJobDslApi 'org.jenkins-ci.plugins:job-dsl:1.83'
+    workflowJobApi 'org.jenkins-ci.plugins.workflow:workflow-job:1203.v7b_7023424efe'
+    workflowCpsApi 'org.jenkins-ci.plugins.workflow:workflow-cps:2729.2732.vda_e3f07b_5a_f8'
+    workflowStepApiApi 'org.jenkins-ci.plugins.workflow:workflow-step-api:622.vb_8e7c15b_c95a_'
+
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.23.4'
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.springframework.security:spring-security-web:5.8.10'
+        force 'org.jenkins-ci.main:jenkins-test-harness:2099.vc95b_86578f37'
+    }
 }
