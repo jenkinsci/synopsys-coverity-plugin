@@ -83,9 +83,9 @@ dependencies {
     implementation 'org.jenkins-ci.plugins:credentials:1139.veb_9579fca_33b_'
     implementation 'org.jenkins-ci.plugins:plain-credentials:1.8'
 
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.6.2'
-    testCompile 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
-    testCompile 'org.mockito:mockito-junit-jupiter:3.3.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.3.3'
 
     workflowJobDslApi 'org.jenkins-ci.plugins:job-dsl:1.83'
     workflowJobApi 'org.jenkins-ci.plugins.workflow:workflow-job:1203.v7b_7023424efe'
