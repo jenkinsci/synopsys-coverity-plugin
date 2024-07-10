@@ -17,3 +17,6 @@ work/
 
 # jenv
 .java-version
+
+#bridge
+.bridge
