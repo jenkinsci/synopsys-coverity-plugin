@@ -1,5 +1,5 @@
 buildscript {
-    apply from: "https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-repositories.gradle", to: buildscript
+    apply from: "buildscript-repositories.gradle", to: buildscript
     apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-dependencies.gradle', to: buildscript
 }
 
@@ -37,11 +37,10 @@ artifactory {
 repositories {
     //jcenter is going away,exclude any dependency search https://blog.gradle.org/jcenter-shutdown
     maven { url "https://repo1.maven.org/maven2/" }
-    maven { url "https://sig-artifactory.internal.synopsys.com/artifactory/ngp-snapshot-local" }
-    maven { url "https://sig-artifactory.internal.synopsys.com/artifactory/plugins-releases" }
     maven { url "https://artifacts-oss.talend.com/nexus/content/repositories/TalendOpenSourceRelease/" }
     maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
     maven { url "https://repo.jenkins-ci.org/releases/"}
+    maven { url "https://repo.jenkins-ci.org/plugin/"}
 }
 
 jenkinsPlugin {
