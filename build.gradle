@@ -1,9 +1,6 @@
 buildscript {
     apply from: "buildscript-repositories.gradle", to: buildscript
-    ////////// START BUILDSCRIPT DEPENDENCY //////////
-dependencies { classpath "com.synopsys.integration:common-gradle-plugin:1.12.0" }
-
-////////// END BUILDSCRIPT DEPENDENCY //////////
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-dependencies.gradle', to: buildscript
 }
 
 plugins {
@@ -26,7 +23,7 @@ java {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '3.0.4'
+version = '3.0.5-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
