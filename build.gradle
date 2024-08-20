@@ -23,7 +23,7 @@ java {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '3.0.4-SNAPSHOT'
+version = '3.0.4-SIGQA5'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
@@ -36,6 +36,7 @@ artifactory {
 
 repositories {
     //jcenter is going away,exclude any dependency search https://blog.gradle.org/jcenter-shutdown
+    maven { url "https://artifactory.internal.synopsys.com/artifactory/bds-integrations-release/" }
     maven { url "https://repo1.maven.org/maven2/" }
     maven { url "https://artifacts-oss.talend.com/nexus/content/repositories/TalendOpenSourceRelease/" }
     maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
@@ -59,7 +60,7 @@ jenkinsPlugin {
 dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.7'
 
-    implementation ('com.synopsys.integration:coverity-common:0.8.1') {
+    implementation ('com.synopsys.integration:coverity-common:0.8.2') {
         exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
         exclude group: "net.minidev", module: "json-smart"
         exclude group: "org.springframework.security", module: "spring-security-web"
