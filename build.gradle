@@ -23,7 +23,7 @@ java {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '3.0.4-SIGQA7-SNAPSHOT'
+version = '3.0.4-SIGQA10'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
@@ -60,7 +60,7 @@ jenkinsPlugin {
 dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.7'
 
-    implementation ('com.synopsys.integration:coverity-common:0.8.2') {
+    implementation ('com.synopsys.integration:coverity-common:0.8.8') {
         exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
         exclude group: "net.minidev", module: "json-smart"
         exclude group: "org.springframework.security", module: "spring-security-web"
