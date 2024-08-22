@@ -40,7 +40,7 @@ artifactory {
 
 repositories {
     //jcenter is going away,exclude any dependency search https://blog.gradle.org/jcenter-shutdown
-    maven { url "https://artifactory.internal.synopsys.com/artifactory/bds-integrations-release/" }
+    maven { url " https://artifactory.internal.synopsys.com/artifactory/bds-integrations-snapshot/" }
     maven { url "https://repo1.maven.org/maven2/" }
     maven { url "https://artifacts-oss.talend.com/nexus/content/repositories/TalendOpenSourceRelease/" }
     maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
