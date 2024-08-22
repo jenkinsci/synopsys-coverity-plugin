@@ -27,7 +27,7 @@ java {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '3.0.5-SIGQA1-SNAPSHOT'
+version = '3.0.5-SIGQA1'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
