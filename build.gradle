@@ -1,6 +1,10 @@
 buildscript {
     apply from: "buildscript-repositories.gradle", to: buildscript
-    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-dependencies.gradle', to: buildscript
+    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-cgp-version.gradle'
+
+    dependencies {
+        classpath "com.synopsys.integration:common-gradle-plugin:${managedCgpVersion}"
+    }
 }
 
 plugins {
@@ -23,7 +27,7 @@ java {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '3.0.4-SNAPSHOT'
+version = '3.0.6-SNAPSHOT'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
@@ -59,7 +63,7 @@ jenkinsPlugin {
 dependencies {
     annotationProcessor 'com.synopsys.integration:jenkins-annotation-processor:0.0.7'
 
-    implementation ('com.synopsys.integration:coverity-common:0.8.1') {
+    implementation ('com.synopsys.integration:coverity-common:0.8.2') {
         exclude group: "com.fasterxml.jackson.core", module: "jackson-databind"
         exclude group: "net.minidev", module: "json-smart"
         exclude group: "org.springframework.security", module: "spring-security-web"
