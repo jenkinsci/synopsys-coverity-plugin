@@ -1,6 +1,6 @@
 buildscript {
     apply from: "buildscript-repositories.gradle", to: buildscript
-    apply from: 'https://raw.githubusercontent.com/blackducksoftware/integration-resources/master/gradle_common/buildscript-cgp-version.gradle'
+    project.ext { managedCgpVersion = '2.0.4' }
 
     dependencies {
         classpath "com.synopsys.integration:common-gradle-plugin:${managedCgpVersion}"
@@ -27,7 +27,7 @@ java {
 }
 
 group = 'org.jenkins-ci.plugins'
-version = '3.0.5-SNAPSHOT'
+version = '3.0.5'
 description = 'Allows users to run Coverity commands in their builds'
 
 apply plugin: 'com.synopsys.integration.solution'
