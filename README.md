@@ -1,4 +1,4 @@
-**NOTE:** This plugin is deprecated and no longer supported. It is recommended that you migrate to our new <a href="">Black Duck Security Scan</a>. Instructions can be found <a href=<community url>>here</a>.
+**NOTE:** This plugin is deprecated and no longer supported. It is recommended that you migrate to our new <a href="">Black Duck Security Scan</a>. Instructions can be found <a href="<community url>">here</a>.
 ## Overview ##
 Synopsys Coverity for Jenkins simplifies running Coverity commands in Jenkins builds. 
 
