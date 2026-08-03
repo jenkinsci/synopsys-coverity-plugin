@@ -19,7 +19,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.api.rest.ViewContents;
 import com.synopsys.integration.coverity.ws.WebServiceFactory;

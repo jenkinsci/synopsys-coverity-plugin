@@ -69,6 +69,7 @@ dependencies {
         exclude group: "org.springframework.security", module: "spring-security-web"
     }
 
+    implementation 'org.apache.commons:commons-lang3:3.19.0'
     implementation 'org.apache.commons:commons-text:1.10.0'
 
     implementation ('com.synopsys.integration:jenkins-common:0.4.0') {

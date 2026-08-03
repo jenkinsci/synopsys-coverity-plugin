@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.synopsys.integration.coverity.executable.CoverityToolEnvironmentVariable;
 import com.synopsys.integration.jenkins.coverity.ChangeSetFilter;
